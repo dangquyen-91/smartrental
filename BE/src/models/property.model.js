@@ -15,7 +15,7 @@ const propertySchema = new mongoose.Schema(
       default: 'available',
     },
     price: { type: Number, required: true },
-    area: { type: Number }, // m2
+    area: { type: Number },
     address: {
       street: { type: String },
       ward: { type: String },

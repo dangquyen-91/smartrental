@@ -1,5 +1,5 @@
-const { body } = require('express-validator');
-const validate = require('../middleware/validate');
+const { body, query } = require('express-validator');
+const validate = require('../middleware/validate.middleware');
 
 const createPropertyValidation = validate([
   body('title')
@@ -113,4 +113,14 @@ const updatePropertyValidation = validate([
     .isURL().withMessage('Each image must be a valid URL'),
 ]);
 
-module.exports = { createPropertyValidation, updatePropertyValidation };
+const getPropertiesValidation = validate([
+  query('page').optional().isInt({ min: 1 }).withMessage('page must be >= 1'),
+  query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('limit must be 1–50'),
+  query('type').optional().isIn(['room', 'apartment', 'house', 'studio']).withMessage('Invalid type'),
+  query('status').optional().isIn(['available', 'rented', 'maintenance']).withMessage('Invalid status'),
+  query('minPrice').optional().isFloat({ gt: 0 }).withMessage('minPrice must be a positive number'),
+  query('maxPrice').optional().isFloat({ gt: 0 }).withMessage('maxPrice must be a positive number'),
+  query('sort').optional().isIn(['newest', 'price_asc', 'price_desc']).withMessage('sort must be newest, price_asc, or price_desc'),
+]);
+
+module.exports = { getPropertiesValidation, createPropertyValidation, updatePropertyValidation };
