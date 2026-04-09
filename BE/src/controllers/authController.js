@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const R = require('../utils/response');
 
 const generateAccessToken = (user) =>
   jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
@@ -11,12 +12,12 @@ const generateRefreshToken = (user) =>
     expiresIn: '7d',
   });
 
-const register = async (req, res) => {
+const register = async (req, res, next) => {
   try {
     const { name, email, password, phone, role } = req.body;
 
     const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ message: 'Email already in use' });
+    if (existing) return R.badRequest(res, 'Email already in use');
 
     const user = await User.create({ name, email, password, phone, role });
 
@@ -26,26 +27,26 @@ const register = async (req, res) => {
     user.refreshToken = refreshToken;
     await user.save();
 
-    res.status(201).json({
+    return R.created(res, {
       accessToken,
       refreshToken,
       user: { id: user._id, name: user.name, email: user.email, role: user.role },
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    }, 'Registration successful');
+  } catch (err) {
+    next(err);
   }
 };
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
     if (!user || !(await user.matchPassword(password))) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return R.unauthorized(res, 'Invalid email or password');
     }
 
-    if (!user.isActive) return res.status(403).json({ message: 'Account is deactivated' });
+    if (!user.isActive) return R.forbidden(res, 'Account is deactivated');
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
@@ -53,31 +54,31 @@ const login = async (req, res) => {
     user.refreshToken = refreshToken;
     await user.save();
 
-    res.json({
+    return R.success(res, {
       accessToken,
       refreshToken,
       user: { id: user._id, name: user.name, email: user.email, role: user.role },
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    }, 'Login successful');
+  } catch (err) {
+    next(err);
   }
 };
 
-const refreshToken = async (req, res) => {
+const refreshToken = async (req, res, next) => {
   try {
     const { refreshToken: token } = req.body;
-    if (!token) return res.status(401).json({ message: 'Refresh token required' });
+    if (!token) return R.unauthorized(res, 'Refresh token required');
 
     let payload;
     try {
       payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
     } catch {
-      return res.status(401).json({ message: 'Invalid or expired refresh token' });
+      return R.unauthorized(res, 'Invalid or expired refresh token');
     }
 
     const user = await User.findById(payload.id);
     if (!user || user.refreshToken !== token) {
-      return res.status(401).json({ message: 'Refresh token revoked' });
+      return R.unauthorized(res, 'Refresh token revoked');
     }
 
     const newAccessToken = generateAccessToken(user);
@@ -86,31 +87,32 @@ const refreshToken = async (req, res) => {
     user.refreshToken = newRefreshToken;
     await user.save();
 
-    res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    return R.success(res, { accessToken: newAccessToken, refreshToken: newRefreshToken }, 'Token refreshed');
+  } catch (err) {
+    next(err);
   }
 };
 
-const logout = async (req, res) => {
+const logout = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
     if (user) {
       user.refreshToken = null;
       await user.save();
     }
-    res.json({ message: 'Logged out successfully' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    return R.success(res, null, 'Logged out successfully');
+  } catch (err) {
+    next(err);
   }
 };
 
-const getMe = async (req, res) => {
+const getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id).select('-password -refreshToken');
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    if (!user || !user.isActive) return R.forbidden(res, 'Account is deactivated');
+    return R.success(res, { user });
+  } catch (err) {
+    next(err);
   }
 };
 
