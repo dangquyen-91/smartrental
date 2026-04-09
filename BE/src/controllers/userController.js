@@ -93,11 +93,7 @@ const updateUser = async (req, res, next) => {
 
     await user.save();
 
-    const updated = user.toObject();
-    delete updated.password;
-    delete updated.refreshToken;
-
-    return R.success(res, { user: updated }, 'Profile updated successfully');
+    return R.success(res, { user: user.toJSON() }, 'Profile updated successfully');
   } catch (err) {
     next(err);
   }

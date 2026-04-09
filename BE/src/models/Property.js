@@ -27,7 +27,26 @@ const propertySchema = new mongoose.Schema(
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     isActive: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform: (_, ret) => ({
+        id: ret._id,
+        title: ret.title,
+        description: ret.description,
+        type: ret.type,
+        status: ret.status,
+        price: ret.price,
+        area: ret.area,
+        address: ret.address,
+        amenities: ret.amenities,
+        images: ret.images,
+        owner: ret.owner,
+        createdAt: ret.createdAt,
+        updatedAt: ret.updatedAt,
+      }),
+    },
+  }
 );
 
 propertySchema.index({ 'address.city': 1, status: 1 });
