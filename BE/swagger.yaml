@@ -1,0 +1,1017 @@
+openapi: 3.0.3
+
+info:
+  title: SmartRental API
+  version: 1.0.0
+  description: |
+    REST API cho nền tảng cho thuê phòng trọ **SmartRental**.
+
+    ## Xác thực
+    Dùng **Bearer JWT** cho các endpoint yêu cầu đăng nhập.
+    1. Gọi `POST /api/auth/login` → lấy `accessToken`
+    2. Nhấn **Authorize** (🔒) → điền `Bearer <accessToken>`
+
+servers:
+  - url: http://localhost:5000
+    description: Local development
+
+tags:
+  - name: Auth
+    description: Đăng ký, đăng nhập, refresh token
+  - name: Users
+    description: Quản lý người dùng
+  - name: Properties
+    description: Quản lý bất động sản
+  - name: Upload
+    description: Upload ảnh lên Cloudinary
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    MongoId:
+      type: string
+      pattern: '^[a-f\d]{24}$'
+      example: 664f1b2c3e4d5a6b7c8d9e0f
+
+    Address:
+      type: object
+      required:
+        - city
+      properties:
+        street:
+          type: string
+          example: 12 Nguyễn Văn Linh
+        ward:
+          type: string
+          example: Phường Tân Phú
+        district:
+          type: string
+          example: Quận 7
+        city:
+          type: string
+          example: Hồ Chí Minh
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        total:
+          type: integer
+          example: 42
+        totalPages:
+          type: integer
+          example: 5
+
+    User:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/MongoId'
+        name:
+          type: string
+          example: Nguyễn Văn A
+        email:
+          type: string
+          format: email
+          example: a@example.com
+        phone:
+          type: string
+          example: '0901234567'
+        avatar:
+          type: string
+          format: uri
+          nullable: true
+        role:
+          type: string
+          enum: [tenant, landlord, admin]
+          example: tenant
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AuthTokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: eyJhbGci...
+        refreshToken:
+          type: string
+          example: eyJhbGci...
+        user:
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            name:
+              type: string
+              example: Nguyễn Văn A
+            email:
+              type: string
+              example: a@example.com
+            role:
+              type: string
+              enum: [tenant, landlord, admin]
+
+    Property:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/MongoId'
+        title:
+          type: string
+          example: Phòng trọ cao cấp Quận 7
+        description:
+          type: string
+          example: Phòng rộng, thoáng mát, full nội thất
+        type:
+          type: string
+          enum: [room, apartment, house, studio]
+          example: room
+        status:
+          type: string
+          enum: [available, rented, maintenance]
+          example: available
+        price:
+          type: number
+          example: 3500000
+        area:
+          type: number
+          example: 20
+        address:
+          $ref: '#/components/schemas/Address'
+        amenities:
+          type: array
+          items:
+            type: string
+          example: [wifi, parking, ac]
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - https://res.cloudinary.com/demo/image/upload/sample.jpg
+        owner:
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            name:
+              type: string
+            phone:
+              type: string
+            avatar:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Success
+        data:
+          type: object
+
+    PaginatedResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Success
+        data:
+          type: array
+          items: {}
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Error message
+        errors:
+          type: array
+          items:
+            type: string
+          nullable: true
+
+  responses:
+    Unauthorized:
+      description: Chưa xác thực hoặc token không hợp lệ
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Không có quyền truy cập
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Không tìm thấy tài nguyên
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    BadRequest:
+      description: Dữ liệu đầu vào không hợp lệ
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      description: MongoDB ObjectId (24 ký tự hex)
+      schema:
+        $ref: '#/components/schemas/MongoId'
+
+    PageParam:
+      name: page
+      in: query
+      description: Số trang (bắt đầu từ 1)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    LimitParam:
+      name: limit
+      in: query
+      description: Số bản ghi mỗi trang
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 10
+
+paths:
+
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Đăng ký tài khoản mới
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                  example: Nguyễn Văn A
+                email:
+                  type: string
+                  format: email
+                  example: a@example.com
+                password:
+                  type: string
+                  minLength: 6
+                  example: secret123
+                phone:
+                  type: string
+                  example: '0901234567'
+                role:
+                  type: string
+                  enum: [tenant, landlord]
+                  default: tenant
+      responses:
+        '201':
+          description: Đăng ký thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthTokens'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Đăng nhập
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: a@example.com
+                password:
+                  type: string
+                  example: secret123
+      responses:
+        '200':
+          description: Đăng nhập thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthTokens'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/refresh-token:
+    post:
+      tags: [Auth]
+      summary: Làm mới access token bằng refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+                  example: eyJhbGci...
+      responses:
+        '200':
+          description: Token mới
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          accessToken:
+                            type: string
+                          refreshToken:
+                            type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Đăng xuất (revoke refresh token)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Đăng xuất thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Lấy thông tin tài khoản đang đăng nhập
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Thông tin user
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/users:
+    get:
+      tags: [Users]
+      summary: Lấy danh sách users (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [tenant, landlord, admin]
+        - name: isActive
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Danh sách users
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/users/{id}:
+    get:
+      tags: [Users]
+      summary: Lấy thông tin user theo ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Thông tin user
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Users]
+      summary: Cập nhật thông tin user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Tên mới
+                phone:
+                  type: string
+                  example: '0909999999'
+                avatar:
+                  type: string
+                  format: uri
+                role:
+                  type: string
+                  enum: [tenant, landlord, admin]
+                isActive:
+                  type: boolean
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      tags: [Users]
+      summary: Xóa user (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Xóa thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/users/{id}/password:
+    put:
+      tags: [Users]
+      summary: Đổi mật khẩu
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword:
+                  type: string
+                  example: oldPass123
+                newPassword:
+                  type: string
+                  minLength: 6
+                  example: newPass456
+      responses:
+        '200':
+          description: Đổi mật khẩu thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/properties:
+    get:
+      tags: [Properties]
+      summary: Tìm kiếm & lọc bất động sản (public)
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: city
+          in: query
+          schema:
+            type: string
+          example: Hồ Chí Minh
+        - name: district
+          in: query
+          schema:
+            type: string
+          example: Quận 7
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [room, apartment, house, studio]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [available, rented, maintenance]
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+          example: 1000000
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+          example: 5000000
+        - name: search
+          in: query
+          description: Tìm theo tiêu đề
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, price_asc, price_desc]
+            default: newest
+      responses:
+        '200':
+          description: Danh sách bất động sản
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Property'
+
+    post:
+      tags: [Properties]
+      summary: Tạo bất động sản mới (landlord / admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, type, price, address]
+              properties:
+                title:
+                  type: string
+                  minLength: 3
+                  maxLength: 200
+                  example: Phòng trọ Quận 7 full nội thất
+                description:
+                  type: string
+                  example: Phòng sạch, thoáng mát, gần trung tâm
+                type:
+                  type: string
+                  enum: [room, apartment, house, studio]
+                price:
+                  type: number
+                  example: 3500000
+                area:
+                  type: number
+                  example: 20
+                address:
+                  $ref: '#/components/schemas/Address'
+                amenities:
+                  type: array
+                  items:
+                    type: string
+                  example: [wifi, ac, parking]
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+                  example:
+                    - https://res.cloudinary.com/demo/image/upload/sample.jpg
+      responses:
+        '201':
+          description: Tạo thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          property:
+                            $ref: '#/components/schemas/Property'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/properties/my:
+    get:
+      tags: [Properties]
+      summary: Lấy bất động sản của tôi (landlord / admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [available, rented, maintenance]
+      responses:
+        '200':
+          description: Danh sách bất động sản của tôi
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Property'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/properties/{id}:
+    get:
+      tags: [Properties]
+      summary: Lấy chi tiết bất động sản (public)
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Chi tiết bất động sản
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          property:
+                            $ref: '#/components/schemas/Property'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Properties]
+      summary: Cập nhật bất động sản (landlord / admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 3
+                  maxLength: 200
+                description:
+                  type: string
+                type:
+                  type: string
+                  enum: [room, apartment, house, studio]
+                status:
+                  type: string
+                  enum: [available, rented, maintenance]
+                price:
+                  type: number
+                area:
+                  type: number
+                address:
+                  $ref: '#/components/schemas/Address'
+                amenities:
+                  type: array
+                  items:
+                    type: string
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          property:
+                            $ref: '#/components/schemas/Property'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Properties]
+      summary: Xóa bất động sản — soft delete (landlord / admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Xóa thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/upload:
+    get:
+      tags: [Upload]
+      summary: Lấy danh sách ảnh trên Cloudinary (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Danh sách ảnh
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          images:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                publicId:
+                                  type: string
+                                  example: smartrental/properties/abc123
+                                url:
+                                  type: string
+                                  format: uri
+                                createdAt:
+                                  type: string
+                                  format: date-time
+                                bytes:
+                                  type: integer
+                                  example: 204800
+                          count:
+                            type: integer
+                            example: 5
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags: [Upload]
+      summary: Upload ảnh lên Cloudinary (landlord / admin)
+      description: |
+        Upload tối đa **10 ảnh** cùng lúc (JPEG / PNG / WebP), mỗi ảnh ≤ 5 MB.
+
+        Trả về mảng URL — dùng các URL này để điền vào `images[]` khi tạo / cập nhật property.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [images]
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Tối đa 10 file ảnh (JPEG / PNG / WebP)
+      responses:
+        '201':
+          description: Upload thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          images:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                url:
+                                  type: string
+                                  format: uri
+                                  example: https://res.cloudinary.com/smartrental/image/upload/v1/smartrental/properties/abc123.jpg
+                                publicId:
+                                  type: string
+                                  example: smartrental/properties/abc123
+                          count:
+                            type: integer
+                            example: 2
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      tags: [Upload]
+      summary: Xóa ảnh khỏi Cloudinary (landlord / admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [publicId]
+              properties:
+                publicId:
+                  type: string
+                  example: smartrental/properties/abc123
+      responses:
+        '200':
+          description: Xóa thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
