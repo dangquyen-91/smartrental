@@ -1,0 +1,30 @@
+services:
+  # ─── Backend ──────────────────────────────────────────────────────────────
+  be:
+    build:
+      context: ./BE
+      target: ${NODE_ENV:-development}
+    container_name: smartrental-be
+    restart: unless-stopped
+    env_file:
+      - ./BE/.env
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+    ports:
+      - "${PORT:-5000}:5000"
+    volumes:
+      # hot-reload in dev: mount source, exclude node_modules
+      - ./BE/src:/app/src
+      - ./BE/swagger.yaml:/app/swagger.yaml
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - smartrental-net
+
+networks:
+  smartrental-net:
+    driver: bridge
