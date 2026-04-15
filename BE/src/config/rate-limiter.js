@@ -1,12 +1,12 @@
-const rateLimit = require('express-rate-limit');
+import rateLimit from 'express-rate-limit';
 
 let redisClient = null;
 let RedisStore = null;
 
 if (process.env.REDIS_URL) {
   try {
-    const { default: Redis } = require('ioredis');
-    const { RedisStore: Store } = require('rate-limit-redis');
+    const { default: Redis } = await import('ioredis');
+    const { RedisStore: Store } = await import('rate-limit-redis');
     redisClient = new Redis(process.env.REDIS_URL, { lazyConnect: true });
     RedisStore = Store;
 
@@ -50,4 +50,4 @@ const authLimiter = createLimiter({
   message: 'Too many auth attempts, please try again later',
 });
 
-module.exports = { apiLimiter, authLimiter };
+export { apiLimiter, authLimiter };

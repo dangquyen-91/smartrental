@@ -1,18 +1,18 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const swaggerUi = require('swagger-ui-express');
-const connectDB = require('./config/db');
-const { apiLimiter, authLimiter } = require('./config/rate-limiter');
-const swaggerSpec = require('./config/swagger');
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import swaggerUi from 'swagger-ui-express';
+import connectDB from './config/db.js';
+import { apiLimiter, authLimiter } from './config/rate-limiter.js';
+import swaggerSpec from './config/swagger.js';
 
-const authRoutes = require('./routes/auth.routes');
-const userRoutes = require('./routes/user.routes');
-const propertyRoutes = require('./routes/property.routes');
-const uploadRoutes = require('./routes/upload.routes');
-const errorHandler = require('./middleware/error-handler.middleware');
+import authRoutes from './routes/auth.routes.js';
+import userRoutes from './routes/user.routes.js';
+import propertyRoutes from './routes/property.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
+import errorHandler from './middleware/error-handler.middleware.js';
 
 connectDB();
 

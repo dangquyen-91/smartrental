@@ -88,11 +88,32 @@ components:
           example: a@example.com
         phone:
           type: string
+          nullable: true
           example: '0901234567'
         avatar:
           type: string
           format: uri
           nullable: true
+        bio:
+          type: string
+          nullable: true
+          maxLength: 300
+          example: Xin chào, tôi là chủ nhà tại Quận 7.
+        gender:
+          type: string
+          enum: [male, female, other]
+          nullable: true
+          example: male
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          example: '1995-08-20'
+        address:
+          type: string
+          nullable: true
+          maxLength: 200
+          example: 12 Nguyễn Văn Linh, Quận 7, TP.HCM
         role:
           type: string
           enum: [tenant, landlord, admin]
@@ -100,6 +121,10 @@ components:
         isActive:
           type: boolean
           example: true
+        isPhoneVerified:
+          type: boolean
+          example: false
+          description: true khi đã xác thực SĐT qua OTP → được phép đăng tin (landlord)
         createdAt:
           type: string
           format: date-time
@@ -293,6 +318,14 @@ paths:
     post:
       tags: [Auth]
       summary: Đăng ký tài khoản mới
+      description: |
+        Tạo tài khoản với role **tenant** (mặc định). Số điện thoại là tuỳ chọn khi đăng ký.
+
+        Muốn trở thành landlord để đăng tin cho thuê:
+        1. Đăng ký (có thể không cần phone)
+        2. Đăng nhập
+        3. Gọi `POST /api/auth/request-landlord` → yêu cầu phải có phone trong tài khoản, nhận OTP qua SMS
+        4. Gọi `POST /api/auth/verify-phone` với OTP → role tự động nâng lên `landlord`
       requestBody:
         required: true
         content:
@@ -303,25 +336,23 @@ paths:
               properties:
                 name:
                   type: string
-                  example: Nguyễn Văn A
+                  example: Trần Thị Mai
                 email:
                   type: string
                   format: email
-                  example: a@example.com
+                  example: mai.tran@gmail.com
                 password:
                   type: string
                   minLength: 6
-                  example: secret123
+                  example: Matkhau@123
                 phone:
                   type: string
-                  example: '0901234567'
-                role:
-                  type: string
-                  enum: [tenant, landlord]
-                  default: tenant
+                  description: Số điện thoại Việt Nam (tuỳ chọn), định dạng 0xxxxxxxxx hoặc +84xxxxxxxxx. Bắt buộc nếu muốn trở thành landlord.
+                  pattern: '^(0|\+84)[0-9]{9}$'
+                  example: '0912345678'
       responses:
         '201':
-          description: Đăng ký thành công
+          description: Đăng ký thành công — role mặc định là tenant
           content:
             application/json:
               schema:
@@ -333,6 +364,90 @@ paths:
                         $ref: '#/components/schemas/AuthTokens'
         '400':
           $ref: '#/components/responses/BadRequest'
+
+  /api/auth/request-landlord:
+    post:
+      tags: [Auth]
+      summary: Yêu cầu nâng lên landlord — gửi OTP qua SMS
+      description: |
+        Gửi mã OTP 6 chữ số đến số điện thoại đã đăng ký.
+        OTP có hiệu lực trong **5 phút**.
+
+        Yêu cầu: tài khoản phải có số điện thoại và chưa là landlord.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OTP đã được gửi thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                success: true
+                message: OTP sent to your phone number
+                data: null
+        '400':
+          description: Đã là landlord hoặc chưa có số điện thoại
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          description: OTP vừa được gửi, vui lòng chờ trước khi gửi lại
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/verify-phone:
+    post:
+      tags: [Auth]
+      summary: Xác thực OTP — nâng role lên landlord
+      description: |
+        Nhập mã OTP nhận được qua SMS để xác thực số điện thoại.
+        Sau khi xác thực thành công:
+        - `isPhoneVerified` → `true`
+        - `role` → `landlord`
+        - Trả về cặp token mới (với role đã cập nhật)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [otp]
+              properties:
+                otp:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+                  pattern: '^\d{6}$'
+                  example: '482951'
+      responses:
+        '200':
+          description: Xác thực thành công — đã là landlord
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthTokens'
+        '400':
+          description: OTP không hợp lệ hoặc đã hết hạn
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /api/auth/login:
     post:
@@ -512,7 +627,15 @@ paths:
 
     put:
       tags: [Users]
-      summary: Cập nhật thông tin user
+      summary: Cập nhật thông tin cá nhân
+      description: |
+        Cập nhật hồ sơ cá nhân. Mỗi user chỉ được cập nhật chính mình; admin có thể cập nhật bất kỳ ai.
+
+        **Lưu ý `phone`:** Chỉ được set khi `isPhoneVerified = false`. Sau khi đã xác thực SĐT qua OTP, số điện thoại bị khoá và không thể thay đổi.
+
+        **Không thể thay đổi:** `email`, `password` (dùng endpoint riêng).
+
+        **Chỉ admin:** `role`, `isActive`.
       security:
         - bearerAuth: []
       parameters:
@@ -528,15 +651,36 @@ paths:
                   example: Tên mới
                 phone:
                   type: string
-                  example: '0909999999'
+                  description: Chỉ được set khi chưa verify (isPhoneVerified = false). Sau khi verify xong sẽ bị khoá.
+                  pattern: '^(0|\+84)[0-9]{9}$'
+                  example: '0912345678'
                 avatar:
                   type: string
                   format: uri
+                  example: 'https://res.cloudinary.com/smartrental/image/upload/avatar.jpg'
+                bio:
+                  type: string
+                  maxLength: 300
+                  example: Xin chào, tôi là chủ nhà tại Quận 7.
+                gender:
+                  type: string
+                  enum: [male, female, other]
+                  example: male
+                dateOfBirth:
+                  type: string
+                  format: date
+                  example: '1995-08-20'
+                address:
+                  type: string
+                  maxLength: 200
+                  example: 12 Nguyễn Văn Linh, Quận 7, TP.HCM
                 role:
                   type: string
                   enum: [tenant, landlord, admin]
+                  description: Chỉ admin mới được thay đổi
                 isActive:
                   type: boolean
+                  description: Chỉ admin mới được thay đổi
       responses:
         '200':
           description: Cập nhật thành công

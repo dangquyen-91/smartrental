@@ -1,5 +1,5 @@
-const { body, query } = require('express-validator');
-const validate = require('../middleware/validate.middleware');
+import { body, query } from 'express-validator';
+import validate from '../middleware/validate.middleware.js';
 
 const createPropertyValidation = validate([
   body('title')
@@ -19,41 +19,19 @@ const createPropertyValidation = validate([
     .trim()
     .notEmpty().withMessage('City is required'),
 
-  body('description')
-    .optional()
-    .trim(),
+  body('description').optional().trim(),
 
-  body('area')
-    .optional()
-    .isFloat({ gt: 0 }).withMessage('Area must be a positive number'),
+  body('area').optional().isFloat({ gt: 0 }).withMessage('Area must be a positive number'),
 
-  body('address.street')
-    .optional()
-    .trim(),
+  body('address.street').optional().trim(),
+  body('address.ward').optional().trim(),
+  body('address.district').optional().trim(),
 
-  body('address.ward')
-    .optional()
-    .trim(),
+  body('amenities').optional().isArray().withMessage('Amenities must be an array'),
+  body('amenities.*').optional().isString().withMessage('Each amenity must be a string'),
 
-  body('address.district')
-    .optional()
-    .trim(),
-
-  body('amenities')
-    .optional()
-    .isArray().withMessage('Amenities must be an array'),
-
-  body('amenities.*')
-    .optional()
-    .isString().withMessage('Each amenity must be a string'),
-
-  body('images')
-    .optional()
-    .isArray().withMessage('Images must be an array'),
-
-  body('images.*')
-    .optional()
-    .isURL().withMessage('Each image must be a valid URL'),
+  body('images').optional().isArray().withMessage('Images must be an array'),
+  body('images.*').optional().isURL().withMessage('Each image must be a valid URL'),
 ]);
 
 const updatePropertyValidation = validate([
@@ -71,46 +49,19 @@ const updatePropertyValidation = validate([
     .optional()
     .isIn(['available', 'rented', 'maintenance']).withMessage('Status must be available, rented, or maintenance'),
 
-  body('price')
-    .optional()
-    .isFloat({ gt: 0 }).withMessage('Price must be a positive number'),
+  body('price').optional().isFloat({ gt: 0 }).withMessage('Price must be a positive number'),
+  body('area').optional().isFloat({ gt: 0 }).withMessage('Area must be a positive number'),
 
-  body('area')
-    .optional()
-    .isFloat({ gt: 0 }).withMessage('Area must be a positive number'),
+  body('address.city').optional().trim().notEmpty().withMessage('City cannot be empty'),
+  body('address.street').optional().trim(),
+  body('address.ward').optional().trim(),
+  body('address.district').optional().trim(),
 
-  body('address.city')
-    .optional()
-    .trim()
-    .notEmpty().withMessage('City cannot be empty'),
+  body('amenities').optional().isArray().withMessage('Amenities must be an array'),
+  body('amenities.*').optional().isString().withMessage('Each amenity must be a string'),
 
-  body('address.street')
-    .optional()
-    .trim(),
-
-  body('address.ward')
-    .optional()
-    .trim(),
-
-  body('address.district')
-    .optional()
-    .trim(),
-
-  body('amenities')
-    .optional()
-    .isArray().withMessage('Amenities must be an array'),
-
-  body('amenities.*')
-    .optional()
-    .isString().withMessage('Each amenity must be a string'),
-
-  body('images')
-    .optional()
-    .isArray().withMessage('Images must be an array'),
-
-  body('images.*')
-    .optional()
-    .isURL().withMessage('Each image must be a valid URL'),
+  body('images').optional().isArray().withMessage('Images must be an array'),
+  body('images.*').optional().isURL().withMessage('Each image must be a valid URL'),
 ]);
 
 const getPropertiesValidation = validate([
@@ -123,4 +74,4 @@ const getPropertiesValidation = validate([
   query('sort').optional().isIn(['newest', 'price_asc', 'price_desc']).withMessage('sort must be newest, price_asc, or price_desc'),
 ]);
 
-module.exports = { getPropertiesValidation, createPropertyValidation, updatePropertyValidation };
+export { getPropertiesValidation, createPropertyValidation, updatePropertyValidation };

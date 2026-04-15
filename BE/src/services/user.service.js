@@ -1,5 +1,5 @@
-const User = require('../models/user.model');
-const AppError = require('../utils/app-error');
+import User from '../models/user.model.js';
+import AppError from '../utils/app-error.js';
 
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -53,7 +53,11 @@ const updateUser = async (id, data, requesterId, requesterRole) => {
   const user = await User.findById(id);
   if (!user) throw new AppError('User not found', 404);
 
-  const allowedFields = ['name', 'phone', 'avatar'];
+  if (data.phone !== undefined && user.isPhoneVerified) {
+    throw new AppError('Phone number cannot be changed after verification', 400);
+  }
+
+  const allowedFields = ['name', 'phone', 'avatar', 'bio', 'gender', 'dateOfBirth', 'address'];
   if (requesterRole === 'admin') allowedFields.push('role', 'isActive');
 
   allowedFields.forEach((field) => {
@@ -87,4 +91,4 @@ const changePassword = async (id, currentPassword, newPassword, requesterId) => 
   await user.save();
 };
 
-module.exports = { getUsers, getUserById, updateUser, deleteUser, changePassword };
+export { getUsers, getUserById, updateUser, deleteUser, changePassword };

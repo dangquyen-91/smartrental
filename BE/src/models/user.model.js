@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema(
   {
@@ -9,7 +9,14 @@ const userSchema = new mongoose.Schema(
     phone: { type: String },
     role: { type: String, enum: ['tenant', 'landlord', 'admin'], default: 'tenant' },
     avatar: { type: String },
+    bio: { type: String, maxlength: 300, default: null },
+    gender: { type: String, enum: ['male', 'female', 'other'], default: null },
+    dateOfBirth: { type: Date, default: null },
+    address: { type: String, default: null },
     isActive: { type: Boolean, default: true },
+    isPhoneVerified: { type: Boolean, default: false },
+    phoneOtp: { type: String, default: null },
+    phoneOtpExpiry: { type: Date, default: null },
     refreshToken: { type: String, default: null },
   },
   {
@@ -21,8 +28,13 @@ const userSchema = new mongoose.Schema(
         email: ret.email,
         phone: ret.phone,
         avatar: ret.avatar,
+        bio: ret.bio,
+        gender: ret.gender,
+        dateOfBirth: ret.dateOfBirth,
+        address: ret.address,
         role: ret.role,
         isActive: ret.isActive,
+        isPhoneVerified: ret.isPhoneVerified,
         createdAt: ret.createdAt,
         updatedAt: ret.updatedAt,
       }),
@@ -39,4 +51,4 @@ userSchema.methods.matchPassword = function (enteredPassword) {
   return bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema);
+export default mongoose.model('User', userSchema);

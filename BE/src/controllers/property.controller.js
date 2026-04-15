@@ -1,5 +1,5 @@
-const propertyService = require('../services/property.service');
-const R = require('../utils/response');
+import * as propertyService from '../services/property.service.js';
+import * as R from '../utils/response.js';
 
 const getProperties = async (req, res, next) => {
   try {
@@ -55,4 +55,4 @@ const deleteProperty = async (req, res, next) => {
   }
 };
 
-module.exports = { getProperties, getMyProperties, getPropertyById, createProperty, updateProperty, deleteProperty };
+export { getProperties, getMyProperties, getPropertyById, createProperty, updateProperty, deleteProperty };

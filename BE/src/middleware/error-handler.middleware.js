@@ -36,4 +36,4 @@ const errorHandler = (err, req, res, next) => {
   res.status(statusCode).json(payload);
 };
 
-module.exports = errorHandler;
+export default errorHandler;

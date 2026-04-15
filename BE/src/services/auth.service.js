@@ -1,6 +1,7 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/user.model');
-const AppError = require('../utils/app-error');
+import jwt from 'jsonwebtoken';
+import User from '../models/user.model.js';
+import AppError from '../utils/app-error.js';
+import { sendOtp } from './sms.service.js';
 
 const generateAccessToken = (user) =>
   jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '15m' });
@@ -8,11 +9,18 @@ const generateAccessToken = (user) =>
 const generateRefreshToken = (user) =>
   jwt.sign({ id: user._id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
-const register = async ({ name, email, password, phone, role }) => {
+const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+const register = async ({ name, email, password, phone }) => {
   const existing = await User.findOne({ email });
   if (existing) throw new AppError('Email already in use', 400);
 
-  const user = await User.create({ name, email, password, phone, role });
+  if (phone) {
+    const phoneExists = await User.findOne({ phone });
+    if (phoneExists) throw new AppError('Phone number already in use', 400);
+  }
+
+  const user = await User.create({ name, email, password, phone, role: 'tenant' });
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 
@@ -80,8 +88,59 @@ const logout = async (userId) => {
 
 const getMe = async (userId) => {
   const user = await User.findById(userId).select('-password -refreshToken');
-  if (!user || !user.isActive) throw new AppError('Account is deactivated', 403);
+  if (!user) throw new AppError('User not found', 404);
+  if (!user.isActive) throw new AppError('Account is deactivated', 403);
   return user;
 };
 
-module.exports = { register, login, refresh, logout, getMe };
+const requestLandlord = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new AppError('User not found', 404);
+  if (!user.isActive) throw new AppError('Account is deactivated', 403);
+  if (user.role === 'landlord') throw new AppError('Already a landlord', 400);
+  if (!user.phone) throw new AppError('Please update your phone number first', 400);
+
+  // Giới hạn: nếu OTP cũ vẫn còn hiệu lực (> 1 phút chưa hết) thì không gửi lại
+  if (user.phoneOtpExpiry && user.phoneOtpExpiry > new Date(Date.now() + 4 * 60 * 1000)) {
+    throw new AppError('OTP was just sent, please wait before requesting again', 429);
+  }
+
+  const otp = generateOtp();
+  user.phoneOtp = otp;
+  user.phoneOtpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 phút
+  await user.save();
+
+  await sendOtp(user.phone, otp);
+};
+
+const verifyPhone = async (userId, otp) => {
+  const user = await User.findById(userId).select('+phoneOtp +phoneOtpExpiry');
+  if (!user) throw new AppError('User not found', 404);
+  if (!user.isActive) throw new AppError('Account is deactivated', 403);
+  if (user.role === 'landlord') throw new AppError('Already a landlord', 400);
+
+  if (!user.phoneOtp || !user.phoneOtpExpiry) {
+    throw new AppError('No OTP requested, please request one first', 400);
+  }
+  if (new Date() > user.phoneOtpExpiry) {
+    throw new AppError('OTP has expired', 400);
+  }
+  if (user.phoneOtp !== otp) {
+    throw new AppError('Invalid OTP', 400);
+  }
+
+  user.role = 'landlord';
+  user.isPhoneVerified = true;
+  user.phoneOtp = null;
+  user.phoneOtpExpiry = null;
+
+  // Trả về access token mới với role đã được cập nhật
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  return { accessToken, refreshToken, user: user.toJSON() };
+};
+
+export { register, login, refresh, logout, getMe, requestLandlord, verifyPhone };

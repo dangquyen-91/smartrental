@@ -1,10 +1,11 @@
-const express = require('express');
+import express from 'express';
+import { getUsers, getUserById, updateUser, deleteUser, changePassword } from '../controllers/user.controller.js';
+import { protect, authorizeRoles } from '../middleware/auth.middleware.js';
+import validate from '../middleware/validate.middleware.js';
+import { mongoId } from '../validators/common.validator.js';
+import { getUsersValidation, updateUserValidation, changePasswordValidation } from '../validators/user.validator.js';
+
 const router = express.Router();
-const { getUsers, getUserById, updateUser, deleteUser, changePassword } = require('../controllers/user.controller');
-const { protect, authorizeRoles } = require('../middleware/auth.middleware');
-const validate = require('../middleware/validate.middleware');
-const { mongoId } = require('../validators/common.validator');
-const { getUsersValidation, updateUserValidation, changePasswordValidation } = require('../validators/user.validator');
 
 router.get('/', protect, authorizeRoles('admin'), getUsersValidation, getUsers);
 router.get('/:id', protect, validate([mongoId('id')]), getUserById);
@@ -12,4 +13,4 @@ router.put('/:id', protect, updateUserValidation, updateUser);
 router.put('/:id/password', protect, changePasswordValidation, changePassword);
 router.delete('/:id', protect, authorizeRoles('admin'), validate([mongoId('id')]), deleteUser);
 
-module.exports = router;
+export default router;

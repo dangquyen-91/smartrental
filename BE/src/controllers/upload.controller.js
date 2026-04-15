@@ -1,5 +1,5 @@
-const uploadService = require('../services/upload.service');
-const R = require('../utils/response');
+import * as uploadService from '../services/upload.service.js';
+import * as R from '../utils/response.js';
 
 const listImages = async (req, res, next) => {
   try {
@@ -30,4 +30,4 @@ const deleteImage = async (req, res, next) => {
   }
 };
 
-module.exports = { uploadImages, deleteImage, listImages };
+export { uploadImages, deleteImage, listImages };

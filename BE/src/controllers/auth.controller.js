@@ -1,5 +1,5 @@
-const authService = require('../services/auth.service');
-const R = require('../utils/response');
+import * as authService from '../services/auth.service.js';
+import * as R from '../utils/response.js';
 
 const register = async (req, res, next) => {
   try {
@@ -46,4 +46,22 @@ const getMe = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, refreshToken, logout, getMe };
+const requestLandlord = async (req, res, next) => {
+  try {
+    await authService.requestLandlord(req.user.id);
+    return R.success(res, null, 'OTP sent to your phone number');
+  } catch (err) {
+    next(err);
+  }
+};
+
+const verifyPhone = async (req, res, next) => {
+  try {
+    const data = await authService.verifyPhone(req.user.id, req.body.otp);
+    return R.success(res, data, 'Phone verified. You are now a landlord!');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export { register, login, refreshToken, logout, getMe, requestLandlord, verifyPhone };

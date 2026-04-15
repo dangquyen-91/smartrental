@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const propertySchema = new mongoose.Schema(
   {
@@ -53,4 +53,4 @@ propertySchema.index({ 'address.city': 1, status: 1 });
 propertySchema.index({ owner: 1 });
 propertySchema.index({ price: 1 });
 
-module.exports = mongoose.model('Property', propertySchema);
+export default mongoose.model('Property', propertySchema);

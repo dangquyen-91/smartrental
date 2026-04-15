@@ -1,5 +1,5 @@
-const { validationResult } = require('express-validator');
-const { badRequest } = require('../utils/response');
+import { validationResult } from 'express-validator';
+import { badRequest } from '../utils/response.js';
 
 const validate = (schemas) => [
   ...schemas,
@@ -12,4 +12,4 @@ const validate = (schemas) => [
   },
 ];
 
-module.exports = validate;
+export default validate;

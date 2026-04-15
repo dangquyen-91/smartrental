@@ -1,5 +1,5 @@
-const multer = require('multer');
-const AppError = require('../utils/app-error');
+import multer from 'multer';
+import AppError from '../utils/app-error.js';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -16,4 +16,4 @@ const upload = multer({
   },
 });
 
-module.exports = upload;
+export default upload;

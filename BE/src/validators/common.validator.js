@@ -1,6 +1,6 @@
-const { param } = require('express-validator');
+import { param } from 'express-validator';
 
 const mongoId = (field) =>
   param(field).isMongoId().withMessage(`${field} must be a valid ID`);
 
-module.exports = { mongoId };
+export { mongoId };
