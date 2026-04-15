@@ -12,7 +12,22 @@ const userSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     refreshToken: { type: String, default: null },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform: (_, ret) => ({
+        id: ret._id,
+        name: ret.name,
+        email: ret.email,
+        phone: ret.phone,
+        avatar: ret.avatar,
+        role: ret.role,
+        isActive: ret.isActive,
+        createdAt: ret.createdAt,
+        updatedAt: ret.updatedAt,
+      }),
+    },
+  }
 );
 
 userSchema.pre('save', async function () {

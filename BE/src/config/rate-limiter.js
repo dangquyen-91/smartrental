@@ -3,7 +3,6 @@ const rateLimit = require('express-rate-limit');
 let redisClient = null;
 let RedisStore = null;
 
-// Use Redis store if REDIS_URL is configured, otherwise fall back to memory store
 if (process.env.REDIS_URL) {
   try {
     const { default: Redis } = require('ioredis');
@@ -24,7 +23,7 @@ const makeStore = (prefix) => {
   if (redisClient && RedisStore) {
     return new RedisStore({ sendCommand: (...args) => redisClient.call(...args), prefix });
   }
-  return undefined; // express-rate-limit uses memory store by default
+  return undefined;
 };
 
 const createLimiter = ({ windowMs, max, prefix, message }) =>
