@@ -31,4 +31,4 @@ const paginated = (res, data, pagination) => {
   });
 };
 
-module.exports = { success, created, error, notFound, badRequest, unauthorized, forbidden, paginated };
+export { success, created, error, notFound, badRequest, unauthorized, forbidden, paginated };

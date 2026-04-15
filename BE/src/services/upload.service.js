@@ -1,5 +1,5 @@
-const cloudinary = require('../config/cloudinary');
-const AppError = require('../utils/app-error');
+import cloudinary from '../config/cloudinary.js';
+import AppError from '../utils/app-error.js';
 
 const FOLDER = 'smartrental/properties';
 
@@ -48,4 +48,4 @@ const listImages = async () => {
   }));
 };
 
-module.exports = { uploadImages, deleteImage, listImages };
+export { uploadImages, deleteImage, listImages };

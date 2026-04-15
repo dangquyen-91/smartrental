@@ -1,5 +1,5 @@
-const Property = require('../models/property.model');
-const AppError = require('../utils/app-error');
+import Property from '../models/property.model.js';
+import AppError from '../utils/app-error.js';
 
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -108,4 +108,4 @@ const deleteProperty = async (id, userId, userRole) => {
   await property.save();
 };
 
-module.exports = { getProperties, getMyProperties, getPropertyById, createProperty, updateProperty, deleteProperty };
+export { getProperties, getMyProperties, getPropertyById, createProperty, updateProperty, deleteProperty };

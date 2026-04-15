@@ -1,10 +1,11 @@
-const express = require('express');
+import express from 'express';
+import { getProperties, getMyProperties, getPropertyById, createProperty, updateProperty, deleteProperty } from '../controllers/property.controller.js';
+import { protect, authorizeRoles } from '../middleware/auth.middleware.js';
+import validate from '../middleware/validate.middleware.js';
+import { mongoId } from '../validators/common.validator.js';
+import { getPropertiesValidation, createPropertyValidation, updatePropertyValidation } from '../validators/property.validator.js';
+
 const router = express.Router();
-const { getProperties, getMyProperties, getPropertyById, createProperty, updateProperty, deleteProperty } = require('../controllers/property.controller');
-const { protect, authorizeRoles } = require('../middleware/auth.middleware');
-const validate = require('../middleware/validate.middleware');
-const { mongoId } = require('../validators/common.validator');
-const { getPropertiesValidation, createPropertyValidation, updatePropertyValidation } = require('../validators/property.validator');
 
 router.get('/', getPropertiesValidation, getProperties);
 router.get('/my', protect, authorizeRoles('landlord', 'admin'), getMyProperties);
@@ -14,4 +15,4 @@ router.post('/', protect, authorizeRoles('landlord', 'admin'), createPropertyVal
 router.put('/:id', protect, authorizeRoles('landlord', 'admin'), validate([mongoId('id')]), updatePropertyValidation, updateProperty);
 router.delete('/:id', protect, authorizeRoles('landlord', 'admin'), validate([mongoId('id')]), deleteProperty);
 
-module.exports = router;
+export default router;

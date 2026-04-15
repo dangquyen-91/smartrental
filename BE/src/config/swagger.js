@@ -1,11 +1,15 @@
-const path = require('path');
-const fs = require('fs');
-const yaml = require('js-yaml');
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { readFileSync } from 'fs';
+import yaml from 'js-yaml';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const swaggerSpec = yaml.load(
-  fs.readFileSync(path.join(__dirname, '../../swagger.yaml'), 'utf8')
+  readFileSync(join(__dirname, '../../swagger.yaml'), 'utf8')
 );
 
 console.log('Swagger document loaded successfully');
 
-module.exports = swaggerSpec;
+export default swaggerSpec;
