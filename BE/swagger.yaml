@@ -22,6 +22,8 @@ tags:
     description: Quản lý người dùng
   - name: Properties
     description: Quản lý bất động sản
+  - name: Bookings
+    description: Quản lý đặt phòng / thuê nhà
   - name: Upload
     description: Upload ảnh lên Cloudinary
 
@@ -57,6 +59,32 @@ components:
         city:
           type: string
           example: Hồ Chí Minh
+        lat:
+          type: number
+          nullable: true
+          example: 10.7336
+        lng:
+          type: number
+          nullable: true
+          example: 106.7026
+        fullAddress:
+          type: string
+          nullable: true
+          example: 12 Nguyễn Văn Linh, Phường Tân Phú, Quận 7, Hồ Chí Minh
+
+    PropertyImage:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          format: uri
+          example: https://res.cloudinary.com/smartrental/image/upload/sample.jpg
+        isPrimary:
+          type: boolean
+          default: false
+          example: true
 
     Pagination:
       type: object
@@ -112,7 +140,6 @@ components:
         address:
           type: string
           nullable: true
-          maxLength: 200
           example: 12 Nguyễn Văn Linh, Quận 7, TP.HCM
         role:
           type: string
@@ -178,9 +205,26 @@ components:
         price:
           type: number
           example: 3500000
+          description: Giá thuê hàng tháng (VNĐ)
+        pricePerM2:
+          type: number
+          nullable: true
+          example: 175000
+          description: Tự động tính = price / area
         area:
           type: number
+          nullable: true
           example: 20
+        bedrooms:
+          type: integer
+          nullable: true
+          minimum: 0
+          example: 1
+        bathrooms:
+          type: integer
+          nullable: true
+          minimum: 0
+          example: 1
         address:
           $ref: '#/components/schemas/Address'
         amenities:
@@ -191,10 +235,7 @@ components:
         images:
           type: array
           items:
-            type: string
-            format: uri
-          example:
-            - https://res.cloudinary.com/demo/image/upload/sample.jpg
+            $ref: '#/components/schemas/PropertyImage'
         owner:
           type: object
           properties:
@@ -206,6 +247,142 @@ components:
               type: string
             avatar:
               type: string
+        contact:
+          type: object
+          nullable: true
+          properties:
+            name:
+              type: string
+              nullable: true
+              example: Anh Nam
+            phone:
+              type: string
+              nullable: true
+              example: '0909123456'
+        views:
+          type: integer
+          example: 128
+        isFeatured:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Booking:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/MongoId'
+        property:
+          description: Thông tin bất động sản (populated)
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            title:
+              type: string
+              example: Phòng trọ cao cấp Quận 7
+            address:
+              $ref: '#/components/schemas/Address'
+            price:
+              type: number
+              example: 3500000
+            type:
+              type: string
+              enum: [room, apartment, house, studio]
+            images:
+              type: array
+              items:
+                $ref: '#/components/schemas/PropertyImage'
+        tenant:
+          description: Người thuê (populated)
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            name:
+              type: string
+              example: Trần Thị Mai
+            email:
+              type: string
+              example: mai@example.com
+            phone:
+              type: string
+              example: '0912345678'
+            avatar:
+              type: string
+              nullable: true
+        landlord:
+          description: Chủ nhà (populated)
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            name:
+              type: string
+              example: Nguyễn Văn A
+            email:
+              type: string
+              example: a@example.com
+            phone:
+              type: string
+              example: '0901234567'
+            avatar:
+              type: string
+              nullable: true
+        startDate:
+          type: string
+          format: date
+          example: '2026-05-01'
+        endDate:
+          type: string
+          format: date
+          example: '2026-08-01'
+        duration:
+          type: integer
+          minimum: 1
+          maximum: 24
+          example: 3
+          description: Số tháng thuê
+        totalPrice:
+          type: number
+          example: 10500000
+          description: Tổng tiền = price × duration
+        status:
+          type: string
+          enum: [pending, confirmed, rejected, cancelled, active, completed]
+          example: pending
+          description: |
+            - **pending**: Chờ chủ nhà xác nhận
+            - **confirmed**: Chủ nhà đã chấp nhận, property bị lock
+            - **rejected**: Chủ nhà từ chối (hoặc auto-reject khi booking khác được confirm)
+            - **cancelled**: Huỷ bởi tenant / landlord / admin
+            - **active**: Tenant đã dọn vào (check-in)
+            - **completed**: Kết thúc hợp đồng, property trở lại available
+        note:
+          type: string
+          nullable: true
+          maxLength: 500
+          example: Tôi muốn xem phòng trước khi chuyển vào.
+        rejectionReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          example: Chủ nhà đã chọn tenant khác.
+        cancelledBy:
+          type: string
+          nullable: true
+          enum: [tenant, landlord, admin]
+          example: tenant
+        cancelReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          example: Tôi đã tìm được chỗ khác.
         createdAt:
           type: string
           format: date-time
@@ -284,6 +461,13 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
 
+    Conflict:
+      description: Xung đột dữ liệu
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
   parameters:
     IdParam:
       name: id
@@ -312,20 +496,29 @@ components:
         maximum: 50
         default: 10
 
+    StatusBookingParam:
+      name: status
+      in: query
+      description: Lọc theo trạng thái booking
+      schema:
+        type: string
+        enum: [pending, confirmed, rejected, cancelled, active, completed]
+
 paths:
+
+  # ─── AUTH ────────────────────────────────────────────────────────────────────
 
   /api/auth/register:
     post:
       tags: [Auth]
       summary: Đăng ký tài khoản mới
       description: |
-        Tạo tài khoản với role **tenant** (mặc định). Số điện thoại là tuỳ chọn khi đăng ký.
+        Tạo tài khoản với role **tenant** (mặc định).
 
         Muốn trở thành landlord để đăng tin cho thuê:
-        1. Đăng ký (có thể không cần phone)
-        2. Đăng nhập
-        3. Gọi `POST /api/auth/request-landlord` → yêu cầu phải có phone trong tài khoản, nhận OTP qua SMS
-        4. Gọi `POST /api/auth/verify-phone` với OTP → role tự động nâng lên `landlord`
+        1. Đăng ký
+        2. Gọi `POST /api/auth/request-landlord` → nhận OTP qua SMS
+        3. Gọi `POST /api/auth/verify-phone` với OTP → role nâng lên `landlord`
       requestBody:
         required: true
         content:
@@ -347,12 +540,11 @@ paths:
                   example: Matkhau@123
                 phone:
                   type: string
-                  description: Số điện thoại Việt Nam (tuỳ chọn), định dạng 0xxxxxxxxx hoặc +84xxxxxxxxx. Bắt buộc nếu muốn trở thành landlord.
                   pattern: '^(0|\+84)[0-9]{9}$'
                   example: '0912345678'
       responses:
         '201':
-          description: Đăng ký thành công — role mặc định là tenant
+          description: Đăng ký thành công
           content:
             application/json:
               schema:
@@ -364,90 +556,6 @@ paths:
                         $ref: '#/components/schemas/AuthTokens'
         '400':
           $ref: '#/components/responses/BadRequest'
-
-  /api/auth/request-landlord:
-    post:
-      tags: [Auth]
-      summary: Yêu cầu nâng lên landlord — gửi OTP qua SMS
-      description: |
-        Gửi mã OTP 6 chữ số đến số điện thoại đã đăng ký.
-        OTP có hiệu lực trong **5 phút**.
-
-        Yêu cầu: tài khoản phải có số điện thoại và chưa là landlord.
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: OTP đã được gửi thành công
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-              example:
-                success: true
-                message: OTP sent to your phone number
-                data: null
-        '400':
-          description: Đã là landlord hoặc chưa có số điện thoại
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '429':
-          description: OTP vừa được gửi, vui lòng chờ trước khi gửi lại
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/auth/verify-phone:
-    post:
-      tags: [Auth]
-      summary: Xác thực OTP — nâng role lên landlord
-      description: |
-        Nhập mã OTP nhận được qua SMS để xác thực số điện thoại.
-        Sau khi xác thực thành công:
-        - `isPhoneVerified` → `true`
-        - `role` → `landlord`
-        - Trả về cặp token mới (với role đã cập nhật)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [otp]
-              properties:
-                otp:
-                  type: string
-                  minLength: 6
-                  maxLength: 6
-                  pattern: '^\d{6}$'
-                  example: '482951'
-      responses:
-        '200':
-          description: Xác thực thành công — đã là landlord
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/AuthTokens'
-        '400':
-          description: OTP không hợp lệ hoặc đã hết hạn
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
 
   /api/auth/login:
     post:
@@ -488,7 +596,7 @@ paths:
   /api/auth/refresh-token:
     post:
       tags: [Auth]
-      summary: Làm mới access token bằng refresh token
+      summary: Làm mới access token
       requestBody:
         required: true
         content:
@@ -539,7 +647,7 @@ paths:
   /api/auth/me:
     get:
       tags: [Auth]
-      summary: Lấy thông tin tài khoản đang đăng nhập
+      summary: Thông tin tài khoản đang đăng nhập
       security:
         - bearerAuth: []
       responses:
@@ -560,10 +668,82 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /api/auth/request-landlord:
+    post:
+      tags: [Auth]
+      summary: Yêu cầu nâng lên landlord — gửi OTP qua SMS
+      description: OTP có hiệu lực trong **5 phút**.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OTP đã được gửi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Đã là landlord hoặc chưa có số điện thoại
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          description: Gửi quá nhanh, vui lòng chờ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/verify-phone:
+    post:
+      tags: [Auth]
+      summary: Xác thực OTP — nâng role lên landlord
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [otp]
+              properties:
+                otp:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+                  pattern: '^\d{6}$'
+                  example: '482951'
+      responses:
+        '200':
+          description: Xác thực thành công — đã là landlord
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthTokens'
+        '400':
+          description: OTP không hợp lệ hoặc đã hết hạn
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── USERS ───────────────────────────────────────────────────────────────────
+
   /api/users:
     get:
       tags: [Users]
-      summary: Lấy danh sách users (admin only)
+      summary: Danh sách users (admin only)
       security:
         - bearerAuth: []
       parameters:
@@ -600,7 +780,7 @@ paths:
   /api/users/{id}:
     get:
       tags: [Users]
-      summary: Lấy thông tin user theo ID
+      summary: Thông tin user theo ID
       security:
         - bearerAuth: []
       parameters:
@@ -627,11 +807,9 @@ paths:
 
     put:
       tags: [Users]
-      summary: Cập nhật thông tin cá nhân
+      summary: Cập nhật hồ sơ cá nhân
       description: |
-        Cập nhật hồ sơ cá nhân. Mỗi user chỉ được cập nhật chính mình; admin có thể cập nhật bất kỳ ai.
-
-        **Lưu ý `phone`:** Chỉ được set khi `isPhoneVerified = false`. Sau khi đã xác thực SĐT qua OTP, số điện thoại bị khoá và không thể thay đổi.
+        Mỗi user chỉ cập nhật được chính mình; admin có thể cập nhật bất kỳ ai.
 
         **Không thể thay đổi:** `email`, `password` (dùng endpoint riêng).
 
@@ -648,39 +826,30 @@ paths:
               properties:
                 name:
                   type: string
-                  example: Tên mới
                 phone:
                   type: string
-                  description: Chỉ được set khi chưa verify (isPhoneVerified = false). Sau khi verify xong sẽ bị khoá.
                   pattern: '^(0|\+84)[0-9]{9}$'
-                  example: '0912345678'
                 avatar:
                   type: string
                   format: uri
-                  example: 'https://res.cloudinary.com/smartrental/image/upload/avatar.jpg'
                 bio:
                   type: string
                   maxLength: 300
-                  example: Xin chào, tôi là chủ nhà tại Quận 7.
                 gender:
                   type: string
                   enum: [male, female, other]
-                  example: male
                 dateOfBirth:
                   type: string
                   format: date
-                  example: '1995-08-20'
                 address:
                   type: string
-                  maxLength: 200
-                  example: 12 Nguyễn Văn Linh, Quận 7, TP.HCM
                 role:
                   type: string
                   enum: [tenant, landlord, admin]
-                  description: Chỉ admin mới được thay đổi
+                  description: Chỉ admin
                 isActive:
                   type: boolean
-                  description: Chỉ admin mới được thay đổi
+                  description: Chỉ admin
       responses:
         '200':
           description: Cập nhật thành công
@@ -703,14 +872,14 @@ paths:
 
     delete:
       tags: [Users]
-      summary: Xóa user (admin only)
+      summary: Xoá user — soft delete (admin only)
       security:
         - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
         '200':
-          description: Xóa thành công
+          description: Xoá thành công
           content:
             application/json:
               schema:
@@ -757,10 +926,13 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  # ─── PROPERTIES ──────────────────────────────────────────────────────────────
+
   /api/properties:
     get:
       tags: [Properties]
       summary: Tìm kiếm & lọc bất động sản (public)
+      description: Trả về tất cả bất động sản đang hoạt động. Tin nổi bật (`isFeatured`) luôn ở đầu danh sách.
       parameters:
         - $ref: '#/components/parameters/PageParam'
         - $ref: '#/components/parameters/LimitParam'
@@ -794,6 +966,18 @@ paths:
           schema:
             type: number
           example: 5000000
+        - name: bedrooms
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+          example: 1
+        - name: bathrooms
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+          example: 1
         - name: search
           in: query
           description: Tìm theo tiêu đề
@@ -823,6 +1007,7 @@ paths:
     post:
       tags: [Properties]
       summary: Tạo bất động sản mới (landlord / admin)
+      description: Bài đăng hiển thị ngay lập tức sau khi tạo.
       security:
         - bearerAuth: []
       requestBody:
@@ -850,6 +1035,14 @@ paths:
                 area:
                   type: number
                   example: 20
+                bedrooms:
+                  type: integer
+                  minimum: 0
+                  example: 1
+                bathrooms:
+                  type: integer
+                  minimum: 0
+                  example: 1
                 address:
                   $ref: '#/components/schemas/Address'
                 amenities:
@@ -860,13 +1053,19 @@ paths:
                 images:
                   type: array
                   items:
-                    type: string
-                    format: uri
-                  example:
-                    - https://res.cloudinary.com/demo/image/upload/sample.jpg
+                    $ref: '#/components/schemas/PropertyImage'
+                contact:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: Anh Nam
+                    phone:
+                      type: string
+                      example: '0909123456'
       responses:
         '201':
-          description: Tạo thành công
+          description: Tạo thành công — hiển thị ngay
           content:
             application/json:
               schema:
@@ -886,10 +1085,10 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
-  /api/properties/my:
+  /api/properties/my/listings:
     get:
       tags: [Properties]
-      summary: Lấy bất động sản của tôi (landlord / admin)
+      summary: Bất động sản của tôi (landlord / admin)
       security:
         - bearerAuth: []
       parameters:
@@ -922,7 +1121,8 @@ paths:
   /api/properties/{id}:
     get:
       tags: [Properties]
-      summary: Lấy chi tiết bất động sản (public)
+      summary: Chi tiết bất động sản (public)
+      description: Tăng `views` mỗi lần gọi.
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -946,6 +1146,8 @@ paths:
     put:
       tags: [Properties]
       summary: Cập nhật bất động sản (landlord / admin)
+      description: |
+        Admin có thêm quyền toggle `isFeatured`.
       security:
         - bearerAuth: []
       parameters:
@@ -972,6 +1174,12 @@ paths:
                   type: number
                 area:
                   type: number
+                bedrooms:
+                  type: integer
+                  minimum: 0
+                bathrooms:
+                  type: integer
+                  minimum: 0
                 address:
                   $ref: '#/components/schemas/Address'
                 amenities:
@@ -981,8 +1189,17 @@ paths:
                 images:
                   type: array
                   items:
-                    type: string
-                    format: uri
+                    $ref: '#/components/schemas/PropertyImage'
+                contact:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    phone:
+                      type: string
+                isFeatured:
+                  type: boolean
+                  description: Chỉ admin
       responses:
         '200':
           description: Cập nhật thành công
@@ -1009,14 +1226,14 @@ paths:
 
     delete:
       tags: [Properties]
-      summary: Xóa bất động sản — soft delete (landlord / admin)
+      summary: Xoá bất động sản — soft delete (landlord / admin)
       security:
         - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
         '200':
-          description: Xóa thành công
+          description: Xoá thành công
           content:
             application/json:
               schema:
@@ -1028,10 +1245,395 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  # ─── BOOKINGS ────────────────────────────────────────────────────────────────
+
+  /api/bookings:
+    get:
+      tags: [Bookings]
+      summary: Tất cả bookings (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/StatusBookingParam'
+      responses:
+        '200':
+          description: Danh sách tất cả bookings
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Booking'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags: [Bookings]
+      summary: Tạo yêu cầu đặt phòng (tenant only)
+      description: |
+        Nhiều tenant có thể gửi request cùng lúc cho cùng 1 property.
+
+        Hệ thống tự block nếu property đã có booking `confirmed` hoặc `active`.
+
+        `totalPrice` và `endDate` được tính tự động:
+        - `totalPrice = property.price × duration`
+        - `endDate = startDate + duration tháng`
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [property, startDate, duration]
+              properties:
+                property:
+                  $ref: '#/components/schemas/MongoId'
+                startDate:
+                  type: string
+                  format: date
+                  example: '2026-05-01'
+                  description: Phải từ hôm nay trở đi
+                duration:
+                  type: integer
+                  minimum: 1
+                  maximum: 24
+                  example: 3
+                  description: Số tháng thuê
+                note:
+                  type: string
+                  maxLength: 500
+                  example: Tôi muốn xem phòng trước khi chuyển vào.
+      responses:
+        '201':
+          description: Gửi yêu cầu thành công — chờ landlord xác nhận
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          booking:
+                            $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/bookings/my:
+    get:
+      tags: [Bookings]
+      summary: Bookings của tôi với tư cách tenant
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/StatusBookingParam'
+      responses:
+        '200':
+          description: Danh sách bookings của tenant
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Booking'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/bookings/landlord:
+    get:
+      tags: [Bookings]
+      summary: Bookings trên property của tôi (landlord)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/StatusBookingParam'
+      responses:
+        '200':
+          description: Danh sách bookings cho landlord
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Booking'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/bookings/{id}:
+    get:
+      tags: [Bookings]
+      summary: Chi tiết booking
+      description: Chỉ tenant, landlord liên quan hoặc admin mới xem được.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Chi tiết booking
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          booking:
+                            $ref: '#/components/schemas/Booking'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/bookings/{id}/confirm:
+    put:
+      tags: [Bookings]
+      summary: Xác nhận booking (landlord)
+      description: |
+        Chuyển booking từ `pending` → `confirmed`.
+
+        **Tự động:**
+        - Các booking `pending` khác trên cùng property → `rejected`
+        - Property `status` → `rented`
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Xác nhận thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          booking:
+                            $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/bookings/{id}/reject:
+    put:
+      tags: [Bookings]
+      summary: Từ chối booking (landlord)
+      description: Chuyển booking từ `pending` → `rejected`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+                  example: Tôi đã chọn tenant khác phù hợp hơn.
+      responses:
+        '200':
+          description: Từ chối thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          booking:
+                            $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/bookings/{id}/cancel:
+    put:
+      tags: [Bookings]
+      summary: Huỷ booking (tenant / landlord / admin)
+      description: |
+        - **Tenant / Landlord**: huỷ khi `pending` hoặc `confirmed`
+        - **Admin**: huỷ thêm khi `active`
+
+        Nếu huỷ từ trạng thái `confirmed` hoặc `active` → property revert về `available`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+                  example: Tôi đã tìm được chỗ khác.
+      responses:
+        '200':
+          description: Huỷ thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          booking:
+                            $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/bookings/{id}/activate:
+    put:
+      tags: [Bookings]
+      summary: Check-in — tenant đã dọn vào (landlord / admin)
+      description: Chuyển booking từ `confirmed` → `active`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Kích hoạt thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          booking:
+                            $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/bookings/{id}/complete:
+    put:
+      tags: [Bookings]
+      summary: Kết thúc hợp đồng (landlord / admin)
+      description: |
+        Chuyển booking từ `active` → `completed`.
+
+        Property revert về `available`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Hoàn thành thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          booking:
+                            $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─── UPLOAD ──────────────────────────────────────────────────────────────────
+
   /api/upload:
     get:
       tags: [Upload]
-      summary: Lấy danh sách ảnh trên Cloudinary (admin only)
+      summary: Danh sách ảnh trên Cloudinary (admin only)
       security:
         - bearerAuth: []
       responses:
@@ -1078,7 +1680,7 @@ paths:
       description: |
         Upload tối đa **10 ảnh** cùng lúc (JPEG / PNG / WebP), mỗi ảnh ≤ 5 MB.
 
-        Trả về mảng URL — dùng các URL này để điền vào `images[]` khi tạo / cập nhật property.
+        Dùng URL trả về để điền vào `images[].url` khi tạo / cập nhật property.
       security:
         - bearerAuth: []
       requestBody:
@@ -1094,7 +1696,7 @@ paths:
                   items:
                     type: string
                     format: binary
-                  description: Tối đa 10 file ảnh (JPEG / PNG / WebP)
+                  description: Tối đa 10 file (JPEG / PNG / WebP)
       responses:
         '201':
           description: Upload thành công
@@ -1132,7 +1734,7 @@ paths:
 
     delete:
       tags: [Upload]
-      summary: Xóa ảnh khỏi Cloudinary (landlord / admin)
+      summary: Xoá ảnh khỏi Cloudinary (landlord / admin)
       security:
         - bearerAuth: []
       requestBody:
@@ -1148,7 +1750,7 @@ paths:
                   example: smartrental/properties/abc123
       responses:
         '200':
-          description: Xóa thành công
+          description: Xoá thành công
           content:
             application/json:
               schema:

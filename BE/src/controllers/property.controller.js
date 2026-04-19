@@ -39,7 +39,9 @@ const createProperty = async (req, res, next) => {
 
 const updateProperty = async (req, res, next) => {
   try {
-    const property = await propertyService.updateProperty(req.params.id, req.body, req.user.id, req.user.role);
+    const property = await propertyService.updateProperty(
+      req.params.id, req.body, req.user.id, req.user.role,
+    );
     return R.success(res, { property }, 'Property updated successfully');
   } catch (err) {
     next(err);
@@ -55,4 +57,11 @@ const deleteProperty = async (req, res, next) => {
   }
 };
 
-export { getProperties, getMyProperties, getPropertyById, createProperty, updateProperty, deleteProperty };
+export {
+  getProperties,
+  getMyProperties,
+  getPropertyById,
+  createProperty,
+  updateProperty,
+  deleteProperty,
+};

@@ -3,9 +3,13 @@ import AppError from '../utils/app-error.js';
 
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+// ─── Public listing ──────────────────────────────────────────────────────────
+
 const getProperties = async ({
   city, district, type, status,
-  minPrice, maxPrice, search,
+  minPrice, maxPrice,
+  bedrooms, bathrooms,
+  search,
   sort = 'newest', page = 1, limit = 10,
 }) => {
   const filter = { isActive: true };
@@ -14,6 +18,8 @@ const getProperties = async ({
   if (district) filter['address.district'] = { $regex: escapeRegex(district), $options: 'i' };
   if (type) filter.type = type;
   if (status) filter.status = status;
+  if (bedrooms !== undefined) filter.bedrooms = parseInt(bedrooms);
+  if (bathrooms !== undefined) filter.bathrooms = parseInt(bathrooms);
 
   if (minPrice || maxPrice) {
     filter.price = {};
@@ -36,7 +42,7 @@ const getProperties = async ({
   const [properties, total] = await Promise.all([
     Property.find(filter)
       .populate('owner', 'name phone avatar')
-      .sort(sortMap[sort] || sortMap.newest)
+      .sort({ isFeatured: -1, ...(sortMap[sort] || sortMap.newest) })
       .skip(skip)
       .limit(limitNum),
     Property.countDocuments(filter),
@@ -47,6 +53,8 @@ const getProperties = async ({
     pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
   };
 };
+
+// ─── Owner's properties ──────────────────────────────────────────────────────
 
 const getMyProperties = async (ownerId, { status, page = 1, limit = 10 }) => {
   const filter = { owner: ownerId, isActive: true };
@@ -67,17 +75,36 @@ const getMyProperties = async (ownerId, { status, page = 1, limit = 10 }) => {
   };
 };
 
+// ─── Get by ID (increment views) ────────────────────────────────────────────
+
 const getPropertyById = async (id) => {
   const property = await Property.findOne({ _id: id, isActive: true })
     .populate('owner', 'name phone avatar');
   if (!property) throw new AppError('Property not found', 404);
+
+  await Property.findByIdAndUpdate(id, { $inc: { views: 1 } });
+
   return property;
 };
 
+// ─── Create (goes live immediately) ─────────────────────────────────────────
+
 const createProperty = async (data, ownerId) => {
-  const { title, description, type, price, area, address, amenities, images } = data;
-  return Property.create({ title, description, type, price, area, address, amenities, images, owner: ownerId });
+  const {
+    title, description, type, price, area,
+    bedrooms, bathrooms,
+    address, amenities, images, contact,
+  } = data;
+
+  return Property.create({
+    title, description, type, price, area,
+    bedrooms, bathrooms,
+    address, amenities, images, contact,
+    owner: ownerId,
+  });
 };
+
+// ─── Update ──────────────────────────────────────────────────────────────────
 
 const updateProperty = async (id, data, userId, userRole) => {
   const property = await Property.findOne({ _id: id, isActive: true });
@@ -87,14 +114,23 @@ const updateProperty = async (id, data, userId, userRole) => {
     throw new AppError('You can only update your own properties', 403);
   }
 
-  const allowedFields = ['title', 'description', 'type', 'status', 'price', 'area', 'address', 'amenities', 'images'];
+  const allowedFields = [
+    'title', 'description', 'type', 'status', 'price', 'area',
+    'bedrooms', 'bathrooms', 'address', 'amenities', 'images', 'contact',
+  ];
   allowedFields.forEach((field) => {
     if (data[field] !== undefined) property[field] = data[field];
   });
 
+  if (userRole === 'admin' && data.isFeatured !== undefined) {
+    property.isFeatured = data.isFeatured;
+  }
+
   await property.save();
   return property;
 };
+
+// ─── Delete (soft) — admin can reactively hide any listing ──────────────────
 
 const deleteProperty = async (id, userId, userRole) => {
   const property = await Property.findOne({ _id: id, isActive: true });
@@ -108,4 +144,11 @@ const deleteProperty = async (id, userId, userRole) => {
   await property.save();
 };
 
-export { getProperties, getMyProperties, getPropertyById, createProperty, updateProperty, deleteProperty };
+export {
+  getProperties,
+  getMyProperties,
+  getPropertyById,
+  createProperty,
+  updateProperty,
+  deleteProperty,
+};

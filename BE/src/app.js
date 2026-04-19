@@ -12,6 +12,7 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import propertyRoutes from './routes/property.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
+import bookingRoutes from './routes/booking.routes.js';
 import errorHandler from './middleware/error-handler.middleware.js';
 
 connectDB();
@@ -40,6 +41,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 app.use((_req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
 app.use(errorHandler);
