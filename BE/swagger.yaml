@@ -26,6 +26,8 @@ tags:
     description: Quản lý đặt phòng / thuê nhà
   - name: Upload
     description: Upload ảnh lên Cloudinary
+  - name: Contracts
+    description: Hợp đồng điện tử — tạo, ký, quản lý
 
 components:
 
@@ -390,6 +392,141 @@ components:
           type: string
           format: date-time
 
+    ContractSignature:
+      type: object
+      properties:
+        signed:
+          type: boolean
+          example: true
+        signedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-05-01T08:30:00.000Z'
+
+    Contract:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/MongoId'
+        booking:
+          description: Thông tin booking (populated)
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            startDate:
+              type: string
+              format: date
+            endDate:
+              type: string
+              format: date
+            duration:
+              type: integer
+            totalPrice:
+              type: number
+            status:
+              type: string
+              enum: [pending, confirmed, rejected, cancelled, active, completed]
+            note:
+              type: string
+              nullable: true
+        tenant:
+          description: Người thuê (populated)
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            name:
+              type: string
+              example: Trần Thị Mai
+            email:
+              type: string
+            phone:
+              type: string
+              nullable: true
+            address:
+              type: string
+              nullable: true
+            avatar:
+              type: string
+              nullable: true
+        landlord:
+          description: Chủ nhà (populated)
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            name:
+              type: string
+              example: Nguyễn Văn A
+            email:
+              type: string
+            phone:
+              type: string
+              nullable: true
+            address:
+              type: string
+              nullable: true
+            avatar:
+              type: string
+              nullable: true
+        property:
+          description: Bất động sản (populated)
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            title:
+              type: string
+            type:
+              type: string
+              enum: [room, apartment, house, studio]
+            address:
+              $ref: '#/components/schemas/Address'
+            area:
+              type: number
+              nullable: true
+            bedrooms:
+              type: integer
+              nullable: true
+            bathrooms:
+              type: integer
+              nullable: true
+            price:
+              type: number
+        terms:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: Điều khoản bổ sung do landlord thêm vào
+          example: Không nuôi thú cưng. Đóng tiền trước ngày 5 hàng tháng.
+        pdfUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: URL PDF trên Cloudinary (cập nhật sau mỗi lần ký)
+          example: https://res.cloudinary.com/smartrental/raw/upload/contracts/contract_abc123.pdf
+        status:
+          type: string
+          enum: [draft, awaiting_signatures, signed, cancelled]
+          example: awaiting_signatures
+          description: |
+            - **draft**: Nháp (chưa dùng, dự phòng)
+            - **awaiting_signatures**: Chờ cả 2 bên ký
+            - **signed**: Đã ký đầy đủ
+            - **cancelled**: Đã huỷ (admin)
+        signedByTenant:
+          $ref: '#/components/schemas/ContractSignature'
+        signedByLandlord:
+          $ref: '#/components/schemas/ContractSignature'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
     SuccessResponse:
       type: object
       properties:
@@ -503,6 +640,22 @@ components:
       schema:
         type: string
         enum: [pending, confirmed, rejected, cancelled, active, completed]
+
+    StatusContractParam:
+      name: status
+      in: query
+      description: Lọc theo trạng thái hợp đồng
+      schema:
+        type: string
+        enum: [draft, awaiting_signatures, signed, cancelled]
+
+    BookingIdParam:
+      name: bookingId
+      in: path
+      required: true
+      description: MongoDB ObjectId của booking
+      schema:
+        $ref: '#/components/schemas/MongoId'
 
 paths:
 
@@ -1761,3 +1914,275 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+
+  # ─── CONTRACTS ───────────────────────────────────────────────────────────────
+
+  /api/contracts/generate:
+    post:
+      tags: [Contracts]
+      summary: Tạo hợp đồng từ booking đã confirmed (landlord)
+      description: |
+        Chỉ landlord sở hữu booking mới được tạo hợp đồng.
+
+        **Điều kiện:** Booking phải ở trạng thái `confirmed`.
+
+        Hệ thống tự động:
+        - Điền thông tin tenant, landlord, property, các điều khoản thuê
+        - Generate PDF và upload lên Cloudinary
+        - Trả về `pdfUrl` để xem / download bản nháp
+
+        Sau khi tạo, cả 2 bên dùng `PATCH /api/contracts/:id/sign` để ký.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId]
+              properties:
+                bookingId:
+                  $ref: '#/components/schemas/MongoId'
+                terms:
+                  type: string
+                  maxLength: 2000
+                  nullable: true
+                  example: Không nuôi thú cưng. Đóng tiền trước ngày 5 hàng tháng.
+                  description: Điều khoản bổ sung (tuỳ chọn)
+      responses:
+        '201':
+          description: Tạo hợp đồng thành công — PDF đã được upload
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          contract:
+                            $ref: '#/components/schemas/Contract'
+        '400':
+          description: Booking chưa ở trạng thái confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Hợp đồng đã tồn tại cho booking này
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/contracts/my:
+    get:
+      tags: [Contracts]
+      summary: Hợp đồng của tôi (tenant / landlord)
+      description: |
+        - **tenant**: trả về các hợp đồng mà mình là bên thuê
+        - **landlord**: trả về các hợp đồng mà mình là chủ nhà
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/StatusContractParam'
+      responses:
+        '200':
+          description: Danh sách hợp đồng
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Contract'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/contracts:
+    get:
+      tags: [Contracts]
+      summary: Tất cả hợp đồng (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/StatusContractParam'
+      responses:
+        '200':
+          description: Danh sách tất cả hợp đồng
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Contract'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/contracts/booking/{bookingId}:
+    get:
+      tags: [Contracts]
+      summary: Hợp đồng theo booking ID
+      description: Tenant, landlord liên quan hoặc admin mới xem được.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BookingIdParam'
+      responses:
+        '200':
+          description: Chi tiết hợp đồng
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          contract:
+                            $ref: '#/components/schemas/Contract'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/contracts/{id}:
+    get:
+      tags: [Contracts]
+      summary: Chi tiết hợp đồng theo ID
+      description: Tenant, landlord liên quan hoặc admin mới xem được.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Chi tiết hợp đồng
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          contract:
+                            $ref: '#/components/schemas/Contract'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/contracts/{id}/sign:
+    patch:
+      tags: [Contracts]
+      summary: Ký hợp đồng điện tử (tenant / landlord)
+      description: |
+        Mỗi bên chỉ ký được **một lần**.
+
+        Hệ thống tự động nhận biết bạn là tenant hay landlord dựa vào JWT.
+
+        Khi **cả 2 bên đã ký**:
+        - `status` chuyển thành `signed`
+        - PDF được regenerate với timestamp ký của cả 2 bên và upload lại Cloudinary
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Ký thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          contract:
+                            $ref: '#/components/schemas/Contract'
+        '400':
+          description: Đã ký rồi, hoặc hợp đồng đã huỷ / đã signed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/contracts/{id}/cancel:
+    patch:
+      tags: [Contracts]
+      summary: Huỷ hợp đồng (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Huỷ thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          contract:
+                            $ref: '#/components/schemas/Contract'
+        '400':
+          description: Hợp đồng đã huỷ rồi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
