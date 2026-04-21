@@ -15,6 +15,7 @@ import uploadRoutes from './routes/upload.routes.js';
 import bookingRoutes from './routes/booking.routes.js';
 import contractRoutes from './routes/contract.routes.js';
 import roommateRoutes from './routes/roommate.routes.js';
+import serviceRoutes from './routes/service.routes.js';
 import errorHandler from './middleware/error-handler.middleware.js';
 
 connectDB();
@@ -46,6 +47,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/contracts', contractRoutes);
 app.use('/api/roommates', roommateRoutes);
+app.use('/api/services', serviceRoutes);
 
 app.use((_req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
 app.use(errorHandler);

@@ -30,6 +30,8 @@ tags:
     description: Hợp đồng điện tử — tạo, ký, quản lý
   - name: Roommates
     description: Tìm người ở ghép — hồ sơ, gợi ý matching, lời mời ghép
+  - name: Services
+    description: Dịch vụ đi kèm — danh mục dịch vụ, đặt dịch vụ, quản lý đơn
 
 components:
 
@@ -147,7 +149,7 @@ components:
           example: 12 Nguyễn Văn Linh, Quận 7, TP.HCM
         role:
           type: string
-          enum: [tenant, landlord, admin]
+          enum: [tenant, landlord, admin, provider]
           example: tenant
         isActive:
           type: boolean
@@ -185,7 +187,7 @@ components:
               example: a@example.com
             role:
               type: string
-              enum: [tenant, landlord, admin]
+              enum: [tenant, landlord, admin, provider]
 
     Property:
       type: object
@@ -676,6 +678,133 @@ components:
           type: string
           format: date-time
 
+    ServiceCatalogItem:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [cleaning, repair, wifi, moving, painting, registration]
+          example: cleaning
+        name:
+          type: string
+          example: Dọn dẹp vệ sinh
+        price:
+          type: number
+          example: 150000
+          description: Giá dịch vụ (VNĐ)
+        unit:
+          type: string
+          example: lần
+
+    ServiceOrder:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/MongoId'
+        tenant:
+          description: Người thuê (populated)
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            name:
+              type: string
+              example: Trần Thị Mai
+            email:
+              type: string
+              example: mai@example.com
+            phone:
+              type: string
+              nullable: true
+              example: '0912345678'
+            avatar:
+              type: string
+              nullable: true
+        property:
+          description: Bất động sản (populated)
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            title:
+              type: string
+              example: Phòng trọ Quận 7
+            address:
+              $ref: '#/components/schemas/Address'
+            type:
+              type: string
+              enum: [room, apartment, house, studio]
+            images:
+              type: array
+              items:
+                $ref: '#/components/schemas/PropertyImage'
+        assignedProvider:
+          description: Provider được admin gán thực hiện đơn (populated)
+          nullable: true
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            name:
+              type: string
+              example: Nguyễn Thợ Điện
+            email:
+              type: string
+              example: thodien@example.com
+            phone:
+              type: string
+              nullable: true
+              example: '0909111222'
+            avatar:
+              type: string
+              nullable: true
+        type:
+          type: string
+          enum: [cleaning, repair, wifi, moving, painting, registration]
+          example: cleaning
+          description: |
+            - **cleaning**: Dọn dẹp vệ sinh (150.000 ₫/lần)
+            - **repair**: Sửa chữa (200.000 ₫/lần)
+            - **wifi**: Lắp đặt WiFi (500.000 ₫/lần)
+            - **moving**: Chuyển đồ (300.000 ₫/lần)
+            - **painting**: Sơn nhà (1.000.000 ₫/phòng)
+            - **registration**: Đăng ký tạm trú/tạm vắng (100.000 ₫/hồ sơ)
+        status:
+          type: string
+          enum: [pending, confirmed, in_progress, done, cancelled]
+          example: pending
+          description: |
+            - **pending**: Chờ xác nhận
+            - **confirmed**: Đã xác nhận lịch
+            - **in_progress**: Đang thực hiện
+            - **done**: Hoàn thành
+            - **cancelled**: Đã huỷ
+        scheduledAt:
+          type: string
+          format: date-time
+          example: '2026-05-10T09:00:00.000Z'
+          description: Thời điểm thực hiện dịch vụ (phải là tương lai khi đặt)
+        price:
+          type: number
+          example: 150000
+          description: Giá tự động lấy từ catalog theo type
+        note:
+          type: string
+          nullable: true
+          maxLength: 500
+          example: Vui lòng dọn phòng bếp và phòng tắm.
+        cancelReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          example: Tenant đã huỷ lịch.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
     SuccessResponse:
       type: object
       properties:
@@ -821,6 +950,22 @@ components:
       schema:
         type: string
         enum: [pending, accepted, rejected, cancelled]
+
+    StatusServiceParam:
+      name: status
+      in: query
+      description: Lọc theo trạng thái đơn dịch vụ
+      schema:
+        type: string
+        enum: [pending, confirmed, in_progress, done, cancelled]
+
+    ServiceTypeParam:
+      name: type
+      in: query
+      description: Lọc theo loại dịch vụ
+      schema:
+        type: string
+        enum: [cleaning, repair, wifi, moving, painting, registration]
 
 paths:
 
@@ -1071,7 +1216,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [tenant, landlord, admin]
+            enum: [tenant, landlord, admin, provider]
         - name: isActive
           in: query
           schema:
@@ -1163,7 +1308,7 @@ paths:
                   type: string
                 role:
                   type: string
-                  enum: [tenant, landlord, admin]
+                  enum: [tenant, landlord, admin, provider]
                   description: Chỉ admin
                 isActive:
                   type: boolean
@@ -2660,6 +2805,317 @@ paths:
                             $ref: '#/components/schemas/RoommateRequest'
         '400':
           description: Lời mời không còn ở trạng thái pending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─── SERVICES ────────────────────────────────────────────────────────────────
+
+  /api/services:
+    get:
+      tags: [Services]
+      summary: Danh sách dịch vụ kèm giá (public)
+      description: |
+        Trả về catalog 6 dịch vụ đi kèm với giá cố định.
+
+        | Loại | Tên | Giá |
+        |---|---|---|
+        | `cleaning` | Dọn dẹp vệ sinh | 150.000 ₫/lần |
+        | `repair` | Sửa chữa | 200.000 ₫/lần |
+        | `wifi` | Lắp đặt WiFi | 500.000 ₫/lần |
+        | `moving` | Chuyển đồ | 300.000 ₫/lần |
+        | `painting` | Sơn nhà | 1.000.000 ₫/phòng |
+        | `registration` | Đăng ký tạm trú/tạm vắng | 100.000 ₫/hồ sơ |
+
+        ## Luồng hoạt động (Platform-managed)
+        ```
+        [Tenant]   POST /order              → pending
+        [Landlord] PATCH status=confirmed   → confirmed
+        [Admin]    PATCH /:id/assign        → gán provider
+        [Provider] PATCH status=in_progress → in_progress
+        [Provider] PATCH status=done        → done
+        ```
+        Huỷ: tenant (pending), landlord (pending/confirmed), admin (bất kỳ)
+      responses:
+        '200':
+          description: Danh sách dịch vụ
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          services:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/ServiceCatalogItem'
+
+  /api/services/order:
+    post:
+      tags: [Services]
+      summary: Đặt dịch vụ (tenant only)
+      description: |
+        Giá dịch vụ được lấy tự động từ catalog — client **không cần gửi `price`**.
+
+        `scheduledAt` phải là thời điểm trong tương lai.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [property, type, scheduledAt]
+              properties:
+                property:
+                  $ref: '#/components/schemas/MongoId'
+                type:
+                  type: string
+                  enum: [cleaning, repair, wifi, moving, painting, registration]
+                  example: cleaning
+                scheduledAt:
+                  type: string
+                  format: date-time
+                  example: '2026-05-10T09:00:00.000Z'
+                  description: Phải là thời điểm trong tương lai
+                note:
+                  type: string
+                  maxLength: 500
+                  example: Vui lòng dọn phòng bếp và phòng tắm.
+      responses:
+        '201':
+          description: Đặt dịch vụ thành công — chờ xác nhận
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          order:
+                            $ref: '#/components/schemas/ServiceOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/services/provider-orders:
+    get:
+      tags: [Services]
+      summary: Đơn dịch vụ được gán cho tôi (provider only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StatusServiceParam'
+        - $ref: '#/components/parameters/ServiceTypeParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Danh sách đơn được gán cho provider, sắp xếp theo scheduledAt tăng dần
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ServiceOrder'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/services/my-orders:
+    get:
+      tags: [Services]
+      summary: Lịch sử đơn dịch vụ của tôi (tenant only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StatusServiceParam'
+        - $ref: '#/components/parameters/ServiceTypeParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Danh sách đơn dịch vụ của tenant
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ServiceOrder'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/services/orders:
+    get:
+      tags: [Services]
+      summary: Tất cả đơn dịch vụ (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StatusServiceParam'
+        - $ref: '#/components/parameters/ServiceTypeParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Danh sách tất cả đơn dịch vụ
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ServiceOrder'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/services/order/{id}/assign:
+    patch:
+      tags: [Services]
+      summary: Gán provider cho đơn dịch vụ (admin only)
+      description: |
+        Gán một user có role **provider** để thực hiện đơn.
+
+        Provider được gán sẽ thấy đơn này trong `GET /api/services/provider-orders`
+        và có thể cập nhật trạng thái `confirmed → in_progress → done`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [providerId]
+              properties:
+                providerId:
+                  $ref: '#/components/schemas/MongoId'
+      responses:
+        '200':
+          description: Gán provider thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          order:
+                            $ref: '#/components/schemas/ServiceOrder'
+        '400':
+          description: Đơn đã done hoặc cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Đơn không tồn tại hoặc provider không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/services/order/{id}:
+    patch:
+      tags: [Services]
+      summary: Cập nhật trạng thái đơn dịch vụ (landlord / provider / admin)
+      description: |
+        Quyền chuyển trạng thái theo role:
+
+        | Role | Được phép |
+        |---|---|
+        | **tenant** | `pending → cancelled` |
+        | **landlord** | `pending → confirmed`, `pending/confirmed → cancelled` |
+        | **provider** | `confirmed → in_progress`, `in_progress → done` (chỉ đơn được gán) |
+        | **admin** | mọi transition hợp lệ |
+
+        **Provider** chỉ update được đơn đã được gán cho mình qua `/assign`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [confirmed, in_progress, done, cancelled]
+                  example: confirmed
+                cancelReason:
+                  type: string
+                  maxLength: 500
+                  nullable: true
+                  example: Nhân viên bận, vui lòng đặt lại.
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          order:
+                            $ref: '#/components/schemas/ServiceOrder'
+        '400':
+          description: Transition không hợp lệ với role hiện tại
           content:
             application/json:
               schema:
