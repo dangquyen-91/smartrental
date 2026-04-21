@@ -26,6 +26,10 @@ tags:
     description: Quản lý đặt phòng / thuê nhà
   - name: Upload
     description: Upload ảnh lên Cloudinary
+  - name: Contracts
+    description: Hợp đồng điện tử — tạo, ký, quản lý
+  - name: Roommates
+    description: Tìm người ở ghép — hồ sơ, gợi ý matching, lời mời ghép
 
 components:
 
@@ -390,6 +394,288 @@ components:
           type: string
           format: date-time
 
+    ContractSignature:
+      type: object
+      properties:
+        signed:
+          type: boolean
+          example: true
+        signedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-05-01T08:30:00.000Z'
+
+    Contract:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/MongoId'
+        booking:
+          description: Thông tin booking (populated)
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            startDate:
+              type: string
+              format: date
+            endDate:
+              type: string
+              format: date
+            duration:
+              type: integer
+            totalPrice:
+              type: number
+            status:
+              type: string
+              enum: [pending, confirmed, rejected, cancelled, active, completed]
+            note:
+              type: string
+              nullable: true
+        tenant:
+          description: Người thuê (populated)
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            name:
+              type: string
+              example: Trần Thị Mai
+            email:
+              type: string
+            phone:
+              type: string
+              nullable: true
+            address:
+              type: string
+              nullable: true
+            avatar:
+              type: string
+              nullable: true
+        landlord:
+          description: Chủ nhà (populated)
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            name:
+              type: string
+              example: Nguyễn Văn A
+            email:
+              type: string
+            phone:
+              type: string
+              nullable: true
+            address:
+              type: string
+              nullable: true
+            avatar:
+              type: string
+              nullable: true
+        property:
+          description: Bất động sản (populated)
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            title:
+              type: string
+            type:
+              type: string
+              enum: [room, apartment, house, studio]
+            address:
+              $ref: '#/components/schemas/Address'
+            area:
+              type: number
+              nullable: true
+            bedrooms:
+              type: integer
+              nullable: true
+            bathrooms:
+              type: integer
+              nullable: true
+            price:
+              type: number
+        terms:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: Điều khoản bổ sung do landlord thêm vào
+          example: Không nuôi thú cưng. Đóng tiền trước ngày 5 hàng tháng.
+        pdfUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: URL PDF trên Cloudinary (cập nhật sau mỗi lần ký)
+          example: https://res.cloudinary.com/smartrental/raw/upload/contracts/contract_abc123.pdf
+        status:
+          type: string
+          enum: [draft, awaiting_signatures, signed, cancelled]
+          example: awaiting_signatures
+          description: |
+            - **draft**: Nháp (chưa dùng, dự phòng)
+            - **awaiting_signatures**: Chờ cả 2 bên ký
+            - **signed**: Đã ký đầy đủ
+            - **cancelled**: Đã huỷ (admin)
+        signedByTenant:
+          $ref: '#/components/schemas/ContractSignature'
+        signedByLandlord:
+          $ref: '#/components/schemas/ContractSignature'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    RoommateProfile:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/MongoId'
+        user:
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            name:
+              type: string
+              example: Trần Thị Mai
+            avatar:
+              type: string
+              format: uri
+              nullable: true
+            gender:
+              type: string
+              enum: [male, female, other]
+              nullable: true
+        property:
+          description: Phòng đang thuê (nếu có)
+          nullable: true
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            title:
+              type: string
+              example: Phòng trọ Quận 7
+            address:
+              $ref: '#/components/schemas/Address'
+            price:
+              type: number
+              example: 3500000
+        budget:
+          type: object
+          properties:
+            min:
+              type: integer
+              example: 2000000
+              description: Ngân sách tối thiểu (VNĐ/tháng)
+            max:
+              type: integer
+              example: 5000000
+              description: Ngân sách tối đa (VNĐ/tháng)
+        gender:
+          type: string
+          enum: [male, female, any]
+          example: any
+          description: Giới tính người ghép muốn tìm
+        schedule:
+          type: string
+          enum: [early_bird, night_owl, flexible]
+          example: flexible
+          description: |
+            - **early_bird**: Ngủ sớm dậy sớm
+            - **night_owl**: Thức khuya
+            - **flexible**: Linh hoạt
+        lifestyle:
+          type: string
+          enum: [quiet, social, mixed]
+          example: mixed
+          description: |
+            - **quiet**: Yên tĩnh, ít giao tiếp
+            - **social**: Thích giao lưu
+            - **mixed**: Linh hoạt
+        pets:
+          type: boolean
+          example: false
+          description: Chấp nhận nuôi thú cưng
+        smoking:
+          type: boolean
+          example: false
+          description: Chấp nhận hút thuốc
+        looking:
+          type: boolean
+          example: true
+          description: Đang tìm người ghép (true = hiển thị trong matches)
+        bio:
+          type: string
+          nullable: true
+          maxLength: 500
+          example: Mình là sinh viên, thích yên tĩnh, về nhà sau 6 giờ tối.
+        matchScore:
+          type: integer
+          nullable: true
+          example: 75
+          description: Điểm tương thích (0–100), chỉ có khi gọi GET /matches
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    RoommateRequest:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/MongoId'
+        sender:
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            name:
+              type: string
+              example: Nguyễn Văn A
+            avatar:
+              type: string
+              format: uri
+              nullable: true
+        receiver:
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            name:
+              type: string
+              example: Trần Thị Mai
+            avatar:
+              type: string
+              format: uri
+              nullable: true
+        status:
+          type: string
+          enum: [pending, accepted, rejected, cancelled]
+          example: pending
+          description: |
+            - **pending**: Chờ phản hồi
+            - **accepted**: Đã chấp nhận
+            - **rejected**: Đã từ chối
+            - **cancelled**: Người gửi đã hủy
+        message:
+          type: string
+          nullable: true
+          maxLength: 300
+          example: Chào bạn, mình muốn ghép phòng cùng bạn nhé!
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
     SuccessResponse:
       type: object
       properties:
@@ -503,6 +789,38 @@ components:
       schema:
         type: string
         enum: [pending, confirmed, rejected, cancelled, active, completed]
+
+    StatusContractParam:
+      name: status
+      in: query
+      description: Lọc theo trạng thái hợp đồng
+      schema:
+        type: string
+        enum: [draft, awaiting_signatures, signed, cancelled]
+
+    BookingIdParam:
+      name: bookingId
+      in: path
+      required: true
+      description: MongoDB ObjectId của booking
+      schema:
+        $ref: '#/components/schemas/MongoId'
+
+    UserIdParam:
+      name: userId
+      in: path
+      required: true
+      description: MongoDB ObjectId của user nhận lời mời
+      schema:
+        $ref: '#/components/schemas/MongoId'
+
+    StatusRoommateRequestParam:
+      name: status
+      in: query
+      description: Lọc theo trạng thái lời mời
+      schema:
+        type: string
+        enum: [pending, accepted, rejected, cancelled]
 
 paths:
 
@@ -1761,3 +2079,631 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+
+  # ─── CONTRACTS ───────────────────────────────────────────────────────────────
+
+  /api/contracts/generate:
+    post:
+      tags: [Contracts]
+      summary: Tạo hợp đồng từ booking đã confirmed (landlord)
+      description: |
+        Chỉ landlord sở hữu booking mới được tạo hợp đồng.
+
+        **Điều kiện:** Booking phải ở trạng thái `confirmed`.
+
+        Hệ thống tự động:
+        - Điền thông tin tenant, landlord, property, các điều khoản thuê
+        - Generate PDF và upload lên Cloudinary
+        - Trả về `pdfUrl` để xem / download bản nháp
+
+        Sau khi tạo, cả 2 bên dùng `PATCH /api/contracts/:id/sign` để ký.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId]
+              properties:
+                bookingId:
+                  $ref: '#/components/schemas/MongoId'
+                terms:
+                  type: string
+                  maxLength: 2000
+                  nullable: true
+                  example: Không nuôi thú cưng. Đóng tiền trước ngày 5 hàng tháng.
+                  description: Điều khoản bổ sung (tuỳ chọn)
+      responses:
+        '201':
+          description: Tạo hợp đồng thành công — PDF đã được upload
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          contract:
+                            $ref: '#/components/schemas/Contract'
+        '400':
+          description: Booking chưa ở trạng thái confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Hợp đồng đã tồn tại cho booking này
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/contracts/my:
+    get:
+      tags: [Contracts]
+      summary: Hợp đồng của tôi (tenant / landlord)
+      description: |
+        - **tenant**: trả về các hợp đồng mà mình là bên thuê
+        - **landlord**: trả về các hợp đồng mà mình là chủ nhà
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/StatusContractParam'
+      responses:
+        '200':
+          description: Danh sách hợp đồng
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Contract'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/contracts:
+    get:
+      tags: [Contracts]
+      summary: Tất cả hợp đồng (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/StatusContractParam'
+      responses:
+        '200':
+          description: Danh sách tất cả hợp đồng
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Contract'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/contracts/booking/{bookingId}:
+    get:
+      tags: [Contracts]
+      summary: Hợp đồng theo booking ID
+      description: Tenant, landlord liên quan hoặc admin mới xem được.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BookingIdParam'
+      responses:
+        '200':
+          description: Chi tiết hợp đồng
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          contract:
+                            $ref: '#/components/schemas/Contract'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/contracts/{id}:
+    get:
+      tags: [Contracts]
+      summary: Chi tiết hợp đồng theo ID
+      description: Tenant, landlord liên quan hoặc admin mới xem được.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Chi tiết hợp đồng
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          contract:
+                            $ref: '#/components/schemas/Contract'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/contracts/{id}/sign:
+    patch:
+      tags: [Contracts]
+      summary: Ký hợp đồng điện tử (tenant / landlord)
+      description: |
+        Mỗi bên chỉ ký được **một lần**.
+
+        Hệ thống tự động nhận biết bạn là tenant hay landlord dựa vào JWT.
+
+        Khi **cả 2 bên đã ký**:
+        - `status` chuyển thành `signed`
+        - PDF được regenerate với timestamp ký của cả 2 bên và upload lại Cloudinary
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Ký thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          contract:
+                            $ref: '#/components/schemas/Contract'
+        '400':
+          description: Đã ký rồi, hoặc hợp đồng đã huỷ / đã signed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/contracts/{id}/cancel:
+    patch:
+      tags: [Contracts]
+      summary: Huỷ hợp đồng (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Huỷ thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          contract:
+                            $ref: '#/components/schemas/Contract'
+        '400':
+          description: Hợp đồng đã huỷ rồi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─── ROOMMATES ───────────────────────────────────────────────────────────────
+
+  /api/roommates/profile:
+    post:
+      tags: [Roommates]
+      summary: Tạo hoặc cập nhật hồ sơ tìm người ghép
+      description: |
+        Nếu đã có hồ sơ thì cập nhật (upsert). Mỗi user chỉ có **một** hồ sơ.
+
+        Sau khi tạo hồ sơ, đặt `looking: true` để xuất hiện trong danh sách gợi ý của người khác.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [budget, gender, schedule, lifestyle, pets, smoking]
+              properties:
+                budget:
+                  type: object
+                  required: [min, max]
+                  properties:
+                    min:
+                      type: integer
+                      minimum: 0
+                      example: 2000000
+                    max:
+                      type: integer
+                      minimum: 0
+                      example: 5000000
+                gender:
+                  type: string
+                  enum: [male, female, any]
+                  example: any
+                schedule:
+                  type: string
+                  enum: [early_bird, night_owl, flexible]
+                  example: flexible
+                lifestyle:
+                  type: string
+                  enum: [quiet, social, mixed]
+                  example: mixed
+                pets:
+                  type: boolean
+                  example: false
+                smoking:
+                  type: boolean
+                  example: false
+                looking:
+                  type: boolean
+                  default: true
+                  example: true
+                property:
+                  $ref: '#/components/schemas/MongoId'
+                bio:
+                  type: string
+                  maxLength: 500
+                  example: Mình là sinh viên, về nhà sau 6 giờ tối, thích yên tĩnh.
+      responses:
+        '201':
+          description: Tạo / cập nhật hồ sơ thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          profile:
+                            $ref: '#/components/schemas/RoommateProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/roommates/profile/me:
+    get:
+      tags: [Roommates]
+      summary: Xem hồ sơ của mình
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Hồ sơ roommate của user hiện tại
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          profile:
+                            $ref: '#/components/schemas/RoommateProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Chưa tạo hồ sơ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags: [Roommates]
+      summary: Xóa hồ sơ của mình
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Đã xóa hồ sơ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/roommates/matches:
+    get:
+      tags: [Roommates]
+      summary: Danh sách người ghép được gợi ý (có matchScore)
+      description: |
+        Thuật toán tính điểm tương thích (**matchScore**, tối đa 100):
+
+        | Tiêu chí | Điểm |
+        |---|---|
+        | Budget overlap | +30 |
+        | Gender preference tương thích | +20 |
+        | Schedule tương thích (hoặc flexible) | +20 |
+        | Lifestyle tương thích (hoặc mixed) | +20 |
+        | Pets preference giống nhau | +5 |
+        | Smoking preference giống nhau | +5 |
+
+        Kết quả sắp xếp theo `matchScore` giảm dần.
+
+        **Điều kiện:** User phải có hồ sơ và đang ở trạng thái `looking: true`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Danh sách người ghép phù hợp kèm điểm tương thích
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RoommateProfile'
+        '400':
+          description: Hồ sơ chưa đặt looking=true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Chưa tạo hồ sơ roommate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/roommates/requests:
+    get:
+      tags: [Roommates]
+      summary: Xem lời mời đã gửi hoặc nhận
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          description: Loại lời mời cần xem
+          schema:
+            type: string
+            enum: [sent, received]
+            default: received
+        - $ref: '#/components/parameters/StatusRoommateRequestParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Danh sách lời mời
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RoommateRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/roommates/request/{userId}:
+    post:
+      tags: [Roommates]
+      summary: Gửi lời mời ghép phòng
+      description: |
+        Gửi lời mời cho user đang có hồ sơ với `looking: true`.
+
+        - Không thể gửi cho chính mình
+        - Nếu đã có lời mời `pending` → lỗi 409
+        - Nếu đã `rejected` hoặc `cancelled` → cho phép gửi lại
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserIdParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  maxLength: 300
+                  example: Chào bạn, mình muốn ghép phòng cùng bạn nhé!
+      responses:
+        '201':
+          description: Gửi lời mời thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          request:
+                            $ref: '#/components/schemas/RoommateRequest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: User không tìm người ghép hoặc không tồn tại
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Đã có lời mời pending hoặc đã được chấp nhận
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/roommates/request/{id}/respond:
+    patch:
+      tags: [Roommates]
+      summary: Chấp nhận hoặc từ chối lời mời nhận được
+      description: Chỉ người **nhận** lời mời mới được phản hồi. Lời mời phải đang ở trạng thái `pending`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [accepted, rejected]
+                  example: accepted
+      responses:
+        '200':
+          description: Phản hồi thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          request:
+                            $ref: '#/components/schemas/RoommateRequest'
+        '400':
+          description: Lời mời không còn ở trạng thái pending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/roommates/request/{id}/cancel:
+    patch:
+      tags: [Roommates]
+      summary: Hủy lời mời đã gửi
+      description: Chỉ người **gửi** lời mời mới được hủy. Lời mời phải đang ở trạng thái `pending`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Hủy thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          request:
+                            $ref: '#/components/schemas/RoommateRequest'
+        '400':
+          description: Lời mời không còn ở trạng thái pending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
