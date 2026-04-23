@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Contract from '../models/contract.model.js';
 import Booking from '../models/booking.model.js';
 import AppError from '../utils/app-error.js';
@@ -39,19 +40,26 @@ const generateContract = async (bookingId, landlordId, terms) => {
     );
   }
 
-  const existing = await Contract.findOne({ booking: bookingId });
-  if (existing) throw new AppError('Contract already exists for this booking', 409);
-
-  const contract = await Contract.create({
-    booking: booking._id,
-    tenant: booking.tenant._id,
-    landlord: booking.landlord._id,
-    property: booking.property._id,
-    terms: terms || null,
-    status: 'awaiting_signatures',
-    signedByTenant: { signed: false, signedAt: null },
-    signedByLandlord: { signed: false, signedAt: null },
-  });
+  // Use insertOne inside a try/catch — the unique index on `booking` makes
+  // concurrent duplicate calls fail with E11000 rather than creating two contracts.
+  let contract;
+  try {
+    [contract] = await Contract.create(
+      [{
+        booking: booking._id,
+        tenant: booking.tenant._id,
+        landlord: booking.landlord._id,
+        property: booking.property._id,
+        terms: terms || null,
+        status: 'awaiting_signatures',
+        signedByTenant: { signed: false, signedAt: null },
+        signedByLandlord: { signed: false, signedAt: null },
+      }],
+    );
+  } catch (err) {
+    if (err.code === 11000) throw new AppError('Contract already exists for this booking', 409);
+    throw err;
+  }
 
   // Generate and upload initial PDF
   const pdfUrl = await generateAndUploadContractPdf({
@@ -74,40 +82,42 @@ const generateContract = async (bookingId, landlordId, terms) => {
 // ─── Sign Contract ───────────────────────────────────────────────────────────
 
 const signContract = async (contractId, userId) => {
-  const contract = await Contract.findById(contractId)
+  // Resolve which party this user is before any write
+  const existing = await Contract.findById(contractId).lean();
+  if (!existing) throw new AppError('Contract not found', 404);
+  if (existing.status === 'cancelled') throw new AppError('Cannot sign a cancelled contract', 400);
+  if (existing.status === 'signed') throw new AppError('Contract is already fully signed', 400);
+
+  const isTenant = existing.tenant.toString() === userId;
+  const isLandlord = existing.landlord.toString() === userId;
+  if (!isTenant && !isLandlord) throw new AppError('Access denied', 403);
+
+  const now = new Date();
+  const signField = isTenant ? 'signedByTenant' : 'signedByLandlord';
+  const alreadySignedFilter = { [`${signField}.signed`]: false };
+
+  // Atomic update — filter ensures idempotency (won't match if already signed)
+  const contract = await Contract.findOneAndUpdate(
+    { _id: contractId, status: { $in: ['awaiting_signatures'] }, ...alreadySignedFilter },
+    { $set: { [`${signField}.signed`]: true, [`${signField}.signedAt`]: now } },
+    { new: true },
+  )
     .populate('tenant', 'name email phone address')
     .populate('landlord', 'name email phone address')
     .populate('property', 'title type address area bedrooms bathrooms price')
     .populate('booking', 'startDate endDate duration totalPrice status');
 
-  if (!contract) throw new AppError('Contract not found', 404);
+  if (!contract) throw new AppError('You have already signed this contract', 400);
 
-  if (contract.status === 'cancelled') {
-    throw new AppError('Cannot sign a cancelled contract', 400);
-  }
-  if (contract.status === 'signed') {
-    throw new AppError('Contract is already fully signed', 400);
-  }
-
-  const isTenant = contract.tenant._id.toString() === userId;
-  const isLandlord = contract.landlord._id.toString() === userId;
-
-  if (!isTenant && !isLandlord) throw new AppError('Access denied', 403);
-
-  if (isTenant) {
-    if (contract.signedByTenant.signed) throw new AppError('You have already signed this contract', 400);
-    contract.signedByTenant = { signed: true, signedAt: new Date() };
-  }
-
-  if (isLandlord) {
-    if (contract.signedByLandlord.signed) throw new AppError('You have already signed this contract', 400);
-    contract.signedByLandlord = { signed: true, signedAt: new Date() };
-  }
-
+  // Atomically mark as signed if both parties have now signed
   const bothSigned = contract.signedByTenant.signed && contract.signedByLandlord.signed;
-  if (bothSigned) contract.status = 'signed';
-
-  await contract.save();
+  if (bothSigned) {
+    await Contract.updateOne(
+      { _id: contractId, 'signedByTenant.signed': true, 'signedByLandlord.signed': true },
+      { $set: { status: 'signed' } },
+    );
+    contract.status = 'signed';
+  }
 
   // Regenerate PDF with updated signature info
   const pdfUrl = await generateAndUploadContractPdf({
@@ -121,8 +131,8 @@ const signContract = async (contractId, userId) => {
     signedByLandlord: contract.signedByLandlord,
   });
 
+  await Contract.updateOne({ _id: contractId }, { $set: { pdfUrl } });
   contract.pdfUrl = pdfUrl;
-  await contract.save();
 
   return contract;
 };

@@ -47,4 +47,13 @@ const changePassword = async (req, res, next) => {
   }
 };
 
-export { getUsers, getUserById, updateUser, deleteUser, changePassword };
+const updateBankAccount = async (req, res, next) => {
+  try {
+    const user = await userService.updateBankAccount(req.params.id, req.body, req.user.id, req.user.role);
+    return R.success(res, { user }, 'Bank account updated');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export { getUsers, getUserById, updateUser, deleteUser, changePassword, updateBankAccount };

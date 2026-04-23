@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Booking from '../models/booking.model.js';
 import Property from '../models/property.model.js';
 import AppError from '../utils/app-error.js';
@@ -152,30 +153,40 @@ const getBookingById = async (id, userId, userRole) => {
 // ─── Confirm Booking (landlord) ──────────────────────────────────────────────
 
 const confirmBooking = async (id, landlordId) => {
-  const booking = await Booking.findById(id);
-  if (!booking) throw new AppError('Booking not found', 404);
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
 
-  if (booking.landlord.toString() !== landlordId) {
-    throw new AppError('Access denied', 403);
+    // Atomic status transition — only succeeds if booking is still 'pending'
+    const booking = await Booking.findOneAndUpdate(
+      { _id: id, landlord: landlordId, status: 'pending' },
+      { $set: { status: 'confirmed' } },
+      { new: true, session },
+    );
+
+    if (!booking) {
+      const exists = await Booking.findById(id).session(session);
+      if (!exists) throw new AppError('Booking not found', 404);
+      if (exists.landlord.toString() !== landlordId) throw new AppError('Access denied', 403);
+      throw new AppError(`Cannot confirm a booking with status "${exists.status}"`, 400);
+    }
+
+    await Booking.updateMany(
+      { property: booking.property, status: 'pending', _id: { $ne: booking._id } },
+      { $set: { status: 'rejected', rejectionReason: 'Another booking has been confirmed by the landlord' } },
+      { session },
+    );
+
+    await Property.findByIdAndUpdate(booking.property, { $set: { status: 'rented' } }, { session });
+
+    await session.commitTransaction();
+    return booking;
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
   }
-
-  if (booking.status !== 'pending') {
-    throw new AppError(`Cannot confirm a booking with status "${booking.status}"`, 400);
-  }
-
-  booking.status = 'confirmed';
-  await booking.save();
-
-  // Auto-reject all other pending bookings for the same property
-  await Booking.updateMany(
-    { property: booking.property, status: 'pending', _id: { $ne: booking._id } },
-    { status: 'rejected', rejectionReason: 'Another booking has been confirmed by the landlord' },
-  );
-
-  // Mark property as rented
-  await Property.findByIdAndUpdate(booking.property, { status: 'rented' });
-
-  return booking;
 };
 
 // ─── Reject Booking (landlord) ───────────────────────────────────────────────
@@ -202,83 +213,123 @@ const rejectBooking = async (id, landlordId, reason) => {
 // ─── Cancel Booking (tenant / landlord / admin) ──────────────────────────────
 
 const cancelBooking = async (id, userId, userRole, reason) => {
-  const booking = await Booking.findById(id);
-  if (!booking) throw new AppError('Booking not found', 404);
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
 
-  const isTenant = booking.tenant.toString() === userId;
-  const isLandlord = booking.landlord.toString() === userId;
+    const booking = await Booking.findById(id).session(session);
+    if (!booking) throw new AppError('Booking not found', 404);
 
-  if (userRole !== 'admin' && !isTenant && !isLandlord) {
-    throw new AppError('Access denied', 403);
+    const isTenant = booking.tenant.toString() === userId;
+    const isLandlord = booking.landlord.toString() === userId;
+
+    if (userRole !== 'admin' && !isTenant && !isLandlord) {
+      throw new AppError('Access denied', 403);
+    }
+
+    const cancellableStatuses = ['pending', 'confirmed'];
+    if (userRole === 'admin') cancellableStatuses.push('active');
+
+    if (!cancellableStatuses.includes(booking.status)) {
+      throw new AppError(`Cannot cancel a booking with status "${booking.status}"`, 400);
+    }
+
+    const cancelledBy = isTenant ? 'tenant' : isLandlord ? 'landlord' : 'admin';
+    const wasConfirmedOrActive = ['confirmed', 'active'].includes(booking.status);
+
+    // Atomic update with status pre-condition to prevent double-cancel
+    const updated = await Booking.findOneAndUpdate(
+      { _id: id, status: { $in: cancellableStatuses } },
+      { $set: { status: 'cancelled', cancelledBy, cancelReason: reason || null } },
+      { new: true, session },
+    );
+    if (!updated) throw new AppError(`Cannot cancel a booking with status "${booking.status}"`, 409);
+
+    if (wasConfirmedOrActive) {
+      await Property.findByIdAndUpdate(booking.property, { $set: { status: 'available' } }, { session });
+    }
+
+    await session.commitTransaction();
+    return updated;
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
   }
-
-  const cancellableStatuses = ['pending', 'confirmed'];
-  if (userRole === 'admin') cancellableStatuses.push('active');
-
-  if (!cancellableStatuses.includes(booking.status)) {
-    throw new AppError(`Cannot cancel a booking with status "${booking.status}"`, 400);
-  }
-
-  const cancelledBy = isTenant ? 'tenant' : isLandlord ? 'landlord' : 'admin';
-
-  const wasConfirmedOrActive = ['confirmed', 'active'].includes(booking.status);
-
-  booking.status = 'cancelled';
-  booking.cancelledBy = cancelledBy;
-  booking.cancelReason = reason || null;
-  await booking.save();
-
-  // Revert property to available if booking was confirmed or active
-  if (wasConfirmedOrActive) {
-    await Property.findByIdAndUpdate(booking.property, { status: 'available' });
-  }
-
-  return booking;
 };
 
 // ─── Complete Booking (landlord / admin) ────────────────────────────────────
 
 const completeBooking = async (id, userId, userRole) => {
-  const booking = await Booking.findById(id);
-  if (!booking) throw new AppError('Booking not found', 404);
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
 
-  const isLandlord = booking.landlord.toString() === userId;
-  if (userRole !== 'admin' && !isLandlord) {
-    throw new AppError('Access denied', 403);
+    const booking = await Booking.findById(id).session(session);
+    if (!booking) throw new AppError('Booking not found', 404);
+
+    const isLandlord = booking.landlord.toString() === userId;
+    if (userRole !== 'admin' && !isLandlord) throw new AppError('Access denied', 403);
+    if (booking.status !== 'active') {
+      throw new AppError(`Cannot complete a booking with status "${booking.status}"`, 400);
+    }
+
+    // Atomic update with pre-condition
+    const updated = await Booking.findOneAndUpdate(
+      { _id: id, status: 'active' },
+      { $set: { status: 'completed' } },
+      { new: true, session },
+    );
+    if (!updated) throw new AppError(`Cannot complete a booking with status "${booking.status}"`, 409);
+
+    await Property.findByIdAndUpdate(booking.property, { $set: { status: 'available' } }, { session });
+
+    await session.commitTransaction();
+    return updated;
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
   }
-
-  if (booking.status !== 'active') {
-    throw new AppError(`Cannot complete a booking with status "${booking.status}"`, 400);
-  }
-
-  booking.status = 'completed';
-  await booking.save();
-
-  // Revert property to available
-  await Property.findByIdAndUpdate(booking.property, { status: 'available' });
-
-  return booking;
 };
 
 // ─── Activate Booking (landlord / admin) ────────────────────────────────────
 
 const activateBooking = async (id, userId, userRole) => {
-  const booking = await Booking.findById(id);
-  if (!booking) throw new AppError('Booking not found', 404);
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
 
-  const isLandlord = booking.landlord.toString() === userId;
-  if (userRole !== 'admin' && !isLandlord) {
-    throw new AppError('Access denied', 403);
+    const booking = await Booking.findById(id).session(session);
+    if (!booking) throw new AppError('Booking not found', 404);
+
+    const isLandlord = booking.landlord.toString() === userId;
+    if (userRole !== 'admin' && !isLandlord) throw new AppError('Access denied', 403);
+    if (booking.status !== 'confirmed') {
+      throw new AppError(`Cannot activate a booking with status "${booking.status}"`, 400);
+    }
+    if (booking.paymentStatus !== 'paid') {
+      throw new AppError('Tenant has not completed payment yet', 400);
+    }
+
+    // Atomic update — requires both status=confirmed AND paymentStatus=paid
+    const updated = await Booking.findOneAndUpdate(
+      { _id: id, status: 'confirmed', paymentStatus: 'paid' },
+      { $set: { status: 'active' } },
+      { new: true, session },
+    );
+    if (!updated) throw new AppError('Booking state changed before activation could complete', 409);
+
+    await session.commitTransaction();
+    return updated;
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
   }
-
-  if (booking.status !== 'confirmed') {
-    throw new AppError(`Cannot activate a booking with status "${booking.status}"`, 400);
-  }
-
-  booking.status = 'active';
-  await booking.save();
-
-  return booking;
 };
 
 export {
