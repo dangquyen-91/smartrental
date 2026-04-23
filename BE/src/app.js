@@ -16,6 +16,7 @@ import bookingRoutes from './routes/booking.routes.js';
 import contractRoutes from './routes/contract.routes.js';
 import roommateRoutes from './routes/roommate.routes.js';
 import serviceRoutes from './routes/service.routes.js';
+import paymentRoutes from './routes/payment.routes.js';
 import errorHandler from './middleware/error-handler.middleware.js';
 
 connectDB();
@@ -32,7 +33,11 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 app.use(express.json());
-app.use('/api', apiLimiter);
+// Webhook PayOS phải được exempt khỏi rate limiter — PayOS có thể retry nhiều lần
+app.use('/api', (req, res, next) => {
+  if (req.path === '/payment/webhook') return next();
+  return apiLimiter(req, res, next);
+});
 
 app.get('/health', (_req, res) =>
   res.json({ success: true, message: 'OK', data: { env: process.env.NODE_ENV } })
@@ -48,6 +53,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/contracts', contractRoutes);
 app.use('/api/roommates', roommateRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/payment', paymentRoutes);
 
 app.use((_req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
 app.use(errorHandler);

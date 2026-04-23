@@ -6,7 +6,7 @@ import AppError from '../utils/app-error.js';
 // ─── Service Catalog ─────────────────────────────────────────────────────────
 
 const SERVICE_CATALOG = [
-  { type: 'cleaning',     name: 'Dọn dẹp vệ sinh',          price: 150000,  unit: 'lần' },
+  { type: 'cleaning',     name: 'Dọn dẹp vệ sinh',          price: 2000,    unit: 'lần' },
   { type: 'repair',       name: 'Sửa chữa',                  price: 200000,  unit: 'lần' },
   { type: 'wifi',         name: 'Lắp đặt WiFi',              price: 500000,  unit: 'lần' },
   { type: 'moving',       name: 'Chuyển đồ',                 price: 300000,  unit: 'lần' },

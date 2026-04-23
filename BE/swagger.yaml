@@ -32,6 +32,8 @@ tags:
     description: Tìm người ở ghép — hồ sơ, gợi ý matching, lời mời ghép
   - name: Services
     description: Dịch vụ đi kèm — danh mục dịch vụ, đặt dịch vụ, quản lý đơn
+  - name: Payment
+    description: Thanh toán qua PayOS — tạo link, webhook callback, kiểm tra trạng thái
 
 components:
 
@@ -158,6 +160,29 @@ components:
           type: boolean
           example: false
           description: true khi đã xác thực SĐT qua OTP → được phép đăng tin (landlord)
+        bankAccount:
+          type: object
+          nullable: true
+          description: Thông tin tài khoản ngân hàng để nhận payout (landlord / provider)
+          properties:
+            bankName:
+              type: string
+              example: Vietcombank
+            accountNumber:
+              type: string
+              example: '0123456789'
+            accountName:
+              type: string
+              example: NGUYEN VAN A
+            branch:
+              type: string
+              nullable: true
+              example: Chi nhánh HCM
+            verifiedAt:
+              type: string
+              format: date-time
+              nullable: true
+              description: Admin xác nhận STK hợp lệ — null nếu chưa verify
         createdAt:
           type: string
           format: date-time
@@ -389,6 +414,31 @@ components:
           nullable: true
           maxLength: 500
           example: Tôi đã tìm được chỗ khác.
+        paymentStatus:
+          type: string
+          enum: [unpaid, paid, refunded]
+          default: unpaid
+          example: unpaid
+          description: |
+            - **unpaid**: Chưa thanh toán tiền cọc + tháng đầu
+            - **paid**: Đã thanh toán — landlord mới có thể activate
+            - **refunded**: Đã hoàn tiền
+        paymentCode:
+          type: integer
+          nullable: true
+          example: 1714123456789
+          description: Mã orderCode gửi lên PayOS (tự động gán khi tạo link thanh toán)
+        depositAmount:
+          type: number
+          nullable: true
+          example: 3500000
+          description: Tiền cọc = property.price × 1 (gán khi tạo link thanh toán)
+        paidDate:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-05-02T10:30:00.000Z'
+          description: Thời điểm webhook PayOS xác nhận thanh toán thành công
         createdAt:
           type: string
           format: date-time
@@ -798,12 +848,94 @@ components:
           nullable: true
           maxLength: 500
           example: Tenant đã huỷ lịch.
+        paymentStatus:
+          type: string
+          enum: [unpaid, paid, refunded]
+          default: unpaid
+          example: unpaid
+          description: |
+            - **unpaid**: Chưa thanh toán
+            - **paid**: Đã thanh toán — webhook xác nhận
+            - **refunded**: Đã hoàn tiền
+        paymentCode:
+          type: integer
+          nullable: true
+          example: 1714123456789
+          description: Mã orderCode gửi lên PayOS (tự động gán khi tạo link)
+        platformFee:
+          type: number
+          nullable: true
+          example: 15000
+          description: Phí platform (10% price) — tính khi webhook xác nhận paid
+        providerPayout:
+          type: number
+          nullable: true
+          example: 135000
+          description: Số tiền trả cho provider (90% price) — tính khi webhook xác nhận paid
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
+
+    PaymentLink:
+      type: object
+      properties:
+        checkoutUrl:
+          type: string
+          format: uri
+          example: https://pay.payos.vn/web/abc123
+          description: URL trang thanh toán PayOS — redirect user đến đây
+        orderCode:
+          type: integer
+          example: 1714123456789
+          description: Mã đơn hàng gửi lên PayOS (timestamp)
+        amount:
+          type: number
+          example: 150000
+          description: Số tiền thanh toán (VNĐ)
+
+    PaymentStatus:
+      type: object
+      properties:
+        orderCode:
+          type: integer
+          example: 1714123456789
+        status:
+          type: string
+          enum: [PENDING, PAID, CANCELLED, EXPIRED]
+          example: PAID
+          description: Trạng thái trên hệ thống PayOS
+        amount:
+          type: number
+          example: 150000
+        transactions:
+          type: array
+          description: Lịch sử giao dịch từ PayOS
+          items:
+            type: object
+            properties:
+              reference:
+                type: string
+                example: FT24001234567
+              amount:
+                type: number
+                example: 150000
+              accountNumber:
+                type: string
+                example: '0772408848'
+              description:
+                type: string
+                example: SR-CLEANING
+              transactionDateTime:
+                type: string
+                format: date-time
+        paymentStatus:
+          type: string
+          enum: [unpaid, paid, refunded]
+          example: paid
+          description: Trạng thái trong DB SmartRental
 
     SuccessResponse:
       type: object
@@ -1389,6 +1521,63 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /api/users/{id}/bank-account:
+    put:
+      tags: [Users]
+      summary: Cập nhật tài khoản ngân hàng (landlord / provider)
+      description: |
+        Landlord và Provider đăng ký tài khoản ngân hàng để nhận tiền từ platform.
+
+        - `verifiedAt` luôn reset về `null` khi cập nhật — admin cần verify lại.
+        - Chỉ chủ tài khoản hoặc admin mới được gọi endpoint này.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bankName, accountNumber, accountName]
+              properties:
+                bankName:
+                  type: string
+                  example: Vietcombank
+                accountNumber:
+                  type: string
+                  example: '0123456789'
+                accountName:
+                  type: string
+                  example: NGUYEN VAN A
+                branch:
+                  type: string
+                  example: Chi nhánh HCM
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   # ─── PROPERTIES ──────────────────────────────────────────────────────────────
 
   /api/properties:
@@ -1899,9 +2088,12 @@ paths:
       description: |
         Chuyển booking từ `pending` → `confirmed`.
 
-        **Tự động:**
+        **Tự động (trong một transaction):**
         - Các booking `pending` khác trên cùng property → `rejected`
         - Property `status` → `rented`
+
+        **Idempotency:** Dùng atomic update với pre-condition `status: pending`.
+        Nếu 2 request confirm cùng lúc, chỉ 1 thành công — request còn lại nhận `400`.
       security:
         - bearerAuth: []
       parameters:
@@ -1922,7 +2114,11 @@ paths:
                           booking:
                             $ref: '#/components/schemas/Booking'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Booking không ở trạng thái pending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1983,7 +2179,10 @@ paths:
         - **Tenant / Landlord**: huỷ khi `pending` hoặc `confirmed`
         - **Admin**: huỷ thêm khi `active`
 
-        Nếu huỷ từ trạng thái `confirmed` hoặc `active` → property revert về `available`.
+        Nếu huỷ từ trạng thái `confirmed` hoặc `active` → property revert về `available`
+        (booking + property cập nhật trong cùng một transaction).
+
+        **Idempotency:** Nếu 2 request huỷ cùng lúc, chỉ 1 thành công — request kia nhận `409`.
       security:
         - bearerAuth: []
       parameters:
@@ -2014,19 +2213,38 @@ paths:
                           booking:
                             $ref: '#/components/schemas/Booking'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Booking không ở trạng thái có thể huỷ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          description: Trạng thái booking đã thay đổi trước khi xử lý xong (race condition)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/bookings/{id}/activate:
     put:
       tags: [Bookings]
       summary: Check-in — tenant đã dọn vào (landlord / admin)
-      description: Chuyển booking từ `confirmed` → `active`.
+      description: |
+        Chuyển booking từ `confirmed` → `active`.
+
+        **Điều kiện bắt buộc (kiểm tra đồng thời trong một atomic update):**
+        - `status === 'confirmed'`
+        - `paymentStatus === 'paid'`
+
+        Tenant cần thanh toán qua `POST /api/payment/booking/:bookingId` trước.
+
+        **Idempotency:** Nếu 2 request activate cùng lúc, chỉ 1 thành công — request kia nhận `409`.
       security:
         - bearerAuth: []
       parameters:
@@ -2047,13 +2265,23 @@ paths:
                           booking:
                             $ref: '#/components/schemas/Booking'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Booking chưa confirmed hoặc tenant chưa thanh toán
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          description: Trạng thái booking đã thay đổi trước khi xử lý xong (race condition)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/bookings/{id}/complete:
     put:
@@ -2062,7 +2290,9 @@ paths:
       description: |
         Chuyển booking từ `active` → `completed`.
 
-        Property revert về `available`.
+        Property revert về `available` (booking + property trong cùng một transaction).
+
+        **Idempotency:** Nếu 2 request complete cùng lúc, chỉ 1 thành công — request kia nhận `409`.
       security:
         - bearerAuth: []
       parameters:
@@ -2083,13 +2313,23 @@ paths:
                           booking:
                             $ref: '#/components/schemas/Booking'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Booking không ở trạng thái active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          description: Trạng thái booking đã thay đổi trước khi xử lý xong (race condition)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ─── UPLOAD ──────────────────────────────────────────────────────────────────
 
@@ -2426,6 +2666,10 @@ paths:
 
         Hệ thống tự động nhận biết bạn là tenant hay landlord dựa vào JWT.
 
+        **Idempotency (atomic):** Dùng `findOneAndUpdate` với filter `signedBy{Party}.signed: false`.
+        - Tenant và landlord có thể ký đồng thời mà không ghi đè lên nhau (2 field khác nhau).
+        - Nếu cùng một người gọi 2 lần liên tiếp → request thứ 2 nhận `400`.
+
         Khi **cả 2 bên đã ký**:
         - `status` chuyển thành `signed`
         - PDF được regenerate với timestamp ký của cả 2 bên và upload lại Cloudinary
@@ -2498,6 +2742,274 @@ paths:
           $ref: '#/components/responses/NotFound'
 
   # ─── ROOMMATES ───────────────────────────────────────────────────────────────
+
+  # ─── PAYMENT ─────────────────────────────────────────────────────────────────
+
+  /api/payment/booking/{bookingId}/status:
+    get:
+      tags: [Payment]
+      summary: Kiểm tra trạng thái thanh toán booking (tenant only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/MongoId'
+      responses:
+        '200':
+          description: Trạng thái thanh toán booking
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaymentStatus'
+                          - type: object
+                            properties:
+                              depositAmount:
+                                type: number
+                                example: 3500000
+        '400':
+          description: Chưa khởi tạo thanh toán
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/payment/booking/{bookingId}:
+    post:
+      tags: [Payment]
+      summary: Tạo link thanh toán booking (tenant only)
+      description: |
+        Tạo link thanh toán cho booking đã được landlord **confirmed**.
+
+        Số tiền thanh toán = **tiền cọc (1 tháng) + tháng đầu tiên**:
+        - `depositAmount = property.price × 1`
+        - `firstMonth = property.price`
+        - `amount = depositAmount + firstMonth`
+
+        Sau khi thanh toán thành công → `paymentStatus: paid` → landlord mới có thể activate.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/MongoId'
+      responses:
+        '200':
+          description: Tạo link thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          checkoutUrl:
+                            type: string
+                            format: uri
+                            example: https://pay.payos.vn/web/abc123
+                          orderCode:
+                            type: integer
+                            example: 1714123456789
+                          amount:
+                            type: number
+                            example: 7000000
+                            description: Tổng tiền = cọc + tháng đầu
+                          depositAmount:
+                            type: number
+                            example: 3500000
+                          firstMonth:
+                            type: number
+                            example: 3500000
+        '400':
+          description: Booking chưa confirmed hoặc đã thanh toán
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/payment/service/{orderId}/status:
+    get:
+      tags: [Payment]
+      summary: Kiểm tra trạng thái thanh toán dịch vụ (tenant only)
+      description: |
+        Query trạng thái đơn trực tiếp từ PayOS.
+
+        Dùng sau khi user hoàn tất thanh toán để xác nhận kết quả mà không cần webhook.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: MongoDB ObjectId của ServiceOrder
+          schema:
+            $ref: '#/components/schemas/MongoId'
+      responses:
+        '200':
+          description: Trạng thái thanh toán
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaymentStatus'
+        '400':
+          description: Chưa khởi tạo thanh toán
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/payment/service/{orderId}:
+    post:
+      tags: [Payment]
+      summary: Tạo link thanh toán PayOS (tenant only)
+      description: |
+        Tạo link thanh toán cho đơn dịch vụ. Trả về `checkoutUrl` để redirect user sang trang PayOS.
+
+        **Điều kiện:**
+        - Đơn phải thuộc tenant đang đăng nhập
+        - `paymentStatus` phải là `unpaid`
+        - `status` không được là `cancelled`
+
+        Link thanh toán hết hạn sau **15 phút**.
+
+        **Luồng sau khi tạo link:**
+        1. Frontend redirect user đến `checkoutUrl`
+        2. User thanh toán trên PayOS
+        3. PayOS gọi webhook `POST /api/payment/webhook` → DB cập nhật `paymentStatus: paid`
+        4. User được redirect về `PAYOS_RETURN_URL`
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: MongoDB ObjectId của ServiceOrder
+          schema:
+            $ref: '#/components/schemas/MongoId'
+      responses:
+        '200':
+          description: Tạo link thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaymentLink'
+        '400':
+          description: Đơn đã thanh toán hoặc đã bị huỷ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/payment/webhook:
+    post:
+      tags: [Payment]
+      summary: PayOS Webhook callback (internal)
+      description: |
+        Endpoint này do **PayOS tự gọi** sau khi thanh toán hoàn tất — không gọi thủ công.
+
+        PayOS gửi `POST` với body chứa thông tin giao dịch đã ký bằng `checksumKey`.
+        Server verify chữ ký → cập nhật `paymentStatus: paid` + tính `platformFee` / `providerPayout`.
+
+        | Field | Giá trị |
+        |---|---|
+        | `platformFee` | 10% của `price` |
+        | `providerPayout` | 90% của `price` |
+
+        **Idempotency:** Webhook xử lý trong MongoDB transaction với atomic `updateOne({ paymentStatus: {$ne: 'paid'} })`.
+        PayOS có thể gọi lại nhiều lần (retry) — chỉ lần đầu có `modifiedCount > 0` thực sự cập nhật DB.
+        Các lần sau trả `rspCode: '02'` (Already paid) mà không gây side effect.
+
+        **Không cần Authorization header.**
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Payload do PayOS gửi (tự động)
+              properties:
+                code:
+                  type: string
+                  example: '00'
+                  description: "'00' = thành công"
+                desc:
+                  type: string
+                  example: success
+                data:
+                  type: object
+                  properties:
+                    orderCode:
+                      type: integer
+                      example: 1714123456789
+                    amount:
+                      type: number
+                      example: 150000
+                    description:
+                      type: string
+                      example: SR-CLEANING
+                signature:
+                  type: string
+                  description: HMAC-SHA256 dùng checksumKey để verify
+      responses:
+        '200':
+          description: Xử lý thành công (PayOS luôn cần nhận 200)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rspCode:
+                    type: string
+                    example: '00'
+                    description: |
+                      - `'00'` = Xử lý thành công
+                      - `'02'` = Đã thanh toán trước đó (idempotent retry)
+                      - `'97'` = Sai chữ ký checksumKey
+                      - `'01'` = Không tìm thấy đơn hàng theo orderCode
+                  message:
+                    type: string
+                    example: Payment confirmed
 
   /api/roommates/profile:
     post:

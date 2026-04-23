@@ -43,4 +43,14 @@ const changePasswordValidation = validate([
   body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
 ]);
 
-export { getUsersValidation, updateUserValidation, changePasswordValidation };
+const updateBankAccountValidation = validate([
+  mongoId('id'),
+  body('bankName').notEmpty().trim().withMessage('bankName is required'),
+  body('accountNumber')
+    .notEmpty().trim()
+    .matches(/^[0-9]{6,20}$/).withMessage('accountNumber must be 6–20 digits'),
+  body('accountName').notEmpty().trim().withMessage('accountName is required'),
+  body('branch').optional().trim(),
+]);
+
+export { getUsersValidation, updateUserValidation, changePasswordValidation, updateBankAccountValidation };

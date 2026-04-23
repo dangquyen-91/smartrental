@@ -18,6 +18,13 @@ const userSchema = new mongoose.Schema(
     phoneOtp: { type: String, default: null },
     phoneOtpExpiry: { type: Date, default: null },
     refreshToken: { type: String, default: null },
+    bankAccount: {
+      bankName:      { type: String, default: null },
+      accountNumber: { type: String, default: null },
+      accountName:   { type: String, default: null },
+      branch:        { type: String, default: null },
+      verifiedAt:    { type: Date,   default: null },
+    },
   },
   {
     timestamps: true,
@@ -35,6 +42,7 @@ const userSchema = new mongoose.Schema(
         role: ret.role,
         isActive: ret.isActive,
         isPhoneVerified: ret.isPhoneVerified,
+        bankAccount: ret.bankAccount ?? null,
         createdAt: ret.createdAt,
         updatedAt: ret.updatedAt,
       }),

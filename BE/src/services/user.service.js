@@ -78,6 +78,31 @@ const deleteUser = async (id) => {
   await user.save();
 };
 
+const updateBankAccount = async (id, data, requesterId, requesterRole) => {
+  if (id !== requesterId && requesterRole !== 'admin') {
+    throw new AppError('Access denied', 403);
+  }
+
+  const user = await User.findById(id);
+  if (!user) throw new AppError('User not found', 404);
+
+  if (!['landlord', 'provider', 'admin'].includes(user.role)) {
+    throw new AppError('Only landlords and providers can register bank accounts', 403);
+  }
+
+  const { bankName, accountNumber, accountName, branch } = data;
+  user.bankAccount = {
+    bankName:      bankName      ?? user.bankAccount?.bankName,
+    accountNumber: accountNumber ?? user.bankAccount?.accountNumber,
+    accountName:   accountName   ?? user.bankAccount?.accountName,
+    branch:        branch        ?? user.bankAccount?.branch,
+    verifiedAt:    null,
+  };
+
+  await user.save();
+  return user.toJSON();
+};
+
 const changePassword = async (id, currentPassword, newPassword, requesterId) => {
   if (id !== requesterId) throw new AppError('You can only change your own password', 403);
 
@@ -91,4 +116,4 @@ const changePassword = async (id, currentPassword, newPassword, requesterId) => 
   await user.save();
 };
 
-export { getUsers, getUserById, updateUser, deleteUser, changePassword };
+export { getUsers, getUserById, updateUser, deleteUser, changePassword, updateBankAccount };
