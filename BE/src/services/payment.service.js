@@ -1,8 +1,11 @@
+import { randomInt } from 'crypto';
 import mongoose from 'mongoose';
 import payos from '../config/payos.js';
 import ServiceOrder from '../models/service-order.model.js';
 import Booking from '../models/booking.model.js';
+import Subscription from '../models/subscription.model.js';
 import AppError from '../utils/app-error.js';
+import { activateSubscription } from './subscription.service.js';
 
 const PLATFORM_FEE_RATE = 0.10;
 const DEPOSIT_RATE      = 1;
@@ -34,7 +37,7 @@ const createServicePaymentLink = async (orderId, tenantId) => {
 
   await cancelOldPayosLink(order.paymentCode);
 
-  const orderCode = Date.now();
+  const orderCode = randomInt(1, 281474976710655);
 
   const response = await payos.paymentRequests.create({
     orderCode,
@@ -93,7 +96,7 @@ const createBookingPaymentLink = async (bookingId, tenantId) => {
   const depositAmount = booking.property.price * DEPOSIT_RATE;
   const firstMonth    = booking.property.price;
   const amount        = depositAmount + firstMonth;
-  const orderCode     = Date.now();
+  const orderCode     = randomInt(1, 281474976710655);
 
   const response = await payos.paymentRequests.create({
     orderCode,
@@ -162,7 +165,7 @@ const handleWebhook = async (body) => {
       // $ne filter + modifiedCount check = idempotent even under concurrent webhook calls
       const result = await ServiceOrder.updateOne(
         { _id: serviceOrder._id, paymentStatus: { $ne: 'paid' } },
-        { $set: { paymentStatus: 'paid', platformFee, providerPayout } },
+        { $set: { paymentStatus: 'paid', platformFee, providerPayout, payoutStatus: 'pending' } },
         { session },
       );
       await session.commitTransaction();
@@ -172,14 +175,26 @@ const handleWebhook = async (body) => {
 
     const booking = await Booking.findOne({ paymentCode: orderCode }).session(session);
     if (booking) {
+      // Fee chỉ tính trên firstMonth, không tính trên tiền cọc
+      const firstMonth     = booking.depositAmount; // DEPOSIT_RATE=1 → deposit = firstMonth
+      const platformFee    = Math.round(firstMonth * PLATFORM_FEE_RATE);
+      const landlordPayout = booking.depositAmount + firstMonth - platformFee;
       const result = await Booking.updateOne(
         { _id: booking._id, paymentStatus: { $ne: 'paid' } },
-        { $set: { paymentStatus: 'paid', paidDate: new Date() } },
+        { $set: { paymentStatus: 'paid', paidDate: new Date(), platformFee, landlordPayout, payoutStatus: 'pending' } },
         { session },
       );
       await session.commitTransaction();
       if (result.modifiedCount === 0) return { rspCode: '02', message: 'Already paid' };
       return { rspCode: '00', message: 'Booking payment confirmed' };
+    }
+
+    const subscription = await Subscription.findOne({ paymentCode: orderCode }).session(session);
+    if (subscription) {
+      const activated = await activateSubscription(orderCode, session);
+      await session.commitTransaction();
+      if (!activated) return { rspCode: '02', message: 'Subscription already activated' };
+      return { rspCode: '00', message: 'Subscription activated' };
     }
 
     await session.abortTransaction();
@@ -193,10 +208,63 @@ const handleWebhook = async (body) => {
   }
 };
 
+// ─── SUBSCRIPTION — Tạo link thanh toán ──────────────────────────────────────
+
+const createSubscriptionPaymentLink = async (subscriptionId, landlordId) => {
+  const sub = await Subscription.findOne({ _id: subscriptionId, landlord: landlordId })
+    .populate('plan')
+    .populate('landlord', 'name email phone');
+  if (!sub) throw new AppError('Subscription not found', 404);
+  if (sub.paymentStatus === 'paid')    throw new AppError('Subscription already paid', 400);
+  if (sub.status === 'cancelled')     throw new AppError('Subscription has been cancelled', 400);
+
+  const orderCode = randomInt(1, 281474976710655);
+
+  const response = await payos.paymentRequests.create({
+    orderCode,
+    amount:      sub.plan.price,
+    description: `SR-SUB-${sub.plan.slug.toUpperCase()}`.slice(0, 25),
+    returnUrl:   process.env.PAYOS_RETURN_URL,
+    cancelUrl:   process.env.PAYOS_CANCEL_URL,
+    expiredAt:   Math.floor(Date.now() / 1000) + 30 * 60,
+    buyerName:   sub.landlord.name,
+    buyerEmail:  sub.landlord.email,
+    buyerPhone:  sub.landlord.phone || undefined,
+    items: [{ name: sub.plan.name, quantity: 1, price: sub.plan.price }],
+  });
+
+  sub.paymentCode = orderCode;
+  await sub.save();
+
+  return { checkoutUrl: response.checkoutUrl, orderCode, amount: sub.plan.price };
+};
+
+// ─── SUBSCRIPTION — Kiểm tra trạng thái ──────────────────────────────────────
+
+const getSubscriptionPaymentStatus = async (subscriptionId, landlordId) => {
+  const sub = await Subscription.findOne({ _id: subscriptionId, landlord: landlordId })
+    .populate('plan');
+  if (!sub)             throw new AppError('Subscription not found', 404);
+  if (!sub.paymentCode) throw new AppError('Payment not initiated yet', 400);
+
+  const info = await payos.paymentRequests.get(sub.paymentCode);
+
+  return {
+    orderCode:     info.orderCode,
+    status:        info.status,
+    amount:        info.amount,
+    transactions:  info.transactions,
+    paymentStatus: sub.paymentStatus,
+    plan:          sub.plan,
+  };
+};
+
 export {
   createServicePaymentLink,
   getServicePaymentStatus,
   createBookingPaymentLink,
   getBookingPaymentStatus,
   handleWebhook,
+  createSubscriptionPaymentLink,
+  getSubscriptionPaymentStatus,
 };

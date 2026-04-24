@@ -1,5 +1,6 @@
 import Property from '../models/property.model.js';
 import AppError from '../utils/app-error.js';
+import { assertListingSlot, assertFeaturedSlot } from './subscription.service.js';
 
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -90,6 +91,8 @@ const getPropertyById = async (id) => {
 // ─── Create (goes live immediately) ─────────────────────────────────────────
 
 const createProperty = async (data, ownerId) => {
+  await assertListingSlot(ownerId);
+
   const {
     title, description, type, price, area,
     bedrooms, bathrooms,
@@ -122,8 +125,15 @@ const updateProperty = async (id, data, userId, userRole) => {
     if (data[field] !== undefined) property[field] = data[field];
   });
 
-  if (userRole === 'admin' && data.isFeatured !== undefined) {
-    property.isFeatured = data.isFeatured;
+  if (data.isFeatured !== undefined) {
+    if (userRole === 'admin') {
+      property.isFeatured = data.isFeatured;
+    } else if (userRole === 'landlord' && data.isFeatured === true) {
+      await assertFeaturedSlot(userId);
+      property.isFeatured = true;
+    } else if (userRole === 'landlord' && data.isFeatured === false) {
+      property.isFeatured = false;
+    }
   }
 
   await property.save();

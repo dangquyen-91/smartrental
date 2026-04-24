@@ -18,6 +18,8 @@ const serviceOrderSchema = new mongoose.Schema(
     paymentCode:       { type: Number, default: null },
     platformFee:       { type: Number, default: null },
     providerPayout:    { type: Number, default: null },
+    payoutStatus:      { type: String, enum: ['pending', 'paid'], default: null },
+    payoutDate:        { type: Date, default: null },
   },
   {
     timestamps: true,
@@ -37,6 +39,8 @@ const serviceOrderSchema = new mongoose.Schema(
         paymentCode:      ret.paymentCode,
         platformFee:      ret.platformFee,
         providerPayout:   ret.providerPayout,
+        payoutStatus:     ret.payoutStatus,
+        payoutDate:       ret.payoutDate,
         createdAt: ret.createdAt,
         updatedAt: ret.updatedAt,
       }),

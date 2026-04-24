@@ -7,6 +7,7 @@ import {
   getMyOrders,
   getProviderOrders,
   getAllOrders,
+  markPayout,
 } from '../controllers/service.controller.js';
 import { protect, authorizeRoles } from '../middleware/auth.middleware.js';
 import validate from '../middleware/validate.middleware.js';
@@ -44,6 +45,14 @@ router.patch(
   validate([mongoId('id')]),
   assignProviderValidation,
   assignProvider,
+);
+
+// Admin: xác nhận đã chuyển tiền cho provider
+router.patch(
+  '/order/:id/payout',
+  authorizeRoles('admin'),
+  validate([mongoId('id')]),
+  markPayout,
 );
 
 // Tenant / Landlord / Provider / Admin: cập nhật trạng thái (service layer enforce quyền)

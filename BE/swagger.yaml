@@ -34,6 +34,8 @@ tags:
     description: Dịch vụ đi kèm — danh mục dịch vụ, đặt dịch vụ, quản lý đơn
   - name: Payment
     description: Thanh toán qua PayOS — tạo link, webhook callback, kiểm tra trạng thái
+  - name: Subscriptions
+    description: Gói đăng ký cho chủ nhà — Free / Basic / Premium, thanh toán qua PayOS
 
 components:
 
@@ -439,6 +441,30 @@ components:
           nullable: true
           example: '2026-05-02T10:30:00.000Z'
           description: Thời điểm webhook PayOS xác nhận thanh toán thành công
+        platformFee:
+          type: number
+          nullable: true
+          example: 350000
+          description: Phí platform (10% firstMonth) — tính khi webhook xác nhận paid
+        landlordPayout:
+          type: number
+          nullable: true
+          example: 6650000
+          description: Số tiền chuyển cho landlord = depositAmount + firstMonth - platformFee
+        payoutStatus:
+          type: string
+          nullable: true
+          enum: [pending, paid]
+          example: pending
+          description: |
+            - **pending**: Đã thanh toán, chờ admin chuyển tiền cho landlord
+            - **paid**: Admin đã xác nhận chuyển tiền
+        payoutDate:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-05-03T08:00:00.000Z'
+          description: Thời điểm admin xác nhận đã chuyển tiền cho landlord
         createdAt:
           type: string
           format: date-time
@@ -872,6 +898,20 @@ components:
           nullable: true
           example: 135000
           description: Số tiền trả cho provider (90% price) — tính khi webhook xác nhận paid
+        payoutStatus:
+          type: string
+          nullable: true
+          enum: [pending, paid]
+          example: pending
+          description: |
+            - **pending**: Đã thanh toán, chờ admin chuyển tiền cho provider
+            - **paid**: Admin đã xác nhận chuyển tiền
+        payoutDate:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-05-03T08:00:00.000Z'
+          description: Thời điểm admin xác nhận đã chuyển tiền cho provider
         createdAt:
           type: string
           format: date-time
@@ -978,6 +1018,86 @@ components:
           items:
             type: string
           nullable: true
+
+    Plan:
+      type: object
+      description: Gói đăng ký cho chủ nhà
+      properties:
+        id:
+          $ref: '#/components/schemas/MongoId'
+        name:
+          type: string
+          enum: [Free, Basic, Premium]
+          example: Basic
+        slug:
+          type: string
+          enum: [free, basic, premium]
+          example: basic
+        price:
+          type: number
+          example: 199000
+          description: Giá VNĐ/tháng (0 = miễn phí)
+        durationDays:
+          type: integer
+          example: 30
+          description: Số ngày hiệu lực sau khi kích hoạt (0 = không hết hạn)
+        maxListings:
+          type: integer
+          example: 10
+          description: Số tin đăng tối đa đồng thời (-1 = không giới hạn)
+        maxFeatured:
+          type: integer
+          example: 2
+          description: Số tin nổi bật tối đa đồng thời (0 = không có)
+        includesContract:
+          type: boolean
+          example: true
+          description: true = soạn hợp đồng điện tử miễn phí
+        description:
+          type: string
+          nullable: true
+          example: Đăng tối đa 10 tin, 2 tin nổi bật, soạn hợp đồng điện tử
+
+    Subscription:
+      type: object
+      description: Gói đăng ký hiện tại của chủ nhà
+      properties:
+        id:
+          $ref: '#/components/schemas/MongoId'
+        landlord:
+          $ref: '#/components/schemas/MongoId'
+        plan:
+          $ref: '#/components/schemas/Plan'
+        status:
+          type: string
+          enum: [pending_payment, active, expired, cancelled]
+          example: active
+          description: |
+            - **pending_payment**: Đã chọn gói, chờ thanh toán
+            - **active**: Đang hoạt động
+            - **expired**: Hết hạn
+            - **cancelled**: Đã huỷ
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-05-01T00:00:00.000Z'
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-06-01T00:00:00.000Z'
+          description: null nếu gói Free (không hết hạn)
+        paymentStatus:
+          type: string
+          enum: [unpaid, paid]
+          example: paid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
   responses:
     Unauthorized:
@@ -3639,6 +3759,53 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  # ─── SERVICES — Mark Payout ───────────────────────────────────────────────────
+
+  /api/services/order/{id}/payout:
+    patch:
+      tags: [Services]
+      summary: Xác nhận đã chuyển tiền cho provider (admin only)
+      description: |
+        Admin xác nhận đã chuyển tiền thủ công cho provider sau khi tenant thanh toán.
+
+        **Điều kiện:**
+        - `paymentStatus` phải là `paid`
+        - `payoutStatus` chưa phải `paid`
+        - Provider phải đã cập nhật thông tin ngân hàng (`bankAccount.accountNumber`)
+
+        Sau khi gọi, `payoutStatus` chuyển thành `paid` và `payoutDate` được ghi nhận.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Đã xác nhận payout
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          order:
+                            $ref: '#/components/schemas/ServiceOrder'
+        '400':
+          description: Order chưa thanh toán / đã payout / provider chưa có STK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /api/roommates/request/{id}/cancel:
     patch:
       tags: [Roommates]
@@ -3669,6 +3836,310 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─── SUBSCRIPTIONS ────────────────────────────────────────────────────────────
+
+  /api/subscriptions/plans:
+    get:
+      tags: [Subscriptions]
+      summary: Danh sach goi dang ky (public)
+      description: |
+        Tra ve tat ca goi con hoat dong, sap xep theo gia tang dan.
+
+        | Goi | Gia | Tin dang | Tin noi bat | Hop dong |
+        |---|---|---|---|---|
+        | **Free** | 0d | 3 | 0 | x |
+        | **Basic** | 199.000d/30 ngay | 10 | 2 | v |
+        | **Premium** | 499.000d/30 ngay | Khong gioi han | 5 | v |
+      responses:
+        '200':
+          description: Danh sach goi
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          plans:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Plan'
+
+  /api/subscriptions/my:
+    get:
+      tags: [Subscriptions]
+      summary: Xem goi hien tai cua chu nha (landlord / admin)
+      description: |
+        Tra ve subscription dang **active** hoac **pending_payment**, cung voi `currentPlan`.
+        Neu chua mua goi nao thi `currentPlan` la Free (3 tin, khong noi bat, khong hop dong).
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Thong tin goi hien tai
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          subscription:
+                            nullable: true
+                            allOf:
+                              - $ref: '#/components/schemas/Subscription'
+                          currentPlan:
+                            $ref: '#/components/schemas/Plan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/subscriptions/subscribe/{planId}:
+    post:
+      tags: [Subscriptions]
+      summary: Dang ky goi (landlord only)
+      description: |
+        Tao Subscription o trang thai `pending_payment`.
+        Sau do goi `POST /api/payment/subscription/{subscriptionId}` de lay link PayOS.
+
+        Cac subscription `pending_payment` cu se tu dong bi **cancelled** khi tao moi.
+        **Khong ap dung cho goi Free** (goi Free khong can thanh toan).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          description: MongoDB ObjectId cua Plan
+          schema:
+            $ref: '#/components/schemas/MongoId'
+      responses:
+        '201':
+          description: Subscription tao thanh cong — chuyen sang buoc thanh toan
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          subscription:
+                            $ref: '#/components/schemas/Subscription'
+        '400':
+          description: Goi Free khong can thanh toan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─── PAYMENT — Subscription ───────────────────────────────────────────────────
+
+  /api/payment/subscription/{subscriptionId}:
+    post:
+      tags: [Payment]
+      summary: Tao link thanh toan goi dang ky (landlord only)
+      description: |
+        Tao PayOS payment link cho Subscription dang o `pending_payment`.
+
+        **Luong:**
+        1. POST /api/subscriptions/subscribe/:planId → tao subscription
+        2. POST /api/payment/subscription/:subscriptionId → lay `checkoutUrl`
+        3. Redirect landlord sang PayOS
+        4. Webhook → subscription `status: active`, set `startDate` + `endDate`
+
+        Link het han sau **30 phut**.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          description: MongoDB ObjectId cua Subscription
+          schema:
+            $ref: '#/components/schemas/MongoId'
+      responses:
+        '200':
+          description: Link thanh toan tao thanh cong
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          checkoutUrl:
+                            type: string
+                            format: uri
+                            example: https://pay.payos.vn/web/abc123
+                          orderCode:
+                            type: integer
+                            example: 4521890347
+                          amount:
+                            type: number
+                            example: 199000
+        '400':
+          description: Subscription da thanh toan hoac da cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/payment/subscription/{subscriptionId}/status:
+    get:
+      tags: [Payment]
+      summary: Kiem tra trang thai thanh toan goi (landlord only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          description: MongoDB ObjectId cua Subscription
+          schema:
+            $ref: '#/components/schemas/MongoId'
+      responses:
+        '200':
+          description: Trang thai thanh toan
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaymentStatus'
+                          - type: object
+                            properties:
+                              plan:
+                                $ref: '#/components/schemas/Plan'
+        '400':
+          description: Chua khoi tao thanh toan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─── BOOKING — Mark Payout ────────────────────────────────────────────────────
+
+  /api/bookings/{id}/payout:
+    patch:
+      tags: [Bookings]
+      summary: Xác nhận đã chuyển tiền cho landlord (admin only)
+      description: |
+        Admin xác nhận đã chuyển tiền thủ công cho landlord sau khi tenant thanh toán.
+
+        **Điều kiện:**
+        - `paymentStatus` phải là `paid`
+        - `payoutStatus` chưa phải `paid`
+        - Landlord phải đã cập nhật thông tin ngân hàng (`bankAccount.accountNumber`)
+
+        **Số tiền chuyển:** `landlordPayout = depositAmount + firstMonth - platformFee`
+        - `platformFee` = 10% × firstMonth (không tính tiền cọc)
+
+        Sau khi gọi, `payoutStatus` chuyển thành `paid` và `payoutDate` được ghi nhận.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Đã xác nhận payout
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          booking:
+                            $ref: '#/components/schemas/Booking'
+        '400':
+          description: Booking chưa thanh toán / đã payout / landlord chưa có STK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─── BOOKING — Mark Refunded ──────────────────────────────────────────────────
+
+  /api/bookings/{id}/mark-refunded:
+    patch:
+      tags: [Bookings]
+      summary: Đánh dấu booking đã hoàn tiền (admin only)
+      description: |
+        Admin xác nhận đã hoàn tiền thủ công cho tenant.
+
+        **Điều kiện:** booking phải có `status: cancelled` và `paymentStatus: paid`.
+
+        Sau khi gọi, `paymentStatus` chuyển thành `refunded`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Đã cập nhật paymentStatus = refunded
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          booking:
+                            $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':

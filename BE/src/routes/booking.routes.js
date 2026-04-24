@@ -10,6 +10,8 @@ import {
   cancelBooking,
   activateBooking,
   completeBooking,
+  markRefunded,
+  markBookingPayout,
 } from '../controllers/booking.controller.js';
 import { protect, authorizeRoles } from '../middleware/auth.middleware.js';
 import validate from '../middleware/validate.middleware.js';
@@ -55,5 +57,11 @@ router.put('/:id/complete', authorizeRoles('landlord', 'admin'), validate([mongo
 
 // Tenant / Landlord / Admin: cancel a booking
 router.put('/:id/cancel', authorizeRoles('tenant', 'landlord', 'admin'), validate([mongoId('id')]), cancelBookingValidation, cancelBooking);
+
+// Admin: mark a cancelled+paid booking as refunded
+router.patch('/:id/mark-refunded', authorizeRoles('admin'), validate([mongoId('id')]), markRefunded);
+
+// Admin: xác nhận đã chuyển tiền cho landlord
+router.patch('/:id/payout', authorizeRoles('admin'), validate([mongoId('id')]), markBookingPayout);
 
 export default router;

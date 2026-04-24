@@ -1,4 +1,5 @@
 import * as serviceService from '../services/service.service.js';
+
 import * as R from '../utils/response.js';
 
 const getServiceCatalog = async (_req, res, next) => {
@@ -69,6 +70,15 @@ const getAllOrders = async (req, res, next) => {
   }
 };
 
+const markPayout = async (req, res, next) => {
+  try {
+    const order = await serviceService.markPayout(req.params.id);
+    return R.success(res, { order }, 'Payout marked as paid');
+  } catch (err) {
+    next(err);
+  }
+};
+
 export {
   getServiceCatalog,
   createServiceOrder,
@@ -77,4 +87,5 @@ export {
   getMyOrders,
   getProviderOrders,
   getAllOrders,
+  markPayout,
 };

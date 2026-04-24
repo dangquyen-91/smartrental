@@ -87,7 +87,7 @@ const updateBankAccount = async (id, data, requesterId, requesterRole) => {
   if (!user) throw new AppError('User not found', 404);
 
   if (!['landlord', 'provider', 'admin'].includes(user.role)) {
-    throw new AppError('Only landlords and providers can register bank accounts', 403);
+    throw new AppError('Only registered users can set up bank accounts', 403);
   }
 
   const { bankName, accountNumber, accountName, branch } = data;
