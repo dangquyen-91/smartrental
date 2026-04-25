@@ -143,4 +143,37 @@ const verifyPhone = async (userId, otp) => {
   return { accessToken, refreshToken, user: user.toJSON() };
 };
 
-export { register, login, refresh, logout, getMe, requestLandlord, verifyPhone };
+const googleLogin = async (googleAccessToken) => {
+  const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: `Bearer ${googleAccessToken}` },
+  });
+  if (!res.ok) throw new AppError('Invalid Google token', 401);
+
+  const { email, name, picture } = await res.json();
+  if (!email) throw new AppError('Cannot get email from Google', 401);
+
+  let user = await User.findOne({ email });
+  if (!user) {
+    user = await User.create({
+      name,
+      email,
+      avatar: picture,
+      password: Math.random().toString(36) + Math.random().toString(36),
+      role: 'tenant',
+    });
+  }
+  if (!user.isActive) throw new AppError('Account is deactivated', 403);
+
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  return {
+    accessToken,
+    refreshToken,
+    user: { id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar },
+  };
+};
+
+export { register, login, refresh, logout, getMe, requestLandlord, verifyPhone, googleLogin };
