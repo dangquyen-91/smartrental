@@ -218,6 +218,8 @@ const createSubscriptionPaymentLink = async (subscriptionId, landlordId) => {
   if (sub.paymentStatus === 'paid')    throw new AppError('Subscription already paid', 400);
   if (sub.status === 'cancelled')     throw new AppError('Subscription has been cancelled', 400);
 
+  await cancelOldPayosLink(sub.paymentCode);
+
   const orderCode = randomInt(1, 281474976710655);
 
   const response = await payos.paymentRequests.create({
