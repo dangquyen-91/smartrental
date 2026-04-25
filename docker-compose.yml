@@ -2,20 +2,20 @@ services:
   # ─── Backend ──────────────────────────────────────────────────────────────
   be:
     build:
-      context: ./BE
+      context: ./backend
       target: ${NODE_ENV:-development}
     container_name: smartrental-be
     restart: unless-stopped
     env_file:
-      - ./BE/.env
+      - ./backend/.env
     environment:
       - NODE_ENV=${NODE_ENV:-development}
     ports:
       - "${PORT:-5000}:5000"
     volumes:
       # hot-reload in dev: mount source, exclude node_modules
-      - ./BE/src:/app/src
-      - ./BE/swagger.yaml:/app/swagger.yaml
+      - ./backend/src:/app/src
+      - ./backend/swagger.yaml:/app/swagger.yaml
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:5000/health"]
       interval: 15s
