@@ -218,6 +218,29 @@ const getAllOrders = async ({ status, type, page = 1, limit = 10 }) => {
   };
 };
 
+// ─── Mark Payout (admin only) ─────────────────────────────────────────────────
+
+const markPayout = async (id) => {
+  const order = await ServiceOrder.findById(id);
+  if (!order) throw new AppError('Service order not found', 404);
+
+  if (order.paymentStatus !== 'paid') {
+    throw new AppError('Order has not been paid yet', 400);
+  }
+  if (order.payoutStatus === 'paid') {
+    throw new AppError('Payout already marked as paid', 400);
+  }
+  if (!order.assignedProvider) {
+    throw new AppError('No provider assigned to this order', 400);
+  }
+
+  order.payoutStatus = 'paid';
+  order.payoutDate   = new Date();
+  await order.save();
+
+  return order.populate('assignedProvider', 'name email phone avatar');
+};
+
 export {
   getServiceCatalog,
   createServiceOrder,
@@ -226,4 +249,5 @@ export {
   getMyOrders,
   getProviderOrders,
   getAllOrders,
+  markPayout,
 };

@@ -78,6 +78,15 @@ const cancelBooking = async (req, res, next) => {
   }
 };
 
+const markRefunded = async (req, res, next) => {
+  try {
+    const booking = await bookingService.markRefunded(req.params.id);
+    return R.success(res, { booking }, 'Booking marked as refunded');
+  } catch (err) {
+    next(err);
+  }
+};
+
 const activateBooking = async (req, res, next) => {
   try {
     const booking = await bookingService.activateBooking(req.params.id, req.user.id, req.user.role);
@@ -96,6 +105,15 @@ const completeBooking = async (req, res, next) => {
   }
 };
 
+const markBookingPayout = async (req, res, next) => {
+  try {
+    const booking = await bookingService.markBookingPayout(req.params.id);
+    return R.success(res, { booking }, 'Booking payout marked as paid');
+  } catch (err) {
+    next(err);
+  }
+};
+
 export {
   createBooking,
   getAllBookings,
@@ -107,4 +125,6 @@ export {
   cancelBooking,
   activateBooking,
   completeBooking,
+  markRefunded,
+  markBookingPayout,
 };

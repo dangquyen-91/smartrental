@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import Booking from '../models/booking.model.js';
 import Property from '../models/property.model.js';
+import User from '../models/user.model.js';
 import AppError from '../utils/app-error.js';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -332,6 +333,52 @@ const activateBooking = async (id, userId, userRole) => {
   }
 };
 
+// ─── Mark Refunded (admin) ───────────────────────────────────────────────────
+
+const markRefunded = async (bookingId) => {
+  const booking = await Booking.findById(bookingId);
+  if (!booking) throw new AppError('Booking not found', 404);
+
+  if (booking.status !== 'cancelled') {
+    throw new AppError('Booking must be cancelled before marking as refunded', 400);
+  }
+  if (booking.paymentStatus !== 'paid') {
+    throw new AppError('Booking has not been paid', 400);
+  }
+  if (booking.paymentStatus === 'refunded') {
+    throw new AppError('Booking is already marked as refunded', 400);
+  }
+
+  booking.paymentStatus = 'refunded';
+  await booking.save();
+  return booking;
+};
+
+// ─── Mark Booking Payout (admin) ─────────────────────────────────────────────
+
+const markBookingPayout = async (bookingId) => {
+  const booking = await Booking.findById(bookingId);
+  if (!booking) throw new AppError('Booking not found', 404);
+
+  if (booking.paymentStatus !== 'paid') {
+    throw new AppError('Booking has not been paid yet', 400);
+  }
+  if (booking.payoutStatus === 'paid') {
+    throw new AppError('Payout already marked as paid', 400);
+  }
+
+  const landlord = await User.findById(booking.landlord).select('bankAccount');
+  if (!landlord?.bankAccount?.accountNumber) {
+    throw new AppError('Landlord has not set up bank account yet', 400);
+  }
+
+  booking.payoutStatus = 'paid';
+  booking.payoutDate   = new Date();
+  await booking.save();
+
+  return booking;
+};
+
 export {
   createBooking,
   getAllBookings,
@@ -343,4 +390,6 @@ export {
   cancelBooking,
   completeBooking,
   activateBooking,
+  markRefunded,
+  markBookingPayout,
 };
