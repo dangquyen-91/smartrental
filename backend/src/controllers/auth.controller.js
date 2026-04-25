@@ -1,6 +1,15 @@
 import * as authService from '../services/auth.service.js';
 import * as R from '../utils/response.js';
 
+const googleLogin = async (req, res, next) => {
+  try {
+    const data = await authService.googleLogin(req.body.googleAccessToken);
+    return R.success(res, data, 'Google login successful');
+  } catch (err) {
+    next(err);
+  }
+};
+
 const register = async (req, res, next) => {
   try {
     const data = await authService.register(req.body);
@@ -64,4 +73,4 @@ const verifyPhone = async (req, res, next) => {
   }
 };
 
-export { register, login, refreshToken, logout, getMe, requestLandlord, verifyPhone };
+export { register, login, refreshToken, logout, getMe, requestLandlord, verifyPhone, googleLogin };
