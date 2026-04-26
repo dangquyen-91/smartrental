@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,24 +21,24 @@ const schema = z.object({
 });
 type FormData = z.infer<typeof schema>;
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Sau login → quay lại trang trước, hoặc về home
+  const from = searchParams.get('from') ?? '/';
   const setAuth = useAuthStore((s) => s.setAuth);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  const { register, handleSubmit, formState: { errors, isSubmitting } } =
+    useForm<FormData>({ resolver: zodResolver(schema) });
 
   const onSubmit = async ({ email, password }: FormData) => {
     try {
       setError('');
       const data = await loginApi(email, password);
       setAuth(data.user as unknown as User, data.accessToken, data.refreshToken);
-      router.push('/');
+      router.push(from);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Email hoặc mật khẩu không đúng.');
@@ -52,7 +52,7 @@ export default function LoginPage() {
         <p className="text-sm font-medium text-[#6a6a6a] mt-1">Đăng nhập để tiếp tục</p>
       </div>
 
-      <GoogleButton onError={setError} />
+      <GoogleButton redirectTo={from} onError={setError} />
 
       <div className="flex items-center gap-3">
         <Separator className="flex-1" />
@@ -62,9 +62,7 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-sm font-semibold text-[#222222]">
-            Email
-          </Label>
+          <Label htmlFor="email" className="text-sm font-semibold text-[#222222]">Email</Label>
           <Input
             id="email"
             type="email"
@@ -72,20 +70,13 @@ export default function LoginPage() {
             className="h-12 border-[#dddddd] focus-visible:border-[#222222] focus-visible:ring-2 focus-visible:ring-[#222222]/20 text-[#222222] placeholder:text-[#929292]"
             {...register('email')}
           />
-          {errors.email && (
-            <p className="text-xs font-medium text-[#c13515]">{errors.email.message}</p>
-          )}
+          {errors.email && <p className="text-xs font-medium text-[#c13515]">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-sm font-semibold text-[#222222]">
-              Mật khẩu
-            </Label>
-            <Link
-              href="/forgot-password"
-              className="text-xs font-medium text-[#222222] underline underline-offset-2 hover:text-[#ff385c] transition-colors"
-            >
+            <Label htmlFor="password" className="text-sm font-semibold text-[#222222]">Mật khẩu</Label>
+            <Link href="/forgot-password" className="text-xs font-medium text-[#222222] underline underline-offset-2 hover:text-[#ff385c] transition-colors">
               Quên mật khẩu?
             </Link>
           </div>
@@ -105,9 +96,7 @@ export default function LoginPage() {
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-          {errors.password && (
-            <p className="text-xs font-medium text-[#c13515]">{errors.password.message}</p>
-          )}
+          {errors.password && <p className="text-xs font-medium text-[#c13515]">{errors.password.message}</p>}
         </div>
 
         {error && (
@@ -116,7 +105,6 @@ export default function LoginPage() {
           </p>
         )}
 
-        {/* Primary CTA — Rausch #ff385c, native button to avoid CVA conflicts */}
         <button
           type="submit"
           disabled={isSubmitting}
@@ -128,13 +116,18 @@ export default function LoginPage() {
 
       <p className="text-center text-sm font-medium text-[#6a6a6a]">
         Chưa có tài khoản?{' '}
-        <Link
-          href="/register"
-          className="text-[#222222] font-semibold underline underline-offset-2 hover:text-[#ff385c] transition-colors"
-        >
+        <Link href="/register" className="text-[#222222] font-semibold underline underline-offset-2 hover:text-[#ff385c] transition-colors">
           Đăng ký ngay
         </Link>
       </p>
     </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

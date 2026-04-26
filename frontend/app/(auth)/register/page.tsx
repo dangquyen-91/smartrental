@@ -13,17 +13,14 @@ import { Separator } from '@/components/ui/separator';
 import GoogleButton from '@/components/shared/google-button';
 import { useAuthStore } from '@/stores/auth.store';
 import { registerApi } from '@/lib/api/auth.api';
+import { cn } from '@/lib/utils';
 import type { User } from '@/types';
 
 const schema = z
   .object({
     name: z.string().min(2, 'Tên ít nhất 2 ký tự'),
     email: z.string().email('Email không hợp lệ'),
-    phone: z
-      .string()
-      .regex(/^(0|\+84)\d{9}$/, 'Số điện thoại không hợp lệ')
-      .optional()
-      .or(z.literal('')),
+    phone: z.string().refine((v) => !v || /^(0|\+84)\d{9}$/.test(v), 'Số điện thoại không hợp lệ').optional().or(z.literal('')),
     password: z.string().min(6, 'Mật khẩu ít nhất 6 ký tự'),
     confirmPassword: z.string(),
   })
@@ -33,6 +30,7 @@ const schema = z
   });
 
 type FormData = z.infer<typeof schema>;
+type Role = 'tenant' | 'landlord';
 
 const inputClass =
   'h-12 border-[#dddddd] focus-visible:border-[#222222] focus-visible:ring-2 focus-visible:ring-[#222222]/20 text-[#222222] placeholder:text-[#929292]';
@@ -40,21 +38,20 @@ const inputClass =
 export default function RegisterPage() {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const [role, setRole] = useState<Role>('tenant');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  const { register, handleSubmit, formState: { errors, isSubmitting } } =
+    useForm<FormData>({ resolver: zodResolver(schema) });
 
   const onSubmit = async ({ name, email, phone, password }: FormData) => {
     try {
       setError('');
-      const data = await registerApi({ name, email, password, phone: phone || undefined });
+      const data = await registerApi({ name, email, password, phone: phone || undefined, role });
       setAuth(data.user as unknown as User, data.accessToken, data.refreshToken);
-      router.push('/');
+      // Tenant → về home, Landlord → vào hosting ngay
+      router.push(role === 'landlord' ? '/hosting' : '/');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Đăng ký thất bại, vui lòng thử lại.');
@@ -68,7 +65,26 @@ export default function RegisterPage() {
         <p className="text-sm font-medium text-[#6a6a6a] mt-1">Bắt đầu tìm nhà trọ ngay hôm nay</p>
       </div>
 
-      <GoogleButton onError={setError} />
+      {/* Role toggle — minimal */}
+      <div className="flex items-center bg-[#f7f7f7] rounded-[10px] p-1 gap-1">
+        {(['tenant', 'landlord'] as Role[]).map((r) => (
+          <button
+            key={r}
+            type="button"
+            onClick={() => setRole(r)}
+            className={cn(
+              'flex-1 py-2 text-sm font-semibold rounded-[8px] transition-all',
+              role === r
+                ? 'bg-white text-[#222222] shadow-sm'
+                : 'text-[#6a6a6a] hover:text-[#222222]',
+            )}
+          >
+            {r === 'tenant' ? 'Tìm phòng thuê' : 'Cho thuê nhà'}
+          </button>
+        ))}
+      </div>
+
+      <GoogleButton redirectTo={role === 'landlord' ? '/hosting' : '/'} onError={setError} />
 
       <div className="flex items-center gap-3">
         <Separator className="flex-1" />
@@ -78,46 +94,27 @@ export default function RegisterPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="name" className="text-sm font-semibold text-[#222222]">
-            Họ và tên
-          </Label>
+          <Label htmlFor="name" className="text-sm font-semibold text-[#222222]">Họ và tên</Label>
           <Input id="name" placeholder="Nguyễn Văn A" className={inputClass} {...register('name')} />
           {errors.name && <p className="text-xs font-medium text-[#c13515]">{errors.name.message}</p>}
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-sm font-semibold text-[#222222]">
-            Email
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            className={inputClass}
-            {...register('email')}
-          />
+          <Label htmlFor="email" className="text-sm font-semibold text-[#222222]">Email</Label>
+          <Input id="email" type="email" placeholder="you@example.com" className={inputClass} {...register('email')} />
           {errors.email && <p className="text-xs font-medium text-[#c13515]">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="phone" className="text-sm font-semibold text-[#222222]">
-            Số điện thoại{' '}
-            <span className="text-[#929292] font-normal">(tuỳ chọn)</span>
+            Số điện thoại <span className="text-[#929292] font-normal">(tuỳ chọn)</span>
           </Label>
-          <Input
-            id="phone"
-            type="tel"
-            placeholder="0912 345 678"
-            className={inputClass}
-            {...register('phone')}
-          />
+          <Input id="phone" type="tel" placeholder="0912 345 678" className={inputClass} {...register('phone')} />
           {errors.phone && <p className="text-xs font-medium text-[#c13515]">{errors.phone.message}</p>}
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="password" className="text-sm font-semibold text-[#222222]">
-            Mật khẩu
-          </Label>
+          <Label htmlFor="password" className="text-sm font-semibold text-[#222222]">Mật khẩu</Label>
           <div className="relative">
             <Input
               id="password"
@@ -134,25 +131,13 @@ export default function RegisterPage() {
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-          {errors.password && (
-            <p className="text-xs font-medium text-[#c13515]">{errors.password.message}</p>
-          )}
+          {errors.password && <p className="text-xs font-medium text-[#c13515]">{errors.password.message}</p>}
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="confirmPassword" className="text-sm font-semibold text-[#222222]">
-            Xác nhận mật khẩu
-          </Label>
-          <Input
-            id="confirmPassword"
-            type="password"
-            placeholder="Nhập lại mật khẩu"
-            className={inputClass}
-            {...register('confirmPassword')}
-          />
-          {errors.confirmPassword && (
-            <p className="text-xs font-medium text-[#c13515]">{errors.confirmPassword.message}</p>
-          )}
+          <Label htmlFor="confirmPassword" className="text-sm font-semibold text-[#222222]">Xác nhận mật khẩu</Label>
+          <Input id="confirmPassword" type="password" placeholder="Nhập lại mật khẩu" className={inputClass} {...register('confirmPassword')} />
+          {errors.confirmPassword && <p className="text-xs font-medium text-[#c13515]">{errors.confirmPassword.message}</p>}
         </div>
 
         {error && (
@@ -161,7 +146,6 @@ export default function RegisterPage() {
           </p>
         )}
 
-        {/* Primary CTA — Rausch #ff385c */}
         <button
           type="submit"
           disabled={isSubmitting}
@@ -170,26 +154,17 @@ export default function RegisterPage() {
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Tạo tài khoản'}
         </button>
 
-        {/* Legal links use Info Blue per DESIGN.md */}
         <p className="text-xs text-center text-[#929292]">
           Bằng cách đăng ký, bạn đồng ý với{' '}
-          <Link href="/terms" className="text-[#428bff] hover:underline">
-            Điều khoản dịch vụ
-          </Link>{' '}
-          và{' '}
-          <Link href="/privacy" className="text-[#428bff] hover:underline">
-            Chính sách bảo mật
-          </Link>
-          .
+          <Link href="/terms" className="text-[#428bff] hover:underline">Điều khoản dịch vụ</Link>
+          {' '}và{' '}
+          <Link href="/privacy" className="text-[#428bff] hover:underline">Chính sách bảo mật</Link>.
         </p>
       </form>
 
       <p className="text-center text-sm font-medium text-[#6a6a6a]">
         Đã có tài khoản?{' '}
-        <Link
-          href="/login"
-          className="text-[#222222] font-semibold underline underline-offset-2 hover:text-[#ff385c] transition-colors"
-        >
+        <Link href="/login" className="text-[#222222] font-semibold underline underline-offset-2 hover:text-[#ff385c] transition-colors">
           Đăng nhập
         </Link>
       </p>
