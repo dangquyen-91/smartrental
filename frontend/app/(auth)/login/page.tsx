@@ -66,6 +66,7 @@ function LoginForm() {
           <Input
             id="email"
             type="email"
+            autoComplete="email"
             placeholder="you@example.com"
             className="h-12 border-[#dddddd] focus-visible:border-[#222222] focus-visible:ring-2 focus-visible:ring-[#222222]/20 text-[#222222] placeholder:text-[#929292]"
             {...register('email')}
@@ -84,6 +85,7 @@ function LoginForm() {
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
               placeholder="Ít nhất 6 ký tự"
               className="h-12 pr-10 border-[#dddddd] focus-visible:border-[#222222] focus-visible:ring-2 focus-visible:ring-[#222222]/20 text-[#222222] placeholder:text-[#929292]"
               {...register('password')}
@@ -126,7 +128,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<div className="space-y-6 animate-pulse"><div className="h-8 bg-[#f7f7f7] rounded-lg w-48" /><div className="h-14 bg-[#f7f7f7] rounded-xl" /><div className="h-14 bg-[#f7f7f7] rounded-xl" /></div>}>
       <LoginForm />
     </Suspense>
   );

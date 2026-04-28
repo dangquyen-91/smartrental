@@ -36,3 +36,11 @@ export const getMeApi = async (): Promise<User> => {
   const { data } = await api.get<ApiResponse<{ user: User }>>('/auth/me');
   return data.data.user;
 };
+
+export const requestLandlordApi = async (): Promise<void> => {
+  await api.post('/auth/request-landlord');
+};
+
+export const verifyPhoneApi = async (otp: string): Promise<void> => {
+  await api.post('/auth/verify-phone', { otp });
+};

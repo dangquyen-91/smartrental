@@ -7,13 +7,15 @@ interface AuthStore {
   accessToken: string | null;
   refreshToken: string | null;
   setAuth: (user: User, accessToken: string, refreshToken: string) => void;
+  setUser: (user: User) => void;
   setAccessToken: (token: string) => void;
   clearAuth: () => void;
 }
 
 function setSessionCookie() {
   if (typeof document !== 'undefined') {
-    document.cookie = 'has_session=1; path=/; max-age=2592000; SameSite=Lax';
+    const secure = location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `has_session=1; path=/; max-age=2592000; SameSite=Lax${secure}`;
   }
 }
 
@@ -33,6 +35,7 @@ export const useAuthStore = create<AuthStore>()(
         setSessionCookie();
         set({ user, accessToken, refreshToken });
       },
+      setUser: (user) => set({ user }),
       setAccessToken: (token) => set({ accessToken: token }),
       clearAuth: () => {
         clearSessionCookie();
