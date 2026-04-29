@@ -17,6 +17,7 @@ export const registerApi = async (payload: {
   email: string;
   password: string;
   phone?: string;
+  role?: 'tenant' | 'landlord';
 }): Promise<AuthData> => {
   const { data } = await api.post<ApiResponse<AuthData>>('/auth/register', payload);
   return data.data;
@@ -34,4 +35,12 @@ export const logoutApi = async (): Promise<void> => {
 export const getMeApi = async (): Promise<User> => {
   const { data } = await api.get<ApiResponse<{ user: User }>>('/auth/me');
   return data.data.user;
+};
+
+export const requestLandlordApi = async (): Promise<void> => {
+  await api.post('/auth/request-landlord');
+};
+
+export const verifyPhoneApi = async (otp: string): Promise<void> => {
+  await api.post('/auth/verify-phone', { otp });
 };

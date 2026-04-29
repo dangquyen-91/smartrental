@@ -61,7 +61,8 @@ router.put('/:id/cancel', authorizeRoles('tenant', 'landlord', 'admin'), validat
 // Admin: mark a cancelled+paid booking as refunded
 router.patch('/:id/mark-refunded', authorizeRoles('admin'), validate([mongoId('id')]), markRefunded);
 
-// Admin: xác nhận đã chuyển tiền cho landlord
+// Admin: xác nhận đã chuyển 90% cho landlord
 router.patch('/:id/payout', authorizeRoles('admin'), validate([mongoId('id')]), markBookingPayout);
+
 
 export default router;

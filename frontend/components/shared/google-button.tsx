@@ -31,9 +31,11 @@ const GoogleIcon = () => (
 
 interface GoogleButtonProps {
   onError?: (msg: string) => void;
+  redirectTo?: string;
+  onSuccess?: (data: { user: { id: string }; accessToken: string; refreshToken: string }) => Promise<void> | void;
 }
 
-export default function GoogleButton({ onError }: GoogleButtonProps) {
+export default function GoogleButton({ onError, redirectTo = '/', onSuccess }: GoogleButtonProps) {
   const [loading, setLoading] = useState(false);
   const setAuth = useAuthStore((s) => s.setAuth);
   const router = useRouter();
@@ -44,9 +46,14 @@ export default function GoogleButton({ onError }: GoogleButtonProps) {
         setLoading(true);
         const data = await googleLoginApi(tokenResponse.access_token);
         setAuth(data.user as unknown as User, data.accessToken, data.refreshToken);
-        router.push('/');
-      } catch {
-        onError?.('Đăng nhập Google thất bại, vui lòng thử lại.');
+        if (onSuccess) {
+          await onSuccess(data as unknown as { user: { id: string }; accessToken: string; refreshToken: string });
+        } else {
+          router.push(redirectTo);
+        }
+      } catch (err: unknown) {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        onError?.(msg || 'Đăng nhập Google thất bại, vui lòng thử lại.');
       } finally {
         setLoading(false);
       }

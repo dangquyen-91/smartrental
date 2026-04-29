@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth.store';
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 30000,
 });
 
 api.interceptors.request.use((config) => {
@@ -48,8 +49,9 @@ api.interceptors.response.use(
 
     try {
       const { data } = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh-token`,
         { refreshToken },
+        { timeout: 10000 },
       );
       const newToken: string = data.data.accessToken;
       setAccessToken(newToken);

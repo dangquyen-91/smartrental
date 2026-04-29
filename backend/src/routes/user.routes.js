@@ -11,7 +11,7 @@ router.get('/', protect, authorizeRoles('admin'), getUsersValidation, getUsers);
 router.get('/:id', protect, validate([mongoId('id')]), getUserById);
 router.put('/:id', protect, updateUserValidation, updateUser);
 router.put('/:id/password', protect, changePasswordValidation, changePassword);
-router.put('/:id/bank-account', protect, authorizeRoles('landlord', 'provider', 'admin'), updateBankAccountValidation, updateBankAccount);
+router.put('/:id/bank-account', protect, authorizeRoles('tenant', 'landlord', 'provider', 'admin'), updateBankAccountValidation, updateBankAccount);
 router.delete('/:id', protect, authorizeRoles('admin'), validate([mongoId('id')]), deleteUser);
 
 export default router;

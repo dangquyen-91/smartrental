@@ -8,7 +8,6 @@ import AppError from '../utils/app-error.js';
 import { activateSubscription } from './subscription.service.js';
 
 const PLATFORM_FEE_RATE = 0.10;
-const DEPOSIT_RATE      = 1;
 
 const calcFees = (price) => ({
   platformFee:    Math.round(price * PLATFORM_FEE_RATE),
@@ -93,14 +92,14 @@ const createBookingPaymentLink = async (bookingId, tenantId) => {
 
   await cancelOldPayosLink(booking.paymentCode);
 
-  const depositAmount = booking.property.price * DEPOSIT_RATE;
   const firstMonth    = booking.property.price;
-  const amount        = depositAmount + firstMonth;
+  const platformFee   = Math.round(firstMonth * PLATFORM_FEE_RATE);
+  const landlordPayout = firstMonth - platformFee;
   const orderCode     = randomInt(1, 281474976710655);
 
   const response = await payos.paymentRequests.create({
     orderCode,
-    amount,
+    amount:      firstMonth,
     description: 'SR-BOOKING',
     returnUrl:   process.env.PAYOS_RETURN_URL,
     cancelUrl:   process.env.PAYOS_CANCEL_URL,
@@ -108,17 +107,15 @@ const createBookingPaymentLink = async (bookingId, tenantId) => {
     buyerName:   booking.tenant.name,
     buyerEmail:  booking.tenant.email,
     buyerPhone:  booking.tenant.phone || undefined,
-    items: [
-      { name: 'Tien coc',       quantity: 1, price: depositAmount },
-      { name: 'Thang dau tien', quantity: 1, price: firstMonth },
-    ],
+    items: [{ name: 'Thang dau tien', quantity: 1, price: firstMonth }],
   });
 
   booking.paymentCode   = orderCode;
-  booking.depositAmount = depositAmount;
+  booking.platformFee   = platformFee;
+  booking.landlordPayout = landlordPayout;
   await booking.save();
 
-  return { checkoutUrl: response.checkoutUrl, orderCode, amount, depositAmount, firstMonth };
+  return { checkoutUrl: response.checkoutUrl, orderCode, amount: firstMonth, platformFee, landlordPayout };
 };
 
 // ─── BOOKING — Kiểm tra trạng thái ───────────────────────────────────────────
@@ -131,12 +128,13 @@ const getBookingPaymentStatus = async (bookingId, tenantId) => {
   const info = await payos.paymentRequests.get(booking.paymentCode);
 
   return {
-    orderCode:     info.orderCode,
-    status:        info.status,
-    amount:        info.amount,
-    transactions:  info.transactions,
-    paymentStatus: booking.paymentStatus,
-    depositAmount: booking.depositAmount,
+    orderCode:      info.orderCode,
+    status:         info.status,
+    amount:         info.amount,
+    transactions:   info.transactions,
+    paymentStatus:  booking.paymentStatus,
+    platformFee:    booking.platformFee,
+    landlordPayout: booking.landlordPayout,
   };
 };
 
@@ -175,13 +173,9 @@ const handleWebhook = async (body) => {
 
     const booking = await Booking.findOne({ paymentCode: orderCode }).session(session);
     if (booking) {
-      // Fee chỉ tính trên firstMonth, không tính trên tiền cọc
-      const firstMonth     = booking.depositAmount; // DEPOSIT_RATE=1 → deposit = firstMonth
-      const platformFee    = Math.round(firstMonth * PLATFORM_FEE_RATE);
-      const landlordPayout = booking.depositAmount + firstMonth - platformFee;
       const result = await Booking.updateOne(
         { _id: booking._id, paymentStatus: { $ne: 'paid' } },
-        { $set: { paymentStatus: 'paid', paidDate: new Date(), platformFee, landlordPayout, payoutStatus: 'pending' } },
+        { $set: { paymentStatus: 'paid', paidDate: new Date(), payoutStatus: 'pending' } },
         { session },
       );
       await session.commitTransaction();
