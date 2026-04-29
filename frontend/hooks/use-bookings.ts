@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   getMyBookingsApi,
   getLandlordBookingsApi,
@@ -10,6 +11,7 @@ import {
   activateBookingApi,
   type CreateBookingPayload,
 } from "@/lib/api/bookings.api";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { type Booking } from "@/types";
 
 export const bookingKeys = {
@@ -45,6 +47,7 @@ export function useCreateBooking() {
   return useMutation({
     mutationFn: (data: CreateBookingPayload) => createBookingApi(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["bookings"] }),
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể tạo yêu cầu đặt phòng.')),
   });
 }
 
@@ -53,6 +56,7 @@ export function useConfirmBooking() {
   return useMutation({
     mutationFn: confirmBookingApi,
     onSuccess: () => qc.invalidateQueries({ queryKey: ["bookings"] }),
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể xác nhận đặt phòng.')),
   });
 }
 
@@ -61,6 +65,7 @@ export function useRejectBooking() {
   return useMutation({
     mutationFn: rejectBookingApi,
     onSuccess: () => qc.invalidateQueries({ queryKey: ["bookings"] }),
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể từ chối đặt phòng.')),
   });
 }
 
@@ -69,6 +74,7 @@ export function useCancelBooking() {
   return useMutation({
     mutationFn: cancelBookingApi,
     onSuccess: () => qc.invalidateQueries({ queryKey: ["bookings"] }),
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể huỷ đặt phòng.')),
   });
 }
 
@@ -77,5 +83,6 @@ export function useActivateBooking() {
   return useMutation({
     mutationFn: activateBookingApi,
     onSuccess: () => qc.invalidateQueries({ queryKey: ["bookings"] }),
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể kích hoạt đặt phòng.')),
   });
 }

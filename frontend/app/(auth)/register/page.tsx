@@ -23,8 +23,8 @@ import type { User } from '@/types';
 const formSchema = z
   .object({
     name: z.string().min(2, 'Tên ít nhất 2 ký tự'),
-    email: z.string().email('Email không hợp lệ'),
-    phone: z.string().regex(/^(0|\+84)\d{9}$/, 'Số điện thoại không hợp lệ'),
+    email: z.email('Email không hợp lệ'),
+    phone: z.string().refine((v) => /^(0|\+84)\d{9}$/.test(v), 'Số điện thoại không hợp lệ'),
     password: z.string().min(6, 'Mật khẩu ít nhất 6 ký tự'),
     confirmPassword: z.string(),
   })
@@ -36,7 +36,7 @@ const formSchema = z
 const tenantFormSchema = z
   .object({
     name: z.string().min(2, 'Tên ít nhất 2 ký tự'),
-    email: z.string().email('Email không hợp lệ'),
+    email: z.email('Email không hợp lệ'),
     phone: z
       .string()
       .refine((v) => !v || /^(0|\+84)\d{9}$/.test(v), 'Số điện thoại không hợp lệ')
@@ -173,7 +173,7 @@ export default function RegisterPage() {
   const bankForm = useForm<BankData>({ resolver: zodResolver(bankSchema) });
 
   const handleBankSubmit = async (values: BankData) => {
-    const id = userId || user?._id;
+    const id = userId || user?.id;
     if (!id) {
       setError('Không thể xác định tài khoản. Vui lòng thử lại.');
       return;
@@ -416,8 +416,8 @@ function FormFields({
   showPassword,
   onTogglePassword,
 }: {
-  register: UseFormRegister<LandlordData> | UseFormRegister<TenantData>;
-  errors: FieldErrors<LandlordData> | FieldErrors<TenantData>;
+  register: UseFormRegister<FormData> | UseFormRegister<TenantFormData>;
+  errors: FieldErrors<FormData> | FieldErrors<TenantFormData>;
   phoneRequired: boolean;
   showPassword: boolean;
   onTogglePassword: () => void;

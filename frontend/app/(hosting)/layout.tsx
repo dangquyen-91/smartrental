@@ -7,20 +7,25 @@ import HostingSidebar from '@/components/layout/hosting-sidebar';
 import AppNavbar from '@/components/layout/app-navbar';
 
 export default function HostingLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLandlord, isAdmin } = useAuth();
+  const { isAuthenticated, isLandlord, isAdmin, hasHydrated } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
+    if (!hasHydrated) return;
     if (!isAuthenticated) { router.replace('/login'); return; }
     if (!isLandlord && !isAdmin) router.replace('/');
-  }, [isAuthenticated, isLandlord, isAdmin, router]);
+  }, [hasHydrated, isAuthenticated, isLandlord, isAdmin, router]);
 
-  if (!isAuthenticated || (!isLandlord && !isAdmin)) {
+  if (!hasHydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-[#ff385c] border-t-transparent rounded-full animate-spin" />
       </div>
     );
+  }
+
+  if (!isAuthenticated || (!isLandlord && !isAdmin)) {
+    return null;
   }
 
   return (

@@ -1,5 +1,5 @@
 export interface User {
-  _id: string;
+  id: string;
   name: string;
   email: string;
   phone?: string;
@@ -31,28 +31,44 @@ export interface PaginatedResponse<T> {
   };
 }
 
+export interface PropertyImage {
+  url: string;
+  isPrimary: boolean;
+}
+
 export interface Property {
-  _id: string;
+  id: string;
   title: string;
+  description?: string;
   type: 'room' | 'apartment' | 'house' | 'studio';
   status: 'available' | 'rented' | 'maintenance';
   price: number;
+  pricePerM2?: number;
   area: number;
+  bedrooms?: number;
+  bathrooms?: number;
   address: {
-    street: string;
-    ward: string;
+    street?: string;
+    ward?: string;
     district: string;
     city: string;
+    fullAddress?: string;
   };
   amenities: string[];
-  images: string[];
+  images: PropertyImage[];
   owner: User | string;
+  contact?: {
+    name: string;
+    phone: string;
+  };
+  views?: number;
   isFeatured: boolean;
+  isActive?: boolean;
   createdAt: string;
 }
 
 export interface Booking {
-  _id: string;
+  id: string;
   property: Property | string;
   tenant: User | string;
   landlord: User | string;
@@ -68,7 +84,7 @@ export interface Booking {
 }
 
 export interface ServiceOrder {
-  _id: string;
+  id: string;
   tenant: User | string;
   property: Property | string;
   type: 'cleaning' | 'repair' | 'wifi' | 'moving' | 'painting' | 'registration';
@@ -82,7 +98,7 @@ export interface ServiceOrder {
 }
 
 export interface Plan {
-  _id: string;
+  id: string;
   name: string;
   slug: 'free' | 'basic' | 'premium';
   price: number;
@@ -93,7 +109,7 @@ export interface Plan {
 }
 
 export interface Subscription {
-  _id: string;
+  id: string;
   landlord: User | string;
   plan: Plan;
   status: 'pending_payment' | 'active' | 'expired' | 'cancelled';
@@ -105,7 +121,7 @@ export interface Subscription {
 }
 
 export interface Contract {
-  _id: string;
+  id: string;
   booking: Booking | string;
   tenant: User | string;
   landlord: User | string;
@@ -119,7 +135,7 @@ export interface Contract {
 }
 
 export interface RoommateProfile {
-  _id: string;
+  id: string;
   user: User | string;
   budget: number;
   preferredLocation: string;

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   getMyContractsApi,
   getLandlordContractsApi,
@@ -6,6 +7,7 @@ import {
   createContractApi,
   signContractApi,
 } from "@/lib/api/contracts.api";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 export const contractKeys = {
   mine: () => ["contracts", "mine"] as const,
@@ -40,6 +42,7 @@ export function useCreateContract() {
   return useMutation({
     mutationFn: createContractApi,
     onSuccess: () => qc.invalidateQueries({ queryKey: ["contracts"] }),
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể tạo hợp đồng.')),
   });
 }
 
@@ -51,5 +54,6 @@ export function useSignContract() {
       qc.invalidateQueries({ queryKey: contractKeys.detail(id) });
       qc.invalidateQueries({ queryKey: ["contracts"] });
     },
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể ký hợp đồng.')),
   });
 }

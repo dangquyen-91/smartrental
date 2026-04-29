@@ -32,17 +32,17 @@ export async function getPropertiesApi(filters?: PropertyFilters) {
 }
 
 export async function getPropertyApi(id: string) {
-  const res = await api.get<ApiResponse<Property>>(`/properties/${id}`);
+  const res = await api.get<ApiResponse<{ property: Property }>>(`/properties/${id}`);
   return res.data;
 }
 
 export async function getMyPropertiesApi() {
-  const res = await api.get<ApiResponse<Property[]>>("/properties/my");
+  const res = await api.get<ApiResponse<Property[]>>("/properties/my/listings");
   return res.data;
 }
 
 export async function createPropertyApi(
-  data: Omit<Property, "_id" | "owner" | "createdAt" | "status" | "isFeatured">
+  data: Omit<Property, "id" | "owner" | "createdAt" | "status" | "isFeatured">
 ) {
   const res = await api.post<ApiResponse<Property>>("/properties", data);
   return res.data;

@@ -24,7 +24,10 @@ export function PropertyCard({ property, className }: PropertyCardProps) {
   const [imgIndex, setImgIndex] = useState(0);
   const [wishlisted, setWishlisted] = useState(false);
 
-  const images = property.images.length > 0 ? property.images : ["/placeholder.jpg"];
+  const images =
+    property.images.length > 0
+      ? property.images.map((img) => img.url)
+      : ["/placeholder.jpg"];
   const address = `${property.address.district}, ${property.address.city}`;
 
   const prev = (e: React.MouseEvent) => {
@@ -37,9 +40,9 @@ export function PropertyCard({ property, className }: PropertyCardProps) {
   };
 
   return (
-    <Link href={`/properties/${property._id}`} className={cn("group block", className)}>
+    <Link href={`/properties/${property.id}`} className={cn("group block", className)}>
       {/* Image container — 4:3 ratio, 14px radius, no shadow */}
-      <div className="relative aspect-[4/3] overflow-hidden rounded-card bg-soft-cloud">
+      <div className="relative aspect-4/3 overflow-hidden rounded-card bg-soft-cloud">
         <img
           src={images[imgIndex]}
           alt={property.title}

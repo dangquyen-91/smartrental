@@ -6,16 +6,18 @@ interface AuthStore {
   user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
+  _hasHydrated: boolean;
   setAuth: (user: User, accessToken: string, refreshToken: string) => void;
   setUser: (user: User) => void;
   setAccessToken: (token: string) => void;
   clearAuth: () => void;
+  setHasHydrated: (v: boolean) => void;
 }
 
 function setSessionCookie() {
   if (typeof document !== 'undefined') {
     const secure = location.protocol === 'https:' ? '; Secure' : '';
-    document.cookie = `has_session=1; path=/; max-age=2592000; SameSite=Lax${secure}`;
+    document.cookie = `has_session=1; path=/; max-age=604800; SameSite=Lax${secure}`;
   }
 }
 
@@ -31,6 +33,7 @@ export const useAuthStore = create<AuthStore>()(
       user: null,
       accessToken: null,
       refreshToken: null,
+      _hasHydrated: false,
       setAuth: (user, accessToken, refreshToken) => {
         setSessionCookie();
         set({ user, accessToken, refreshToken });
@@ -41,12 +44,16 @@ export const useAuthStore = create<AuthStore>()(
         clearSessionCookie();
         set({ user: null, accessToken: null, refreshToken: null });
       },
+      setHasHydrated: (v) => set({ _hasHydrated: v }),
     }),
     {
       name: 'smartrental-auth',
-      onRehydrateStorage: () => (state) => {
-        if (state?.accessToken) setSessionCookie();
-      },
+      skipHydration: true,
+      partialize: (state) => ({
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+      }),
     },
   ),
 );

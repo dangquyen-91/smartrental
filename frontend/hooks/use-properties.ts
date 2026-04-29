@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   getPropertiesApi,
   getPropertyApi,
@@ -8,6 +9,7 @@ import {
   deletePropertyApi,
   type PropertyFilters,
 } from "@/lib/api/properties.api";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { type Property } from "@/types";
 
 export const propertyKeys = {
@@ -23,6 +25,7 @@ export function useProperties(filters?: PropertyFilters) {
   return useQuery({
     queryKey: propertyKeys.list(filters),
     queryFn: () => getPropertiesApi(filters),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -46,6 +49,7 @@ export function useCreateProperty() {
   return useMutation({
     mutationFn: createPropertyApi,
     onSuccess: () => qc.invalidateQueries({ queryKey: propertyKeys.lists() }),
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể tạo bất động sản.')),
   });
 }
 
@@ -57,7 +61,9 @@ export function useUpdateProperty() {
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: propertyKeys.detail(id) });
       qc.invalidateQueries({ queryKey: propertyKeys.lists() });
+      qc.invalidateQueries({ queryKey: propertyKeys.mine() });
     },
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể cập nhật bất động sản.')),
   });
 }
 
@@ -65,6 +71,10 @@ export function useDeleteProperty() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: deletePropertyApi,
-    onSuccess: () => qc.invalidateQueries({ queryKey: propertyKeys.lists() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: propertyKeys.lists() });
+      qc.invalidateQueries({ queryKey: propertyKeys.mine() });
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể xoá bất động sản.')),
   });
 }

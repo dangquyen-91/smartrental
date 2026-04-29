@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   getMyServiceOrdersApi,
   getProviderServiceOrdersApi,
@@ -8,6 +9,7 @@ import {
   cancelServiceOrderApi,
   type CreateServiceOrderPayload,
 } from "@/lib/api/services.api";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { type ServiceOrder } from "@/types";
 
 export const serviceKeys = {
@@ -33,8 +35,8 @@ export function useProviderServiceOrders(status?: ServiceOrder["status"]) {
 export function useServiceOrder(id: string) {
   return useQuery({
     queryKey: serviceKeys.detail(id),
-    queryFn: () => getServiceOrderApi(id),
     enabled: !!id,
+    queryFn: () => getServiceOrderApi(id),
   });
 }
 
@@ -43,6 +45,7 @@ export function useCreateServiceOrder() {
   return useMutation({
     mutationFn: (data: CreateServiceOrderPayload) => createServiceOrderApi(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["services"] }),
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể tạo yêu cầu dịch vụ.')),
   });
 }
 
@@ -55,6 +58,7 @@ export function useUpdateServiceStatus() {
       qc.invalidateQueries({ queryKey: serviceKeys.detail(id) });
       qc.invalidateQueries({ queryKey: ["services"] });
     },
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể cập nhật trạng thái dịch vụ.')),
   });
 }
 
@@ -63,5 +67,6 @@ export function useCancelServiceOrder() {
   return useMutation({
     mutationFn: cancelServiceOrderApi,
     onSuccess: () => qc.invalidateQueries({ queryKey: ["services"] }),
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể huỷ dịch vụ.')),
   });
 }
