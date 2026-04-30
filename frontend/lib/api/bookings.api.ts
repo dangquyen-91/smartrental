@@ -32,21 +32,35 @@ export async function createBookingApi(data: CreateBookingPayload) {
 }
 
 export async function confirmBookingApi(id: string) {
-  const res = await api.patch<ApiResponse<Booking>>(`/bookings/${id}/confirm`);
+  const res = await api.put<ApiResponse<Booking>>(`/bookings/${id}/confirm`);
   return res.data;
 }
 
-export async function rejectBookingApi(id: string) {
-  const res = await api.patch<ApiResponse<Booking>>(`/bookings/${id}/reject`);
+export async function rejectBookingApi({
+  id,
+  reason,
+}: {
+  id: string;
+  reason?: string;
+}) {
+  const res = await api.put<ApiResponse<Booking>>(`/bookings/${id}/reject`, {
+    reason,
+  });
   return res.data;
 }
 
 export async function cancelBookingApi(id: string) {
-  const res = await api.patch<ApiResponse<Booking>>(`/bookings/${id}/cancel`);
+  // Send empty body so Express parses req.body as {} instead of undefined
+  const res = await api.put<ApiResponse<Booking>>(`/bookings/${id}/cancel`, {});
   return res.data;
 }
 
 export async function activateBookingApi(id: string) {
-  const res = await api.patch<ApiResponse<Booking>>(`/bookings/${id}/activate`);
+  const res = await api.put<ApiResponse<Booking>>(`/bookings/${id}/activate`);
+  return res.data;
+}
+
+export async function completeBookingApi(id: string) {
+  const res = await api.put<ApiResponse<Booking>>(`/bookings/${id}/complete`);
   return res.data;
 }

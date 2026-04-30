@@ -79,6 +79,7 @@ export interface Booking {
   status: 'pending' | 'confirmed' | 'rejected' | 'cancelled' | 'active' | 'completed';
   paymentStatus: 'unpaid' | 'paid' | 'refunded';
   paymentCode?: number;
+  paymentDeadline?: string;
   depositAmount?: number;
   createdAt: string;
 }

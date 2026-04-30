@@ -70,7 +70,7 @@ const cancelBooking = async (req, res, next) => {
       req.params.id,
       req.user.id,
       req.user.role,
-      req.body.reason,
+      req.body?.reason,
     );
     return R.success(res, { booking }, 'Booking cancelled');
   } catch (err) {

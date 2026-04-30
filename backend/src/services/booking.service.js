@@ -4,6 +4,47 @@ import Property from '../models/property.model.js';
 import User from '../models/user.model.js';
 import AppError from '../utils/app-error.js';
 
+// ─── Auto-expire unpaid confirmed bookings ───────────────────────────────────
+
+const PAYMENT_DEADLINE_HOURS = 24;
+
+const autoExpireBookings = async () => {
+  const expired = await Booking.find({
+    status: 'confirmed',
+    paymentStatus: 'unpaid',
+    paymentDeadline: { $lt: new Date(), $ne: null },
+  }).select('_id property');
+
+  if (!expired.length) return;
+
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+
+    const ids = expired.map((b) => b._id);
+    const propertyIds = [...new Set(expired.map((b) => b.property.toString()))];
+
+    await Booking.updateMany(
+      { _id: { $in: ids } },
+      { $set: { status: 'cancelled', cancelledBy: 'admin', cancelReason: 'Payment deadline exceeded' } },
+      { session },
+    );
+
+    await Property.updateMany(
+      { _id: { $in: propertyIds }, status: 'rented' },
+      { $set: { status: 'available' } },
+      { session },
+    );
+
+    await session.commitTransaction();
+  } catch (err) {
+    await session.abortTransaction();
+    console.error('[autoExpireBookings]', err.message);
+  } finally {
+    session.endSession();
+  }
+};
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const addMonths = (date, months) => {
@@ -85,6 +126,7 @@ const getAllBookings = async ({ status, page = 1, limit = 10 }) => {
 // ─── Get My Bookings (tenant) ────────────────────────────────────────────────
 
 const getMyBookings = async (tenantId, { status, page = 1, limit = 10 }) => {
+  await autoExpireBookings();
   const filter = { tenant: tenantId };
   if (status) filter.status = status;
 
@@ -109,6 +151,7 @@ const getMyBookings = async (tenantId, { status, page = 1, limit = 10 }) => {
 // ─── Get Landlord Bookings ───────────────────────────────────────────────────
 
 const getLandlordBookings = async (landlordId, { status, page = 1, limit = 10 }) => {
+  await autoExpireBookings();
   const filter = { landlord: landlordId };
   if (status) filter.status = status;
 
@@ -159,9 +202,11 @@ const confirmBooking = async (id, landlordId) => {
     session.startTransaction();
 
     // Atomic status transition — only succeeds if booking is still 'pending'
+    const paymentDeadline = new Date(Date.now() + PAYMENT_DEADLINE_HOURS * 60 * 60 * 1000);
+
     const booking = await Booking.findOneAndUpdate(
       { _id: id, landlord: landlordId, status: 'pending' },
-      { $set: { status: 'confirmed' } },
+      { $set: { status: 'confirmed', paymentDeadline } },
       { new: true, session },
     );
 
@@ -380,6 +425,7 @@ const markBookingPayout = async (bookingId) => {
 };
 
 export {
+  autoExpireBookings,
   createBooking,
   getAllBookings,
   getMyBookings,
