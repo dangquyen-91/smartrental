@@ -141,13 +141,16 @@ const getBookingPaymentStatus = async (bookingId, tenantId) => {
 // ─── WEBHOOK — Xử lý callback từ PayOS ───────────────────────────────────────
 
 const handleWebhook = async (body) => {
+  console.log('[webhook] raw body:', JSON.stringify(body));
   let data;
   try {
     data = await payos.webhooks.verify(body);
-  } catch {
+  } catch (err) {
+    console.log('[webhook] verify failed:', err.message);
     return { rspCode: '97', message: 'Invalid signature' };
   }
 
+  console.log('[webhook] verified data:', JSON.stringify(data));
   const { orderCode, code } = data;
   if (code !== '00') {
     return { rspCode: '00', message: `Payment not successful — code: ${code}` };
@@ -173,8 +176,12 @@ const handleWebhook = async (body) => {
 
     const booking = await Booking.findOne({ paymentCode: orderCode }).session(session);
     if (booking) {
+      if (!['confirmed', 'active'].includes(booking.status)) {
+        await session.abortTransaction();
+        return { rspCode: '02', message: `Booking not payable — status: ${booking.status}` };
+      }
       const result = await Booking.updateOne(
-        { _id: booking._id, paymentStatus: { $ne: 'paid' } },
+        { _id: booking._id, paymentStatus: { $ne: 'paid' }, status: { $in: ['confirmed', 'active'] } },
         { $set: { paymentStatus: 'paid', paidDate: new Date(), payoutStatus: 'pending' } },
         { session },
       );

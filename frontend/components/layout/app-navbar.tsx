@@ -110,7 +110,7 @@ export default function AppNavbar({ center }: AppNavbarProps) {
 
                   {/* Tenant links */}
                   <div className="py-1.5">
-                    <MenuLink href="/trips" icon={Home} label="Chuyến đi của tôi" onClick={() => setOpen(false)} />
+                    <MenuLink href="/trips" icon={Home} label="Đơn thuê của tôi" onClick={() => setOpen(false)} />
                     <MenuLink href="/contracts" icon={Settings} label="Hợp đồng" onClick={() => setOpen(false)} />
                     <MenuLink href="/profile" icon={User} label="Hồ sơ cá nhân" onClick={() => setOpen(false)} />
                   </div>

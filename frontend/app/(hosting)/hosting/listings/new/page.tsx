@@ -47,7 +47,7 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const schema = z.object({
   title: z.string().min(10, 'Tối thiểu 10 ký tự').max(200, 'Tối đa 200 ký tự'),
   type: z.enum(['room', 'apartment', 'house', 'studio'] as const),
-  price: z.number({ message: 'Vui lòng nhập giá' }).min(100_000, 'Giá tối thiểu 100.000₫'),
+  price: z.number({ message: 'Vui lòng nhập giá' }).min(2000, 'Giá tối thiểu 2.000₫'),
   area: z.number({ message: 'Vui lòng nhập diện tích' }).min(5, 'Diện tích tối thiểu 5m²'),
   bedrooms: z.number().min(0).optional(),
   bathrooms: z.number().min(0).optional(),
