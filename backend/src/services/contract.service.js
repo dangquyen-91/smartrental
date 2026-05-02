@@ -36,9 +36,9 @@ const generateContract = async (bookingId, landlordId, terms) => {
 
   await assertContractAllowed(landlordId);
 
-  if (booking.status !== 'confirmed') {
+  if (!['confirmed', 'active'].includes(booking.status)) {
     throw new AppError(
-      `Contract can only be generated for confirmed bookings. Current status: "${booking.status}"`,
+      `Hợp đồng chỉ có thể tạo cho booking đã xác nhận hoặc đang thuê. Trạng thái hiện tại: "${booking.status}"`,
       400
     );
   }

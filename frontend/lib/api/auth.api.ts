@@ -44,3 +44,7 @@ export const requestLandlordApi = async (): Promise<void> => {
 export const verifyPhoneApi = async (otp: string): Promise<void> => {
   await api.post('/auth/verify-phone', { otp });
 };
+
+export const verifyGoogleApi = async (googleAccessToken: string): Promise<void> => {
+  await api.post('/auth/verify-google', { googleAccessToken });
+};

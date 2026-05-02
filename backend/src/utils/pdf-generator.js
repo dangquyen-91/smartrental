@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer';
 import cloudinary from '../config/cloudinary.js';
 import { buildContractHtml } from './contract-template.js';
 
-const generateAndUploadContractPdf = async (contractData) => {
+const generateContractPdf = async (contractData) => {
   const html = buildContractHtml(contractData);
 
   const browser = await puppeteer.launch({
@@ -14,16 +14,19 @@ const generateAndUploadContractPdf = async (contractData) => {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
 
-    const pdfBuffer = await page.pdf({
+    return await page.pdf({
       format: 'A4',
       printBackground: true,
       margin: { top: '0', right: '0', bottom: '0', left: '0' },
     });
-
-    return uploadPdfToCloudinary(pdfBuffer, `contract_${contractData.contractId}`);
   } finally {
     await browser.close();
   }
+};
+
+const generateAndUploadContractPdf = async (contractData) => {
+  const pdfBuffer = await generateContractPdf(contractData);
+  return uploadPdfToCloudinary(pdfBuffer, `contract_${contractData.contractId}`);
 };
 
 const uploadPdfToCloudinary = (buffer, publicId) => {
@@ -42,4 +45,4 @@ const uploadPdfToCloudinary = (buffer, publicId) => {
   });
 };
 
-export { generateAndUploadContractPdf };
+export { generateContractPdf, generateAndUploadContractPdf };

@@ -11,6 +11,7 @@ export interface User {
     accountName: string;
   };
   isActive: boolean;
+  authProvider?: 'local' | 'google';
   createdAt: string;
 }
 
@@ -106,7 +107,11 @@ export interface Plan {
   durationDays: number;
   maxListings: number;
   maxFeatured: number;
-  includesContract: boolean;
+  maxContracts: number;       // -1 = unlimited, 0 = none, n = trial cap
+  priorityLevel: number;      // 0 = none, 1 = low, 2 = high
+  includesHighlight: boolean;
+  includesAnalytics: boolean;
+  description?: string;
 }
 
 export interface Subscription {
@@ -130,8 +135,8 @@ export interface Contract {
   terms: string;
   pdfUrl?: string;
   status: 'draft' | 'awaiting_signatures' | 'signed' | 'cancelled';
-  signedByTenant: boolean;
-  signedByLandlord: boolean;
+  signedByTenant: { signed: boolean; signedAt?: string | null };
+  signedByLandlord: { signed: boolean; signedAt?: string | null };
   createdAt: string;
 }
 

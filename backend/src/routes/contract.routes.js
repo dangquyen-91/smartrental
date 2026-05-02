@@ -7,6 +7,7 @@ import {
   getMyContracts,
   getAllContracts,
   cancelContract,
+  downloadContractPdf,
 } from '../controllers/contract.controller.js';
 import { protect, authorizeRoles } from '../middleware/auth.middleware.js';
 import validate from '../middleware/validate.middleware.js';
@@ -28,6 +29,9 @@ router.get('/', authorizeRoles('admin'), getContractsValidation, getAllContracts
 
 // Any party: get contract by booking ID
 router.get('/booking/:bookingId', validate([mongoId('bookingId')]), getContractByBooking);
+
+// Tenant / Landlord / Admin: download PDF (proxy qua backend để tránh Cloudinary 401)
+router.get('/:id/pdf', authorizeRoles('tenant', 'landlord', 'admin'), validate([mongoId('id')]), downloadContractPdf);
 
 // Any party: get contract by contract ID
 router.get('/:id', validate([mongoId('id')]), getContractById);

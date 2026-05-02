@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema(
     isPhoneVerified: { type: Boolean, default: false },
     phoneOtp: { type: String, default: null },
     phoneOtpExpiry: { type: Date, default: null },
+    authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
     refreshToken: { type: String, default: null },
     bankAccount: {
       bankName:      { type: String, default: null },
@@ -41,6 +42,7 @@ const userSchema = new mongoose.Schema(
         address: ret.address,
         role: ret.role,
         isActive: ret.isActive,
+        authProvider: ret.authProvider,
         isPhoneVerified: ret.isPhoneVerified,
         bankAccount: ret.bankAccount ?? null,
         createdAt: ret.createdAt,

@@ -8,7 +8,10 @@ const planSchema = new mongoose.Schema(
     durationDays:     { type: Number, required: true },  // 0 = không hết hạn
     maxListings:      { type: Number, required: true },  // -1 = không giới hạn
     maxFeatured:      { type: Number, required: true },  // 0 = không có
-    includesContract: { type: Boolean, default: false },
+    maxContracts:     { type: Number, required: true },  // -1 = unlimited, 0 = none, n = trial cap
+    priorityLevel:    { type: Number, default: 0 },      // 0 = none, 1 = low, 2 = high
+    includesHighlight:{ type: Boolean, default: false }, // nổi bật trong tìm kiếm (Premium)
+    includesAnalytics:{ type: Boolean, default: false }, // xem thống kê (Premium)
     description:      { type: String, default: null },
     isActive:         { type: Boolean, default: true },
   },
@@ -21,10 +24,13 @@ const planSchema = new mongoose.Schema(
         slug:             ret.slug,
         price:            ret.price,
         durationDays:     ret.durationDays,
-        maxListings:      ret.maxListings,
-        maxFeatured:      ret.maxFeatured,
-        includesContract: ret.includesContract,
-        description:      ret.description,
+        maxListings:       ret.maxListings,
+        maxFeatured:       ret.maxFeatured,
+        maxContracts:      ret.maxContracts,
+        priorityLevel:     ret.priorityLevel,
+        includesHighlight: ret.includesHighlight,
+        includesAnalytics: ret.includesAnalytics,
+        description:       ret.description,
       }),
     },
   }

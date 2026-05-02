@@ -73,4 +73,22 @@ const verifyPhone = async (req, res, next) => {
   }
 };
 
-export { register, login, refreshToken, logout, getMe, requestLandlord, verifyPhone, googleLogin };
+const verifyPassword = async (req, res, next) => {
+  try {
+    await authService.verifyPassword(req.user.id, req.body.password);
+    return R.success(res, null, 'Password verified');
+  } catch (err) {
+    next(err);
+  }
+};
+
+const verifyGoogleToken = async (req, res, next) => {
+  try {
+    await authService.verifyGoogleToken(req.user.id, req.body.googleAccessToken);
+    return R.success(res, null, 'Google identity verified');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export { register, login, refreshToken, logout, getMe, requestLandlord, verifyPhone, googleLogin, verifyPassword, verifyGoogleToken };

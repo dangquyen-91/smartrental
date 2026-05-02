@@ -30,7 +30,7 @@ const register = async ({ name, email, password, phone }) => {
   return {
     accessToken,
     refreshToken,
-    user: { id: user._id, name: user.name, email: user.email, role: user.role },
+    user: { id: user._id, name: user.name, email: user.email, role: user.role, authProvider: user.authProvider },
   };
 };
 
@@ -50,7 +50,7 @@ const login = async (email, password) => {
   return {
     accessToken,
     refreshToken,
-    user: { id: user._id, name: user.name, email: user.email, role: user.role },
+    user: { id: user._id, name: user.name, email: user.email, role: user.role, authProvider: user.authProvider },
   };
 };
 
@@ -159,8 +159,12 @@ const googleLogin = async (googleAccessToken) => {
       email,
       avatar: picture,
       password: Math.random().toString(36) + Math.random().toString(36),
+      authProvider: 'google',
       role: 'tenant',
     });
+  } else if (user.authProvider !== 'google') {
+    // Existing local account — mark as google-linked on first Google login
+    user.authProvider = 'google';
   }
   if (!user.isActive) throw new AppError('Account is deactivated', 403);
 
@@ -172,8 +176,29 @@ const googleLogin = async (googleAccessToken) => {
   return {
     accessToken,
     refreshToken,
-    user: { id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar },
+    user: { id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar, authProvider: user.authProvider },
   };
 };
 
-export { register, login, refresh, logout, getMe, requestLandlord, verifyPhone, googleLogin };
+const verifyPassword = async (userId, password) => {
+  const user = await User.findById(userId).select('+password');
+  if (!user) throw new AppError('User not found', 401);
+  if (user.authProvider === 'google') throw new AppError('Tài khoản Google — hãy dùng xác thực Google', 400);
+  if (!(await user.matchPassword(password))) throw new AppError('Mật khẩu không đúng', 401);
+};
+
+const verifyGoogleToken = async (userId, googleAccessToken) => {
+  const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: `Bearer ${googleAccessToken}` },
+  });
+  if (!res.ok) throw new AppError('Google token không hợp lệ', 401);
+
+  const { email } = await res.json();
+  if (!email) throw new AppError('Không lấy được email từ Google', 401);
+
+  const user = await User.findById(userId);
+  if (!user) throw new AppError('User not found', 401);
+  if (user.email !== email) throw new AppError('Tài khoản Google không khớp', 401);
+};
+
+export { register, login, refresh, logout, getMe, requestLandlord, verifyPhone, googleLogin, verifyPassword, verifyGoogleToken };
