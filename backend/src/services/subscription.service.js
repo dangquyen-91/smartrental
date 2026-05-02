@@ -1,51 +1,64 @@
 import Plan from '../models/plan.model.js';
 import Subscription from '../models/subscription.model.js';
 import Property from '../models/property.model.js';
+import Contract from '../models/contract.model.js';
 import AppError from '../utils/app-error.js';
 
 // ─── Seed data ────────────────────────────────────────────────────────────────
 
 const PLAN_SEEDS = [
   {
-    name:             'Free',
-    slug:             'free',
-    price:            0,
-    durationDays:     0,
-    maxListings:      3,
-    maxFeatured:      0,
-    includesContract: false,
-    description:      'Đăng tối đa 3 tin, không hỗ trợ tin nổi bật',
+    name:              'Free',
+    slug:              'free',
+    price:             0,
+    durationDays:      0,
+    maxListings:       3,
+    maxFeatured:       0,
+    maxContracts:      1,
+    priorityLevel:     0,
+    includesHighlight: false,
+    includesAnalytics: false,
+    description:       'Đăng tối đa 3 tin, 1 hợp đồng dùng thử',
   },
   {
-    name:             'Basic',
-    slug:             'basic',
-    price:            2000,
-    durationDays:     30,
-    maxListings:      10,
-    maxFeatured:      2,
-    includesContract: true,
-    description:      'Đăng tối đa 10 tin, 2 tin nổi bật, soạn hợp đồng điện tử',
+    name:              'Basic',
+    slug:              'basic',
+    price:             199000,
+    durationDays:      30,
+    maxListings:       10,
+    maxFeatured:       2,
+    maxContracts:      -1,
+    priorityLevel:     1,
+    includesHighlight: false,
+    includesAnalytics: false,
+    description:       'Đăng tối đa 10 tin, 2 tin nổi bật, hợp đồng không giới hạn, ưu tiên tìm kiếm',
   },
   {
-    name:             'Premium',
-    slug:             'premium',
-    price:            499000,
-    durationDays:     30,
-    maxListings:      -1,
-    maxFeatured:      5,
-    includesContract: true,
-    description:      'Không giới hạn tin, 5 tin nổi bật, soạn hợp đồng điện tử',
+    name:              'Premium',
+    slug:              'premium',
+    price:             499000,
+    durationDays:      30,
+    maxListings:       50,
+    maxFeatured:       5,
+    maxContracts:      -1,
+    priorityLevel:     2,
+    includesHighlight: true,
+    includesAnalytics: true,
+    description:       'Đăng tối đa 50 tin, 5 tin nổi bật, highlight tìm kiếm, phân tích doanh thu, hỗ trợ ưu tiên cao',
   },
 ];
 
 // Fallback khi landlord chưa có subscription nào
 const FREE_PLAN_DEFAULTS = {
-  slug:             'free',
-  name:             'Free',
-  maxListings:      3,
-  maxFeatured:      0,
-  includesContract: false,
-  price:            0,
+  slug:              'free',
+  name:              'Free',
+  maxListings:       3,
+  maxFeatured:       0,
+  maxContracts:      1,
+  priorityLevel:     0,
+  includesHighlight: false,
+  includesAnalytics: false,
+  price:             0,
 };
 
 let plansSeeded = false;
@@ -186,9 +199,22 @@ const assertFeaturedSlot = async (landlordId) => {
 
 const assertContractAllowed = async (landlordId) => {
   const plan = await getActivePlan(landlordId);
-  if (!plan.includesContract) {
+  if (plan.maxContracts === 0) {
     throw new AppError(
-      'Soạn hợp đồng điện tử yêu cầu gói Basic hoặc Premium. Vui lòng nâng cấp gói.',
+      'Gói hiện tại không hỗ trợ hợp đồng điện tử. Vui lòng nâng cấp gói.',
+      403,
+    );
+  }
+  if (plan.maxContracts === -1) return; // unlimited
+
+  // Có giới hạn (free trial = 1): đếm hợp đồng chưa bị huỷ
+  const count = await Contract.countDocuments({
+    landlord: landlordId,
+    status:   { $ne: 'cancelled' },
+  });
+  if (count >= plan.maxContracts) {
+    throw new AppError(
+      `Gói ${plan.name} chỉ hỗ trợ tối đa ${plan.maxContracts} hợp đồng (dùng thử). Vui lòng nâng cấp lên Basic hoặc Premium.`,
       403,
     );
   }

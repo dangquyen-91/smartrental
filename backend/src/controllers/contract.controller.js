@@ -1,5 +1,6 @@
 import * as contractService from '../services/contract.service.js';
 import * as R from '../utils/response.js';
+import { generateContractPdf } from '../utils/pdf-generator.js';
 
 const generateContract = async (req, res, next) => {
   try {
@@ -76,6 +77,38 @@ const cancelContract = async (req, res, next) => {
   }
 };
 
+// Tạo lại PDF từ dữ liệu hợp đồng và stream trực tiếp về client.
+// Không fetch Cloudinary — tránh hoàn toàn vấn đề access restriction.
+const downloadContractPdf = async (req, res, next) => {
+  try {
+    const contract = await contractService.getContractById(
+      req.params.id,
+      req.user.id,
+      req.user.role,
+    );
+
+    const pdfBuffer = await generateContractPdf({
+      contractId: contract._id.toString(),
+      booking: contract.booking,
+      tenant: contract.tenant,
+      landlord: contract.landlord,
+      property: contract.property,
+      terms: contract.terms,
+      signedByTenant: contract.signedByTenant,
+      signedByLandlord: contract.signedByLandlord,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="hop-dong-${contract._id}.pdf"`,
+    );
+    res.end(pdfBuffer);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export {
   generateContract,
   signContract,
@@ -84,4 +117,5 @@ export {
   getMyContracts,
   getAllContracts,
   cancelContract,
+  downloadContractPdf,
 };

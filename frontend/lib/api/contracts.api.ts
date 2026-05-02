@@ -6,22 +6,22 @@ export async function getMyContractsApi() {
   return res.data;
 }
 
-export async function getLandlordContractsApi() {
-  const res = await api.get<ApiResponse<Contract[]>>("/contracts/landlord");
-  return res.data;
-}
-
 export async function getContractApi(id: string) {
   const res = await api.get<ApiResponse<Contract>>(`/contracts/${id}`);
   return res.data;
 }
 
-export async function createContractApi(data: { bookingId: string; terms: string }) {
-  const res = await api.post<ApiResponse<Contract>>("/contracts", data);
+export async function getContractByBookingApi(bookingId: string) {
+  const res = await api.get<ApiResponse<Contract>>(`/contracts/booking/${bookingId}`);
+  return res.data;
+}
+
+export async function generateContractApi(data: { bookingId: string; terms?: string }) {
+  const res = await api.post<ApiResponse<Contract>>("/contracts/generate", data);
   return res.data;
 }
 
 export async function signContractApi(id: string) {
-  const res = await api.post<ApiResponse<Contract>>(`/contracts/${id}/sign`);
+  const res = await api.patch<ApiResponse<Contract>>(`/contracts/${id}/sign`);
   return res.data;
 }

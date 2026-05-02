@@ -1244,19 +1244,19 @@ paths:
               properties:
                 name:
                   type: string
-                  example: Trần Thị Mai
+                  example: Nguyễn Văn An
                 email:
                   type: string
                   format: email
-                  example: mai.tran@gmail.com
+                  example: nguyenvanan@gmail.com
                 password:
                   type: string
                   minLength: 6
-                  example: Matkhau@123
+                  example: Password@123
                 phone:
                   type: string
                   pattern: '^(0|\+84)[0-9]{9}$'
-                  example: '0912345678'
+                  example: '0987654321'
       responses:
         '201':
           description: Đăng ký thành công
@@ -1452,6 +1452,131 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/google:
+    post:
+      tags: [Auth]
+      summary: Đăng nhập / đăng ký bằng Google OAuth
+      description: |
+        Nhận `access_token` từ Google (lấy qua `useGoogleLogin` của `@react-oauth/google`),
+        xác minh với Google userinfo API, rồi tạo hoặc cập nhật user.
+
+        - Nếu email chưa tồn tại → tạo tài khoản mới với `authProvider: google`
+        - Nếu email đã có (local account) → cập nhật `authProvider: google`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [googleAccessToken]
+              properties:
+                googleAccessToken:
+                  type: string
+                  example: ya29.a0AfH6SMC...
+      responses:
+        '200':
+          description: Đăng nhập thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthTokens'
+        '401':
+          description: Google token không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/verify-password:
+    post:
+      tags: [Auth]
+      summary: Xác minh mật khẩu tài khoản (dùng trước hành động nhạy cảm)
+      description: |
+        Dùng để xác thực danh tính trước các hành động nhạy cảm như **ký hợp đồng**.
+
+        - Tài khoản **local**: so sánh mật khẩu với bcrypt hash
+        - Tài khoản **Google**: trả về lỗi 400 — nên dùng `POST /api/auth/verify-google` thay thế
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password:
+                  type: string
+                  example: Password@123
+      responses:
+        '200':
+          description: Mật khẩu đúng
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Tài khoản Google — không hỗ trợ xác thực bằng mật khẩu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Mật khẩu không đúng hoặc chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/verify-google:
+    post:
+      tags: [Auth]
+      summary: Xác minh danh tính qua Google (dùng trước hành động nhạy cảm)
+      description: |
+        Re-authentication bằng Google OAuth — dùng để xác thực danh tính trước các hành động nhạy cảm
+        như **ký hợp đồng** (tương tự cách Google, Stripe, Notion dùng cho step-up auth).
+
+        Flow:
+        1. Frontend trigger `useGoogleLogin()` → user chọn tài khoản Google
+        2. Google trả về `access_token`
+        3. Gọi endpoint này với token đó
+        4. Backend fetch Google userinfo, so sánh email với user đang đăng nhập
+        5. Nếu khớp → xác minh thành công
+
+        Chỉ dành cho tài khoản có `authProvider: google`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [googleAccessToken]
+              properties:
+                googleAccessToken:
+                  type: string
+                  example: ya29.a0AfH6SMC...
+      responses:
+        '200':
+          description: Danh tính xác minh thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Token không hợp lệ hoặc email Google không khớp tài khoản đang đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ─── USERS ───────────────────────────────────────────────────────────────────
 
@@ -2739,6 +2864,40 @@ paths:
                         properties:
                           contract:
                             $ref: '#/components/schemas/Contract'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/contracts/{id}/pdf:
+    get:
+      tags: [Contracts]
+      summary: Tải xuống PDF hợp đồng
+      description: |
+        Generate PDF hợp đồng on-demand bằng Puppeteer và stream trực tiếp về client.
+
+        - Không phụ thuộc vào Cloudinary — PDF được tạo mới mỗi lần gọi từ dữ liệu hợp đồng hiện tại
+        - Phản ánh trạng thái chữ ký mới nhất (signed / chưa ký)
+        - Chỉ tenant, landlord liên quan hoặc admin mới tải được
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: File PDF hợp đồng
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: attachment; filename="hop-dong-664f1b2c3e4d5a6b7c8d9e0f.pdf"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
