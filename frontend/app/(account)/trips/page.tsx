@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, Suspense } from 'react';
+import { useState, useMemo, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -436,16 +436,19 @@ function PaymentToast() {
   const params = useSearchParams();
   const router = useRouter();
   const qc = useQueryClient();
+  const handled = useRef(false);
 
   useEffect(() => {
+    if (handled.current) return;
     const result = params.get('payment');
     if (result === 'success') {
+      handled.current = true;
       toast.success('Thanh toán thành công! Chờ chủ nhà xác nhận check-in.');
-      // Delay 1.5s để webhook backend kịp cập nhật trước khi refetch
       const t = setTimeout(() => qc.invalidateQueries({ queryKey: ['bookings'] }), 1500);
       router.replace('/trips');
       return () => clearTimeout(t);
     } else if (result === 'cancel') {
+      handled.current = true;
       toast.info('Bạn đã huỷ thanh toán. Đơn đặt phòng vẫn còn hiệu lực.');
       router.replace('/trips');
     }

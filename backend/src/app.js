@@ -19,8 +19,10 @@ import serviceRoutes from './routes/service.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
 import subscriptionRoutes from './routes/subscription.routes.js';
 import errorHandler from './middleware/error-handler.middleware.js';
+import startSubscriptionExpiryJob from './jobs/subscription-expiry.job.js';
 
 connectDB();
+startSubscriptionExpiryJob();
 
 const app = express();
 

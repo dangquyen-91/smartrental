@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   Check,
@@ -37,10 +38,10 @@ async function subscribePlanApi(planId: string): Promise<string> {
     `/subscriptions/subscribe/${planId}`,
   );
   const subscriptionId = subRes.data.data.subscription.id;
-  const payRes = await api.post<ApiResponse<{ paymentUrl: string }>>(
+  const payRes = await api.post<ApiResponse<{ checkoutUrl: string }>>(
     `/payment/subscription/${subscriptionId}`,
   );
-  return payRes.data.data.paymentUrl;
+  return payRes.data.data.checkoutUrl;
 }
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -260,6 +261,32 @@ function CurrentPlanBanner({ plan, subscription }: { plan: Plan; subscription: S
   );
 }
 
+// ─── payment result toast ─────────────────────────────────────────────────────
+
+function PaymentToast() {
+  const params = useSearchParams();
+  const router = useRouter();
+  const qc = useQueryClient();
+  const handled = useRef(false);
+
+  useEffect(() => {
+    if (handled.current) return;
+    const result = params.get('payment');
+    if (result === 'success') {
+      handled.current = true;
+      toast.success('Thanh toán thành công! Gói đăng ký đã được kích hoạt.');
+      qc.invalidateQueries({ queryKey: ['subscription', 'my'] });
+      router.replace('/hosting/plans');
+    } else if (result === 'cancel') {
+      handled.current = true;
+      toast.info('Bạn đã huỷ thanh toán. Gói đăng ký chưa được kích hoạt.');
+      router.replace('/hosting/plans');
+    }
+  }, [params, router, qc]);
+
+  return null;
+}
+
 // ─── skeleton ─────────────────────────────────────────────────────────────────
 
 function PlanSkeleton() {
@@ -298,9 +325,9 @@ export default function HostingPlansPage() {
   const { mutate: subscribe } = useMutation({
     mutationFn: subscribePlanApi,
     onMutate: (planId) => setUpgradingPlanId(planId),
-    onSuccess: (paymentUrl) => {
+    onSuccess: (checkoutUrl) => {
       setUpgradingPlanId(null);
-      window.location.href = paymentUrl;
+      window.location.href = checkoutUrl;
     },
     onError: (error) => {
       setUpgradingPlanId(null);
@@ -318,6 +345,8 @@ export default function HostingPlansPage() {
 
   return (
     <div className="space-y-8">
+      <Suspense><PaymentToast /></Suspense>
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-[#222222]">Gói đăng ký</h1>
