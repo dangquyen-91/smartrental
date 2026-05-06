@@ -21,8 +21,11 @@ const getMyProperties = async (req, res, next) => {
 
 const getPropertyById = async (req, res, next) => {
   try {
-    const property = await propertyService.getPropertyById(req.params.id);
-    return R.success(res, { property });
+    const { property, contactRevealed } = await propertyService.getPropertyById(
+      req.params.id,
+      req.user?.id,
+    );
+    return R.success(res, { property, contactRevealed });
   } catch (err) {
     next(err);
   }

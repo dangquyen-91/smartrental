@@ -32,7 +32,7 @@ export async function getPropertiesApi(filters?: PropertyFilters) {
 }
 
 export async function getPropertyApi(id: string) {
-  const res = await api.get<ApiResponse<{ property: Property }>>(`/properties/${id}`);
+  const res = await api.get<ApiResponse<{ property: Property; contactRevealed: boolean }>>(`/properties/${id}`);
   return res.data;
 }
 

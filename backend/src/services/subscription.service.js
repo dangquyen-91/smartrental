@@ -23,7 +23,7 @@ const PLAN_SEEDS = [
   {
     name:              'Basic',
     slug:              'basic',
-    price:             199000,
+    price:             2000,
     durationDays:      30,
     maxListings:       10,
     maxFeatured:       2,

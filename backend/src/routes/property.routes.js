@@ -7,7 +7,7 @@ import {
   updateProperty,
   deleteProperty,
 } from '../controllers/property.controller.js';
-import { protect, authorizeRoles } from '../middleware/auth.middleware.js';
+import { protect, authorizeRoles, optionalProtect } from '../middleware/auth.middleware.js';
 import validate from '../middleware/validate.middleware.js';
 import { mongoId } from '../validators/common.validator.js';
 import {
@@ -20,7 +20,7 @@ const router = express.Router();
 
 // Public
 router.get('/', getPropertiesValidation, getProperties);
-router.get('/:id', validate([mongoId('id')]), getPropertyById);
+router.get('/:id', optionalProtect, validate([mongoId('id')]), getPropertyById);
 
 // Landlord: manage own listings
 router.get('/my/listings', protect, authorizeRoles('landlord', 'admin'), getMyProperties);

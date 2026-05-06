@@ -278,6 +278,11 @@ components:
               type: string
             phone:
               type: string
+              nullable: true
+              description: |
+                `null` nếu người dùng chưa có booking `confirmed/active/completed` + `paymentStatus=paid`.
+                Chủ nhà tự xem luôn thấy số thật.
+              example: '0909123456'
             avatar:
               type: string
         contact:
@@ -291,6 +296,8 @@ components:
             phone:
               type: string
               nullable: true
+              description: |
+                `null` nếu `contactRevealed = false`. Xem thêm field `contactRevealed` trong response.
               example: '0909123456'
         views:
           type: integer
@@ -2018,8 +2025,28 @@ paths:
   /api/properties/{id}:
     get:
       tags: [Properties]
-      summary: Chi tiết bất động sản (public)
-      description: Tăng `views` mỗi lần gọi.
+      summary: Chi tiết bất động sản
+      description: |
+        Tăng `views` mỗi lần gọi.
+
+        **Thông tin liên hệ (SĐT) — ẩn có điều kiện:**
+
+        Response trả thêm field `contactRevealed: boolean`:
+        - `true` — `owner.phone` và `contact.phone` trả về số thật
+        - `false` — cả hai field đều là `null`
+
+        **Điều kiện để `contactRevealed = true`:**
+        | Người gọi | Điều kiện |
+        |-----------|-----------|
+        | Anonymous (không token) | Luôn `false` |
+        | Chính chủ nhà của tin đăng | Luôn `true` |
+        | Tenant | Phải có booking `status ∈ {confirmed, active, completed}` **và** `paymentStatus = paid` |
+        | Admin | Luôn `true` |
+
+        Token là **optional** — endpoint vẫn public nhưng nếu truyền Bearer token hợp lệ thì logic reveal được áp dụng.
+      security:
+        - {}            # anonymous — không cần token
+        - bearerAuth: [] # có token → áp dụng contactRevealed logic
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -2037,6 +2064,12 @@ paths:
                         properties:
                           property:
                             $ref: '#/components/schemas/Property'
+                          contactRevealed:
+                            type: boolean
+                            description: |
+                              `true` = `owner.phone` và `contact.phone` là số thật.
+                              `false` = cả hai là `null` — tenant chưa đặt phòng hoặc chưa thanh toán.
+                            example: false
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -4121,15 +4154,19 @@ paths:
       tags: [Payment]
       summary: Tao link thanh toan goi dang ky (landlord only)
       description: |
-        Tao PayOS payment link cho Subscription dang o `pending_payment`.
+        Tạo PayOS payment link cho Subscription đang ở `pending_payment`.
 
-        **Luong:**
-        1. POST /api/subscriptions/subscribe/:planId → tao subscription
-        2. POST /api/payment/subscription/:subscriptionId → lay `checkoutUrl`
+        **Luồng:**
+        1. `POST /api/subscriptions/subscribe/:planId` → tạo subscription
+        2. `POST /api/payment/subscription/:subscriptionId` → lấy `checkoutUrl`
         3. Redirect landlord sang PayOS
-        4. Webhook → subscription `status: active`, set `startDate` + `endDate`
+        4. PayOS redirect về `PAYOS_SUB_RETURN_URL` (mặc định `/hosting/plans?payment=success`)
+        5. Webhook → subscription `status: active`, set `startDate` + `endDate`
 
-        Link het han sau **30 phut**.
+        Link hết hạn sau **30 phút**.
+
+        **Lưu ý môi trường:** Subscription dùng env var riêng `PAYOS_SUB_RETURN_URL` và `PAYOS_SUB_CANCEL_URL`
+        để phân biệt với luồng booking (trỏ về `/trips?payment=success`).
       security:
         - bearerAuth: []
       parameters:

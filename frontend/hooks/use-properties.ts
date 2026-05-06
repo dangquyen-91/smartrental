@@ -48,7 +48,10 @@ export function useCreateProperty() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: createPropertyApi,
-    onSuccess: () => qc.invalidateQueries({ queryKey: propertyKeys.lists() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: propertyKeys.lists() });
+      qc.invalidateQueries({ queryKey: propertyKeys.mine() });
+    },
     onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể tạo bất động sản.')),
   });
 }
