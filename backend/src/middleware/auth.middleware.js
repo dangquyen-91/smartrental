@@ -37,4 +37,22 @@ const authorizeRoles = (...roles) => (req, res, next) => {
   next();
 };
 
-export { protect, authorizeRoles };
+// Không reject nếu không có token — chỉ set req.user nếu token hợp lệ
+const optionalProtect = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) return next();
+
+  try {
+    const token = authHeader.split(' ')[1];
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(payload.id).select('_id role isActive');
+    if (user?.isActive) {
+      req.user = { id: user._id.toString(), role: user.role };
+    }
+  } catch {
+    // Token lỗi hoặc expired — bỏ qua, tiếp tục như anonymous
+  }
+  next();
+};
+
+export { protect, authorizeRoles, optionalProtect };

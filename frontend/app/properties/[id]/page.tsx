@@ -38,6 +38,7 @@ import {
   WashingMachine,
   ParkingCircle,
   ArrowUpDown,
+  LockKeyhole,
 } from 'lucide-react';
 import AppNavbar from '@/components/layout/app-navbar';
 import { PriceDisplay } from '@/components/ui/price-display';
@@ -339,7 +340,7 @@ function ImageGrid({
 
 // ─── booking panel ────────────────────────────────────────────────────────────
 
-function BookingPanel({ property }: { property: Property }) {
+function BookingPanel({ property, contactRevealed }: { property: Property; contactRevealed: boolean }) {
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   const { mutate: createBooking, isPending, error } = useCreateBooking();
@@ -484,22 +485,29 @@ function BookingPanel({ property }: { property: Property }) {
       )}
 
       {/* Contact */}
-      {property.contact?.phone && (
-        <div className="mt-4 pt-4 border-t border-hairline-gray flex items-center gap-2 text-sm text-ash-gray">
-          <Phone className="size-4 shrink-0" />
-          <span>{property.contact.name ?? 'Liên hệ'}: </span>
-          <a href={`tel:${property.contact.phone}`} className="font-medium text-ink-black hover:text-rausch transition-colors">
-            {property.contact.phone}
-          </a>
-        </div>
-      )}
+      <div className="mt-4 pt-4 border-t border-hairline-gray">
+        {contactRevealed && property.contact?.phone ? (
+          <div className="flex items-center gap-2 text-sm text-ash-gray">
+            <Phone className="size-4 shrink-0" />
+            <span>{property.contact.name ?? 'Liên hệ'}: </span>
+            <a href={`tel:${property.contact.phone}`} className="font-medium text-ink-black hover:text-rausch transition-colors">
+              {property.contact.phone}
+            </a>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-sm text-ash-gray">
+            <LockKeyhole className="size-4 shrink-0 text-hairline-gray" />
+            <span className="italic">SĐT hiển thị sau khi đặt phòng &amp; thanh toán</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 // ─── mobile sticky bottom bar ─────────────────────────────────────────────────
 
-function MobileReserveBar({ property }: { property: Property }) {
+function MobileReserveBar({ property, contactRevealed }: { property: Property; contactRevealed: boolean }) {
   const [open, setOpen] = useState(false);
   if (property.status !== 'available') return null;
   return (
@@ -527,7 +535,7 @@ function MobileReserveBar({ property }: { property: Property }) {
               <X className="size-4 text-ink-black" />
             </button>
             <h3 className="text-base font-semibold text-ink-black mb-4">{property.title}</h3>
-            <BookingPanel property={property} />
+            <BookingPanel property={property} contactRevealed={contactRevealed} />
           </div>
         </div>
       )}
@@ -564,6 +572,7 @@ export default function PropertyDetailPage({
   }
 
   const p = data.data.property;
+  const contactRevealed = data.data.contactRevealed ?? false;
   const statusCfg = STATUS_CONFIG[p.status] ?? { label: p.status, color: 'bg-stone-100 text-stone-500' };
   const ownerUser = typeof p.owner === 'object' ? p.owner : null;
   const address = [p.address?.street, p.address?.ward, p.address?.district, p.address?.city]
@@ -686,10 +695,18 @@ export default function PropertyDetailPage({
                   </div>
                   <div>
                     <p className="text-base font-semibold text-ink-black">{ownerUser.name}</p>
-                    {ownerUser.phone && (
-                      <p className="text-sm text-ash-gray flex items-center gap-1 mt-0.5">
+                    {contactRevealed && ownerUser.phone ? (
+                      <a
+                        href={`tel:${ownerUser.phone}`}
+                        className="text-sm text-ash-gray flex items-center gap-1 mt-0.5 hover:text-rausch transition-colors"
+                      >
                         <Phone className="size-3.5" />
                         {ownerUser.phone}
+                      </a>
+                    ) : (
+                      <p className="text-sm text-ash-gray flex items-center gap-1.5 mt-0.5">
+                        <LockKeyhole className="size-3.5 text-hairline-gray" />
+                        <span className="italic">Hiển thị sau khi đặt phòng &amp; thanh toán</span>
                       </p>
                     )}
                     <p className="text-xs text-stone-gray mt-1 flex items-center gap-1">
@@ -724,14 +741,14 @@ export default function PropertyDetailPage({
           {/* ── Right: booking panel (desktop sticky) ── */}
           <aside className="hidden lg:block">
             <div className="sticky top-28">
-              <BookingPanel property={p} />
+              <BookingPanel property={p} contactRevealed={contactRevealed} />
             </div>
           </aside>
         </div>
       </main>
 
       {/* Mobile bottom bar */}
-      <MobileReserveBar property={p} />
+      <MobileReserveBar property={p} contactRevealed={contactRevealed} />
     </div>
   );
 }

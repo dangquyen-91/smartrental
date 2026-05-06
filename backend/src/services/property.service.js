@@ -1,4 +1,5 @@
 import Property from '../models/property.model.js';
+import Booking from '../models/booking.model.js';
 import AppError from '../utils/app-error.js';
 import { assertListingSlot, assertFeaturedSlot } from './subscription.service.js';
 
@@ -78,14 +79,39 @@ const getMyProperties = async (ownerId, { status, page = 1, limit = 10 }) => {
 
 // ─── Get by ID (increment views) ────────────────────────────────────────────
 
-const getPropertyById = async (id) => {
+const getPropertyById = async (id, requestingUserId) => {
   const property = await Property.findOne({ _id: id, isActive: true })
     .populate('owner', 'name phone avatar');
   if (!property) throw new AppError('Property not found', 404);
 
   await Property.findByIdAndUpdate(id, { $inc: { views: 1 } });
 
-  return property;
+  // Kiểm tra xem người dùng có quyền xem SĐT không
+  let contactRevealed = false;
+  if (requestingUserId) {
+    const ownerId = property.owner?._id?.toString() ?? '';
+    if (requestingUserId === ownerId) {
+      contactRevealed = true; // Chủ nhà luôn thấy thông tin của mình
+    } else {
+      // Tenant phải có booking confirmed + đã thanh toán
+      const qualified = await Booking.exists({
+        property: id,
+        tenant:   requestingUserId,
+        status:   { $in: ['confirmed', 'active', 'completed'] },
+        paymentStatus: 'paid',
+      });
+      contactRevealed = !!qualified;
+    }
+  }
+
+  // Serialize và strip phone nếu chưa đủ điều kiện
+  const propertyData = property.toJSON();
+  if (!contactRevealed) {
+    if (propertyData.owner)   propertyData.owner.phone   = null;
+    if (propertyData.contact) propertyData.contact.phone = null;
+  }
+
+  return { property: propertyData, contactRevealed };
 };
 
 // ─── Create (goes live immediately) ─────────────────────────────────────────
