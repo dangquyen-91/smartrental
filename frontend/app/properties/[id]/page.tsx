@@ -1,6 +1,7 @@
 'use client';
 
 import { use, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -12,7 +13,6 @@ import {
   BedDouble,
   Bath,
   Wifi,
-  Car,
   Shield,
   Wind,
   ChevronLeft,
@@ -202,6 +202,45 @@ function PropertyDetailSkeleton() {
   );
 }
 
+// ─── image cell ──────────────────────────────────────────────────────────────
+
+function ImageCell({
+  idx,
+  className,
+  urls,
+  title,
+  count,
+  onOpen,
+}: {
+  idx: number;
+  className?: string;
+  urls: string[];
+  title: string;
+  count: number;
+  onOpen: (i: number) => void;
+}) {
+  return (
+    <button
+      onClick={() => onOpen(idx)}
+      className={cn('relative overflow-hidden group/img', className)}
+    >
+      <Image
+        src={urls[idx]}
+        alt={idx === 0 ? title : ''}
+        fill
+        sizes="(max-width: 768px) 100vw, 50vw"
+        className="object-cover group-hover/img:brightness-90 transition-[filter] duration-200"
+        priority={idx === 0}
+      />
+      {idx === 4 && count > 5 && (
+        <div className="absolute inset-0 bg-ink-black/50 flex items-center justify-center pointer-events-none">
+          <span className="text-white font-semibold text-lg">+{count - 5}</span>
+        </div>
+      )}
+    </button>
+  );
+}
+
 // ─── image grid ──────────────────────────────────────────────────────────────
 
 function ImageGrid({
@@ -220,70 +259,50 @@ function ImageGrid({
   const prev = () => setLightbox((n) => (n! === 0 ? urls.length - 1 : n! - 1));
   const next = () => setLightbox((n) => (n! === urls.length - 1 ? 0 : n! + 1));
 
-  const Img = ({ idx, className }: { idx: number; className?: string }) => (
-    <button
-      onClick={() => open(idx)}
-      className={cn('relative overflow-hidden group/img', className)}
-    >
-      <img
-        src={urls[idx]}
-        alt={idx === 0 ? title : ''}
-        className="w-full h-full object-cover group-hover/img:brightness-90 transition-[filter] duration-200"
-        loading={idx === 0 ? 'eager' : 'lazy'}
-      />
-      {/* overlay for extra images */}
-      {idx === 4 && count > 5 && (
-        <div className="absolute inset-0 bg-ink-black/50 flex items-center justify-center pointer-events-none">
-          <span className="text-white font-semibold text-lg">+{count - 5}</span>
-        </div>
-      )}
-    </button>
-  );
-
   return (
     <>
       {/* outer wrapper: clips rounded corners for the whole grid */}
       <div className="relative h-[400px] lg:h-[480px] rounded-panel overflow-hidden">
         {count === 1 ? (
           /* ── 1 image: full width ── */
-          <Img idx={0} className="w-full h-full" />
+          <ImageCell idx={0} className="w-full h-full" urls={urls} title={title} count={count} onOpen={open} />
         ) : count === 2 ? (
           /* ── 2 images: 60/40 split ── */
           <div className="grid grid-cols-[1.5fr_1fr] gap-2 h-full">
-            <Img idx={0} className="h-full" />
-            <Img idx={1} className="h-full" />
+            <ImageCell idx={0} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+            <ImageCell idx={1} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
           </div>
         ) : count === 3 ? (
           /* ── 3 images: large left + 2 stacked right ── */
           <div className="grid grid-cols-2 gap-2 h-full">
-            <Img idx={0} className="h-full" />
+            <ImageCell idx={0} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
             <div className="grid grid-rows-2 gap-2 h-full">
-              <Img idx={1} className="h-full" />
-              <Img idx={2} className="h-full" />
+              <ImageCell idx={1} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+              <ImageCell idx={2} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
             </div>
           </div>
         ) : count === 4 ? (
           /* ── 4 images: large left + 3 stacked right ── */
           <div className="grid grid-cols-2 gap-2 h-full">
-            <Img idx={0} className="h-full" />
+            <ImageCell idx={0} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
             <div className="grid grid-rows-3 gap-2 h-full">
-              <Img idx={1} className="h-full" />
-              <Img idx={2} className="h-full" />
-              <Img idx={3} className="h-full" />
+              <ImageCell idx={1} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+              <ImageCell idx={2} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+              <ImageCell idx={3} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
             </div>
           </div>
         ) : (
           /* ── 5+ images: Airbnb-style large left + 2×2 right ── */
           <div className="grid grid-cols-2 gap-2 h-full">
-            <Img idx={0} className="h-full" />
+            <ImageCell idx={0} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
             <div className="grid grid-rows-2 gap-2 h-full">
               <div className="grid grid-cols-2 gap-2">
-                <Img idx={1} className="h-full" />
-                <Img idx={2} className="h-full" />
+                <ImageCell idx={1} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+                <ImageCell idx={2} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <Img idx={3} className="h-full" />
-                <Img idx={4} className="h-full" />
+                <ImageCell idx={3} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+                <ImageCell idx={4} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
               </div>
             </div>
           </div>
@@ -317,10 +336,13 @@ function ImageGrid({
           >
             <ChevronLeft className="size-6" />
           </button>
-          <img
+          <Image
             src={urls[lightbox]}
             alt={title}
-            className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
+            width={0}
+            height={0}
+            sizes="100vw"
+            className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg w-auto h-auto"
             onClick={(e) => e.stopPropagation()}
           />
           <button
@@ -688,7 +710,7 @@ export default function PropertyDetailPage({
                 <div className="flex items-center gap-4">
                   <div className="size-14 rounded-full bg-ink-black flex items-center justify-center text-white text-xl font-semibold shrink-0 overflow-hidden">
                     {ownerUser.avatar ? (
-                      <img src={ownerUser.avatar} alt={ownerUser.name} className="size-full object-cover" />
+                      <Image src={ownerUser.avatar} alt={ownerUser.name} width={56} height={56} className="size-full object-cover" />
                     ) : (
                       ownerUser.name?.charAt(0).toUpperCase() ?? '?'
                     )}

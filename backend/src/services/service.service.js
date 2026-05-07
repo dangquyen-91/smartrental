@@ -1,18 +1,9 @@
 import ServiceOrder from '../models/service-order.model.js';
+import ServiceCatalog from '../models/service-catalog.model.js';
 import Property from '../models/property.model.js';
+import Booking from '../models/booking.model.js';
 import User from '../models/user.model.js';
 import AppError from '../utils/app-error.js';
-
-// ─── Service Catalog ─────────────────────────────────────────────────────────
-
-const SERVICE_CATALOG = [
-  { type: 'cleaning',     name: 'Dọn dẹp vệ sinh',          price: 2000,    unit: 'lần' },
-  { type: 'repair',       name: 'Sửa chữa',                  price: 200000,  unit: 'lần' },
-  { type: 'wifi',         name: 'Lắp đặt WiFi',              price: 500000,  unit: 'lần' },
-  { type: 'moving',       name: 'Chuyển đồ',                 price: 300000,  unit: 'lần' },
-  { type: 'painting',     name: 'Sơn nhà',                   price: 1000000, unit: 'phòng' },
-  { type: 'registration', name: 'Đăng ký tạm trú/tạm vắng', price: 100000,  unit: 'hồ sơ' },
-];
 
 // ─── Luồng Hướng 2 — Platform-managed ────────────────────────────────────────
 //
@@ -57,11 +48,26 @@ const buildPagination = (page, limit) => {
   return { pageNum, limitNum, skip: (pageNum - 1) * limitNum };
 };
 
-const getCatalogEntry = (type) => SERVICE_CATALOG.find((s) => s.type === type);
+// ─── Get Service Catalog (từ DB) ─────────────────────────────────────────────
 
-// ─── Get Service Catalog ─────────────────────────────────────────────────────
+const getServiceCatalog = async () => {
+  return ServiceCatalog.find({ isActive: true }).sort({ type: 1 });
+};
 
-const getServiceCatalog = () => SERVICE_CATALOG;
+// ─── Admin: Update giá/tên dịch vụ ───────────────────────────────────────────
+
+const updateCatalogEntry = async (type, { name, price, unit, isActive }) => {
+  const entry = await ServiceCatalog.findOne({ type });
+  if (!entry) throw new AppError('Service type not found', 404);
+
+  if (name     !== undefined) entry.name     = name;
+  if (price    !== undefined) entry.price    = price;
+  if (unit     !== undefined) entry.unit     = unit;
+  if (isActive !== undefined) entry.isActive = isActive;
+
+  await entry.save();
+  return entry;
+};
 
 // ─── Create Service Order (tenant) ───────────────────────────────────────────
 
@@ -69,8 +75,19 @@ const createServiceOrder = async ({ property: propertyId, type, scheduledAt, not
   const property = await Property.findOne({ _id: propertyId, isActive: true });
   if (!property) throw new AppError('Property not found', 404);
 
-  const catalogEntry = getCatalogEntry(type);
-  if (!catalogEntry) throw new AppError('Invalid service type', 400);
+  // Tenant phải có booking active tại property này
+  // TODO: re-enable in production
+  // const activeBooking = await Booking.findOne({
+  //   property: propertyId,
+  //   tenant:   tenantId,
+  //   status:   'active',
+  // });
+  // if (!activeBooking) {
+  //   throw new AppError('You must have an active booking at this property to order services', 403);
+  // }
+
+  const catalogEntry = await ServiceCatalog.findOne({ type, isActive: true });
+  if (!catalogEntry) throw new AppError('Service type not available', 400);
 
   const scheduled = new Date(scheduledAt);
   if (scheduled <= new Date()) {
@@ -144,10 +161,11 @@ const updateOrderStatus = async (id, { status, cancelReason }, userId, userRole)
 
 // ─── Get My Orders (tenant) ───────────────────────────────────────────────────
 
-const getMyOrders = async (tenantId, { status, type, page = 1, limit = 10 }) => {
+const getMyOrders = async (tenantId, { status, type, propertyId, page = 1, limit = 10 }) => {
   const filter = { tenant: tenantId };
-  if (status) filter.status = status;
-  if (type) filter.type = type;
+  if (status)     filter.status   = status;
+  if (type)       filter.type     = type;
+  if (propertyId) filter.property = propertyId;
 
   const { pageNum, limitNum, skip } = buildPagination(page, limit);
 
@@ -167,12 +185,42 @@ const getMyOrders = async (tenantId, { status, type, page = 1, limit = 10 }) => 
   };
 };
 
+// ─── Get Landlord Orders (landlord — orders tại properties của mình) ─────────
+
+const getLandlordOrders = async (landlordId, { status, type, propertyId, page = 1, limit = 10 }) => {
+  const ownedProperties = await Property.find({ owner: landlordId, isActive: true }).select('_id');
+  const propertyIds     = ownedProperties.map((p) => p._id);
+
+  const filter = { property: propertyId ? propertyId : { $in: propertyIds } };
+  if (status) filter.status = status;
+  if (type)   filter.type   = type;
+
+  const { pageNum, limitNum, skip } = buildPagination(page, limit);
+
+  const [orders, total] = await Promise.all([
+    ServiceOrder.find(filter)
+      .populate('property', 'title address type images')
+      .populate('tenant', 'name phone avatar')
+      .populate('assignedProvider', 'name phone avatar')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum),
+    ServiceOrder.countDocuments(filter),
+  ]);
+
+  return {
+    orders,
+    pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
+  };
+};
+
 // ─── Get Provider Orders (provider) ──────────────────────────────────────────
 
-const getProviderOrders = async (providerId, { status, type, page = 1, limit = 10 }) => {
+const getProviderOrders = async (providerId, { status, type, propertyId, page = 1, limit = 10 }) => {
   const filter = { assignedProvider: providerId };
-  if (status) filter.status = status;
-  if (type) filter.type = type;
+  if (status)     filter.status   = status;
+  if (type)       filter.type     = type;
+  if (propertyId) filter.property = propertyId;
 
   const { pageNum, limitNum, skip } = buildPagination(page, limit);
 
@@ -194,10 +242,11 @@ const getProviderOrders = async (providerId, { status, type, page = 1, limit = 1
 
 // ─── Get All Orders (admin) ───────────────────────────────────────────────────
 
-const getAllOrders = async ({ status, type, page = 1, limit = 10 }) => {
+const getAllOrders = async ({ status, type, propertyId, page = 1, limit = 10 }) => {
   const filter = {};
-  if (status) filter.status = status;
-  if (type) filter.type = type;
+  if (status)     filter.status   = status;
+  if (type)       filter.type     = type;
+  if (propertyId) filter.property = propertyId;
 
   const { pageNum, limitNum, skip } = buildPagination(page, limit);
 
@@ -216,6 +265,33 @@ const getAllOrders = async ({ status, type, page = 1, limit = 10 }) => {
     orders,
     pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
   };
+};
+
+// ─── Mark Refund (admin only) ────────────────────────────────────────────────
+// Dùng khi order bị huỷ sau khi tenant đã thanh toán.
+// Việc hoàn tiền thực tế (bank transfer) do admin thực hiện thủ công.
+
+const markRefund = async (id) => {
+  const order = await ServiceOrder.findById(id);
+  if (!order) throw new AppError('Service order not found', 404);
+
+  if (order.paymentStatus !== 'paid') {
+    throw new AppError('Only paid orders can be refunded', 400);
+  }
+  if (order.paymentStatus === 'refunded') {
+    throw new AppError('Order has already been refunded', 400);
+  }
+  if (order.status !== 'cancelled') {
+    throw new AppError('Order must be cancelled before refund can be marked', 400);
+  }
+
+  order.paymentStatus = 'refunded';
+  order.payoutStatus  = 'none';
+  order.platformFee   = null;
+  order.providerPayout = null;
+  await order.save();
+
+  return order;
 };
 
 // ─── Mark Payout (admin only) ─────────────────────────────────────────────────
@@ -243,11 +319,14 @@ const markPayout = async (id) => {
 
 export {
   getServiceCatalog,
+  updateCatalogEntry,
   createServiceOrder,
   assignProvider,
   updateOrderStatus,
   getMyOrders,
+  getLandlordOrders,
   getProviderOrders,
   getAllOrders,
+  markRefund,
   markPayout,
 };
