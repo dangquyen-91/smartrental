@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useForm } from 'react-hook-form';
+import { useForm, type UseFormRegister } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -1058,7 +1058,8 @@ function FieldGroup({ label, error, children }: { label: string; error?: string;
 function PillRadioGroup({ name, options, register, currentValue }: {
   name: string;
   options: { value: string; label: string }[];
-  register: ReturnType<typeof useForm>['register'];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  register: UseFormRegister<any>;
   currentValue: string;
 }) {
   return (

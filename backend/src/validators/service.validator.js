@@ -1,7 +1,7 @@
 import { body, query } from 'express-validator';
 import validate from '../middleware/validate.middleware.js';
 
-const SERVICE_TYPES = ['cleaning', 'repair', 'wifi', 'moving', 'painting', 'registration'];
+const SERVICE_TYPES    = ['cleaning', 'repair', 'wifi', 'moving', 'painting', 'registration'];
 const SERVICE_STATUSES = ['pending', 'confirmed', 'in_progress', 'done', 'cancelled'];
 
 const createServiceOrderValidation = validate([
@@ -55,6 +55,10 @@ const getOrdersValidation = validate([
     .optional()
     .isIn(SERVICE_TYPES).withMessage('Invalid service type'),
 
+  query('propertyId')
+    .optional()
+    .isMongoId().withMessage('propertyId must be a valid ID'),
+
   query('page')
     .optional()
     .isInt({ min: 1 }).withMessage('page must be >= 1'),
@@ -64,9 +68,30 @@ const getOrdersValidation = validate([
     .isInt({ min: 1, max: 50 }).withMessage('limit must be 1–50'),
 ]);
 
+const updateCatalogValidation = validate([
+  body('name')
+    .optional()
+    .trim()
+    .notEmpty().withMessage('name cannot be empty'),
+
+  body('price')
+    .optional()
+    .isInt({ min: 0 }).withMessage('price must be a non-negative integer'),
+
+  body('unit')
+    .optional()
+    .trim()
+    .notEmpty().withMessage('unit cannot be empty'),
+
+  body('isActive')
+    .optional()
+    .isBoolean().withMessage('isActive must be boolean'),
+]);
+
 export {
   createServiceOrderValidation,
   assignProviderValidation,
   updateOrderStatusValidation,
   getOrdersValidation,
+  updateCatalogValidation,
 };

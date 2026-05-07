@@ -3,15 +3,27 @@
 import Link from 'next/link';
 import { Wrench, Clock, CheckCircle2, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-
-const STATS = [
-  { label: 'Chờ xử lý', value: '0', icon: Clock, color: 'text-[#d97706]', bg: 'bg-[#fffbeb]' },
-  { label: 'Đang thực hiện', value: '0', icon: Wrench, color: 'text-[#2563eb]', bg: 'bg-[#eff6ff]' },
-  { label: 'Hoàn thành tháng này', value: '0', icon: CheckCircle2, color: 'text-[#16a34a]', bg: 'bg-[#f0fdf4]' },
-];
+import { useProviderServiceOrders } from '@/hooks/use-services';
 
 export default function ProviderPage() {
   const { user } = useAuth();
+  const { data: ordersData } = useProviderServiceOrders();
+
+  const orders = ordersData?.data ?? [];
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const pending = orders.filter((o) => o.status === 'confirmed').length;
+  const inProgress = orders.filter((o) => o.status === 'in_progress').length;
+  const doneThisMonth = orders.filter(
+    (o) => o.status === 'done' && new Date(o.updatedAt) >= startOfMonth,
+  ).length;
+
+  const STATS = [
+    { label: 'Chờ xử lý', value: String(pending), icon: Clock, color: 'text-[#d97706]', bg: 'bg-[#fffbeb]' },
+    { label: 'Đang thực hiện', value: String(inProgress), icon: Wrench, color: 'text-[#2563eb]', bg: 'bg-[#eff6ff]' },
+    { label: 'Hoàn thành tháng này', value: String(doneThisMonth), icon: CheckCircle2, color: 'text-[#16a34a]', bg: 'bg-[#f0fdf4]' },
+  ];
 
   return (
     <div className="space-y-8">

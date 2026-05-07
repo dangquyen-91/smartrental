@@ -20,8 +20,9 @@ import paymentRoutes from './routes/payment.routes.js';
 import subscriptionRoutes from './routes/subscription.routes.js';
 import errorHandler from './middleware/error-handler.middleware.js';
 import startSubscriptionExpiryJob from './jobs/subscription-expiry.job.js';
+import ServiceCatalog from './models/service-catalog.model.js';
 
-connectDB();
+connectDB().then(() => ServiceCatalog.seedIfEmpty());
 startSubscriptionExpiryJob();
 
 const app = express();

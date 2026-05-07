@@ -1,11 +1,19 @@
 import * as serviceService from '../services/service.service.js';
-
 import * as R from '../utils/response.js';
 
 const getServiceCatalog = async (_req, res, next) => {
   try {
-    const services = serviceService.getServiceCatalog();
+    const services = await serviceService.getServiceCatalog();
     return R.success(res, { services });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const updateCatalogEntry = async (req, res, next) => {
+  try {
+    const entry = await serviceService.updateCatalogEntry(req.params.type, req.body);
+    return R.success(res, { entry }, 'Catalog entry updated');
   } catch (err) {
     next(err);
   }
@@ -52,6 +60,15 @@ const getMyOrders = async (req, res, next) => {
   }
 };
 
+const getLandlordOrders = async (req, res, next) => {
+  try {
+    const { orders, pagination } = await serviceService.getLandlordOrders(req.user.id, req.query);
+    return R.paginated(res, orders, pagination);
+  } catch (err) {
+    next(err);
+  }
+};
+
 const getProviderOrders = async (req, res, next) => {
   try {
     const { orders, pagination } = await serviceService.getProviderOrders(req.user.id, req.query);
@@ -70,6 +87,15 @@ const getAllOrders = async (req, res, next) => {
   }
 };
 
+const markRefund = async (req, res, next) => {
+  try {
+    const order = await serviceService.markRefund(req.params.id);
+    return R.success(res, { order }, 'Order marked as refunded');
+  } catch (err) {
+    next(err);
+  }
+};
+
 const markPayout = async (req, res, next) => {
   try {
     const order = await serviceService.markPayout(req.params.id);
@@ -81,11 +107,14 @@ const markPayout = async (req, res, next) => {
 
 export {
   getServiceCatalog,
+  updateCatalogEntry,
   createServiceOrder,
   assignProvider,
   updateOrderStatus,
   getMyOrders,
+  getLandlordOrders,
   getProviderOrders,
   getAllOrders,
+  markRefund,
   markPayout,
 };

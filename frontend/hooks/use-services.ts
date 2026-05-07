@@ -1,42 +1,65 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
+  getServiceCatalogApi,
   getMyServiceOrdersApi,
+  getLandlordServiceOrdersApi,
   getProviderServiceOrdersApi,
-  getServiceOrderApi,
   createServiceOrderApi,
-  updateServiceStatusApi,
-  cancelServiceOrderApi,
+  updateServiceOrderStatusApi,
   type CreateServiceOrderPayload,
-} from "@/lib/api/services.api";
-import { getApiErrorMessage } from "@/lib/api-error";
-import { type ServiceOrder } from "@/types";
+} from '@/lib/api/services.api';
+import { createServicePaymentApi } from '@/lib/api/payment.api';
+import { getApiErrorMessage } from '@/lib/api-error';
+import type { ServiceOrder } from '@/types';
 
 export const serviceKeys = {
-  mine: (status?: ServiceOrder["status"]) => ["services", "mine", status] as const,
-  provider: (status?: ServiceOrder["status"]) => ["services", "provider", status] as const,
-  detail: (id: string) => ["services", "detail", id] as const,
+  catalog:   ['services', 'catalog']   as const,
+  mine:      ['services', 'mine']      as const,
+  landlord:  ['services', 'landlord']  as const,
+  provider:  ['services', 'provider']  as const,
 };
 
-export function useMyServiceOrders(status?: ServiceOrder["status"]) {
+export function useServiceCatalog() {
   return useQuery({
-    queryKey: serviceKeys.mine(status),
-    queryFn: () => getMyServiceOrdersApi(status),
+    queryKey: serviceKeys.catalog,
+    queryFn:  getServiceCatalogApi,
+    staleTime: 5 * 60 * 1000,
   });
 }
 
-export function useProviderServiceOrders(status?: ServiceOrder["status"]) {
+export function useMyServiceOrders() {
   return useQuery({
-    queryKey: serviceKeys.provider(status),
-    queryFn: () => getProviderServiceOrdersApi(status),
+    queryKey: serviceKeys.mine,
+    queryFn:  () => getMyServiceOrdersApi({ limit: 50 }),
   });
 }
 
-export function useServiceOrder(id: string) {
+export function useLandlordServiceOrders() {
   return useQuery({
-    queryKey: serviceKeys.detail(id),
-    enabled: !!id,
-    queryFn: () => getServiceOrderApi(id),
+    queryKey: serviceKeys.landlord,
+    queryFn:  () => getLandlordServiceOrdersApi({ limit: 50 }),
+  });
+}
+
+export function useProviderServiceOrders() {
+  return useQuery({
+    queryKey: serviceKeys.provider,
+    queryFn:  () => getProviderServiceOrdersApi({ limit: 50 }),
+  });
+}
+
+export function useUpdateServiceStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: ServiceOrder['status'] }) =>
+      updateServiceOrderStatusApi(id, status),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: serviceKeys.provider });
+      qc.invalidateQueries({ queryKey: serviceKeys.landlord });
+      qc.invalidateQueries({ queryKey: serviceKeys.mine });
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể cập nhật trạng thái.')),
   });
 }
 
@@ -44,29 +67,33 @@ export function useCreateServiceOrder() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateServiceOrderPayload) => createServiceOrderApi(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["services"] }),
-    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể tạo yêu cầu dịch vụ.')),
-  });
-}
-
-export function useUpdateServiceStatus() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: ServiceOrder["status"] }) =>
-      updateServiceStatusApi(id, status),
-    onSuccess: (_, { id }) => {
-      qc.invalidateQueries({ queryKey: serviceKeys.detail(id) });
-      qc.invalidateQueries({ queryKey: ["services"] });
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: serviceKeys.mine });
+      toast.success('Yêu cầu dịch vụ đã được tạo thành công!');
     },
-    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể cập nhật trạng thái dịch vụ.')),
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể tạo yêu cầu dịch vụ.')),
   });
 }
 
 export function useCancelServiceOrder() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: cancelServiceOrderApi,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["services"] }),
-    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể huỷ dịch vụ.')),
+    mutationFn: (id: string) => updateServiceOrderStatusApi(id, 'cancelled'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: serviceKeys.mine });
+      toast.success('Đã huỷ yêu cầu dịch vụ.');
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể huỷ yêu cầu.')),
+  });
+}
+
+export function useCreateServicePayment() {
+  return useMutation({
+    mutationFn: (orderId: string) => createServicePaymentApi(orderId),
+    onSuccess: (data) => {
+      const url = data.data?.checkoutUrl;
+      if (url) window.location.href = url;
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể tạo link thanh toán.')),
   });
 }

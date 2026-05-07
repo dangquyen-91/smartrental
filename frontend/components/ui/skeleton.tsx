@@ -43,6 +43,28 @@ export function ContractCardSkeleton() {
   );
 }
 
+export function ServiceOrderCardSkeleton() {
+  return (
+    <div className="animate-pulse flex gap-4 border border-[#dddddd] rounded-card p-4 sm:p-5 bg-white">
+      <div className="size-20 rounded-[10px] bg-[#ebebeb] shrink-0" />
+      <div className="flex-1 space-y-2.5">
+        <div className="flex justify-between items-start gap-2">
+          <div className="space-y-1.5">
+            <div className="h-4 bg-[#ebebeb] rounded w-28" />
+            <div className="h-3.5 bg-[#ebebeb] rounded w-40" />
+          </div>
+          <div className="h-5 w-20 bg-[#ebebeb] rounded-full shrink-0" />
+        </div>
+        <div className="h-3.5 bg-[#ebebeb] rounded w-36" />
+        <div className="flex justify-between items-center pt-3 border-t border-[#ebebeb] mt-1">
+          <div className="h-4 bg-[#ebebeb] rounded w-24" />
+          <div className="h-8 bg-[#ebebeb] rounded-lg w-24" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ListItemSkeleton() {
   return (
     <div className="flex items-center gap-4 p-4 border-b border-hairline-gray">

@@ -85,18 +85,34 @@ export interface Booking {
   createdAt: string;
 }
 
+export interface ServiceCatalogEntry {
+  id: string;
+  type: 'cleaning' | 'repair' | 'wifi' | 'moving' | 'painting' | 'registration';
+  name: string;
+  price: number;
+  unit: string;
+  isActive: boolean;
+}
+
 export interface ServiceOrder {
   id: string;
   tenant: User | string;
   property: Property | string;
   type: 'cleaning' | 'repair' | 'wifi' | 'moving' | 'painting' | 'registration';
-  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'in_progress' | 'done' | 'cancelled';
   scheduledAt: string;
   price: number;
-  assignedProvider?: User | string;
-  paymentStatus: 'unpaid' | 'paid';
-  paymentCode?: number;
+  note?: string | null;
+  assignedProvider?: User | string | null;
+  cancelReason?: string | null;
+  paymentStatus: 'unpaid' | 'paid' | 'refunded';
+  paymentCode?: number | null;
+  platformFee?: number | null;
+  providerPayout?: number | null;
+  payoutStatus: 'none' | 'pending' | 'paid';
+  payoutDate?: string | null;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface Plan {
