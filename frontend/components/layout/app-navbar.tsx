@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Settings, LogOut, ChevronDown, Home, Building2 } from 'lucide-react';
+import { User, Settings, LogOut, ChevronDown, Home, Building2, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useAuthStore } from '@/stores/auth.store';
 import { logoutApi } from '@/lib/api/auth.api';
@@ -111,6 +111,7 @@ export default function AppNavbar({ center }: AppNavbarProps) {
                   {/* Tenant links */}
                   <div className="py-1.5">
                     <MenuLink href="/trips" icon={Home} label="Đơn thuê của tôi" onClick={() => setOpen(false)} />
+                    <MenuLink href="/roommate" icon={Users} label="Tìm bạn cùng phòng" onClick={() => setOpen(false)} />
                     <MenuLink href="/contracts" icon={Settings} label="Hợp đồng" onClick={() => setOpen(false)} />
                     <MenuLink href="/profile" icon={User} label="Hồ sơ cá nhân" onClick={() => setOpen(false)} />
                   </div>

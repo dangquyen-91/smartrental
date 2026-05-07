@@ -2,8 +2,10 @@ import express from 'express';
 import {
   upsertProfile,
   getMyProfile,
+  getUserProfile,
   deleteMyProfile,
   getMatches,
+  explainMatch,
   sendRequest,
   respondRequest,
   cancelRequest,
@@ -33,6 +35,9 @@ router.post('/profile', upsertProfileValidation, upsertProfile);
 // Get own roommate profile
 router.get('/profile/me', getMyProfile);
 
+// Get another user's roommate profile (for accepted matches)
+router.get('/profile/:userId', validate([mongoId('userId')]), getUserProfile);
+
 // Delete own roommate profile
 router.delete('/profile/me', deleteMyProfile);
 
@@ -40,6 +45,9 @@ router.delete('/profile/me', deleteMyProfile);
 
 // Get suggested roommate matches (scored algorithm)
 router.get('/matches', getMatchesValidation, getMatches);
+
+// Get AI explanation of compatibility with a specific user
+router.get('/matches/:userId/explain', validate([mongoId('userId')]), explainMatch);
 
 // ─── Requests ────────────────────────────────────────────────────────────────
 

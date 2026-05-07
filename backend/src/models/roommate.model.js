@@ -10,11 +10,15 @@ const roommateProfileSchema = new mongoose.Schema(
     },
     gender: { type: String, enum: ['male', 'female', 'any'], required: true },
     schedule: { type: String, enum: ['early_bird', 'night_owl', 'flexible'], required: true },
-    lifestyle: { type: String, enum: ['quiet', 'social', 'mixed'], required: true },
-    pets: { type: Boolean, required: true },
-    smoking: { type: Boolean, required: true },
+    lifestyle:   { type: String, enum: ['quiet', 'active', 'mixed'], required: true },
+    cleanliness: { type: String, enum: ['neat', 'average', 'relaxed'], required: true },
+    duration:    { type: String, enum: ['short', 'long', 'flexible'], default: 'flexible' },
+    pets:        { type: String, enum: ['ok', 'no'], required: true },
+    smoking:     { type: String, enum: ['ok', 'no'], required: true },
     looking: { type: Boolean, default: true },
     bio: { type: String, maxlength: 500, default: null },
+    // city used for location-based pre-filtering in matches query
+    city: { type: String, trim: true, default: null },
   },
   {
     timestamps: true,
@@ -26,11 +30,14 @@ const roommateProfileSchema = new mongoose.Schema(
         budget: ret.budget,
         gender: ret.gender,
         schedule: ret.schedule,
-        lifestyle: ret.lifestyle,
-        pets: ret.pets,
+        lifestyle:   ret.lifestyle,
+        cleanliness: ret.cleanliness,
+        duration:    ret.duration,
+        pets:        ret.pets,
         smoking: ret.smoking,
         looking: ret.looking,
         bio: ret.bio,
+        city: ret.city,
         createdAt: ret.createdAt,
         updatedAt: ret.updatedAt,
       }),
@@ -41,6 +48,7 @@ const roommateProfileSchema = new mongoose.Schema(
 roommateProfileSchema.index({ looking: 1 });
 roommateProfileSchema.index({ gender: 1 });
 roommateProfileSchema.index({ 'budget.min': 1, 'budget.max': 1 });
+roommateProfileSchema.index({ city: 1, looking: 1 });
 
 // ─── Roommate Request ────────────────────────────────────────────────────────
 

@@ -26,15 +26,23 @@ const upsertProfileValidation = validate([
 
   body('lifestyle')
     .notEmpty().withMessage('lifestyle is required')
-    .isIn(['quiet', 'social', 'mixed']).withMessage('lifestyle must be quiet, social, or mixed'),
+    .isIn(['quiet', 'active', 'mixed']).withMessage('lifestyle must be quiet, active, or mixed'),
+
+  body('cleanliness')
+    .notEmpty().withMessage('cleanliness is required')
+    .isIn(['neat', 'average', 'relaxed']).withMessage('cleanliness must be neat, average, or relaxed'),
+
+  body('duration')
+    .optional()
+    .isIn(['short', 'long', 'flexible']).withMessage('duration must be short, long, or flexible'),
 
   body('pets')
     .notEmpty().withMessage('pets is required')
-    .isBoolean().withMessage('pets must be a boolean'),
+    .isIn(['ok', 'no']).withMessage('pets must be ok or no'),
 
   body('smoking')
     .notEmpty().withMessage('smoking is required')
-    .isBoolean().withMessage('smoking must be a boolean'),
+    .isIn(['ok', 'no']).withMessage('smoking must be ok or no'),
 
   body('looking')
     .optional()
@@ -48,6 +56,11 @@ const upsertProfileValidation = validate([
     .optional()
     .trim()
     .isLength({ max: 500 }).withMessage('bio must not exceed 500 characters'),
+
+  body('city')
+    .optional()
+    .trim()
+    .isLength({ max: 100 }).withMessage('city must not exceed 100 characters'),
 ]);
 
 const sendRequestValidation = validate([
@@ -95,6 +108,10 @@ const getMatchesValidation = validate([
   query('limit')
     .optional()
     .isInt({ min: 1, max: 50 }).withMessage('limit must be 1–50'),
+
+  query('minScore')
+    .optional()
+    .isInt({ min: 0, max: 100 }).withMessage('minScore must be 0–100'),
 ]);
 
 export {

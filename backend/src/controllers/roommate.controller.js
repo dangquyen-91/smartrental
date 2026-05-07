@@ -82,11 +82,31 @@ const getMyRequests = async (req, res, next) => {
   }
 };
 
+const explainMatch = async (req, res, next) => {
+  try {
+    const result = await roommateService.explainMatch(req.user.id, req.params.userId);
+    return R.success(res, result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getUserProfile = async (req, res, next) => {
+  try {
+    const profile = await roommateService.getUserProfile(req.user.id, req.params.userId);
+    return R.success(res, { profile });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export {
   upsertProfile,
   getMyProfile,
+  getUserProfile,
   deleteMyProfile,
   getMatches,
+  explainMatch,
   sendRequest,
   respondRequest,
   cancelRequest,
