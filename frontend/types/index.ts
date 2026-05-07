@@ -142,10 +142,31 @@ export interface Contract {
 
 export interface RoommateProfile {
   id: string;
-  user: User | string;
-  budget: number;
-  preferredLocation: string;
-  moveInDate: string;
-  lifestyle: string[];
+  user: User;
+  gender: 'male' | 'female' | 'any';
+  budget: { min: number; max: number };
+  schedule: 'early_bird' | 'night_owl' | 'flexible';
+  lifestyle: 'quiet' | 'active' | 'mixed';
+  cleanliness: 'neat' | 'average' | 'relaxed';
+  duration: 'short' | 'long' | 'flexible';
+  pets: 'ok' | 'no';
+  smoking: 'ok' | 'no';
+  looking: boolean;
+  bio?: string;
+  city?: string;
+  property?: Property | string;
+  // returned by GET /matches and GET /profile/:userId
+  matchScore?: number;
+  requestStatus?: 'pending' | 'accepted' | 'rejected' | 'cancelled' | null;
+  contactRevealed?: boolean;
+  createdAt: string;
+}
+
+export interface RoommateRequest {
+  id: string;
+  sender: User;
+  receiver: User;
+  status: 'pending' | 'accepted' | 'rejected' | 'cancelled';
+  message?: string;
   createdAt: string;
 }
