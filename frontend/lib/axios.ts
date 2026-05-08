@@ -33,6 +33,12 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Don't try to refresh on login/register — the 401 is a credential error
+    const noRefreshUrls = ['/auth/login', '/auth/register', '/auth/google'];
+    if (noRefreshUrls.some((u) => original.url?.includes(u))) {
+      return Promise.reject(error);
+    }
+
     if (isRefreshing) {
       return new Promise<string>((resolve, reject) => {
         failedQueue.push({ resolve, reject });

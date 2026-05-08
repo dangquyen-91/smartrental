@@ -48,3 +48,8 @@ export const verifyPhoneApi = async (otp: string): Promise<void> => {
 export const verifyGoogleApi = async (googleAccessToken: string): Promise<void> => {
   await api.post('/auth/verify-google', { googleAccessToken });
 };
+
+export const updatePhoneApi = async (phone: string): Promise<User> => {
+  const { data } = await api.patch<ApiResponse<{ user: User }>>('/auth/phone', { phone });
+  return data.data.user;
+};

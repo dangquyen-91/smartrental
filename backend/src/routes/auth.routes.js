@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, refreshToken, logout, getMe, requestLandlord, verifyPhone, googleLogin, verifyPassword, verifyGoogleToken } from '../controllers/auth.controller.js';
+import { register, login, refreshToken, logout, getMe, requestLandlord, verifyPhone, googleLogin, verifyPassword, verifyGoogleToken, updatePhone } from '../controllers/auth.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 import { registerValidation, loginValidation, refreshValidation, otpValidation } from '../validators/auth.validator.js';
 
@@ -15,5 +15,6 @@ router.post('/verify-phone', protect, otpValidation, verifyPhone);
 router.post('/google', googleLogin);
 router.post('/verify-password', protect, verifyPassword);
 router.post('/verify-google', protect, verifyGoogleToken);
+router.patch('/phone', protect, updatePhone);
 
 export default router;

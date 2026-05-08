@@ -7,20 +7,19 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Loader2, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import GoogleButton from '@/components/shared/google-button';
 import { useAuthStore } from '@/stores/auth.store';
-import { registerApi, requestLandlordApi, verifyPhoneApi, getMeApi } from '@/lib/api/auth.api';
-import { updateBankAccountApi } from '@/lib/api/users.api';
+import { registerApi, requestLandlordApi, verifyPhoneApi, getMeApi, updatePhoneApi } from '@/lib/api/auth.api';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types';
 
 // ── Schemas ──────────────────────────────────────────────────────────────────
 
-const formSchema = z
+const landlordSchema = z
   .object({
     name: z.string().min(2, 'Tên ít nhất 2 ký tự'),
     email: z.email('Email không hợp lệ'),
@@ -33,7 +32,7 @@ const formSchema = z
     path: ['confirmPassword'],
   });
 
-const tenantFormSchema = z
+const tenantSchema = z
   .object({
     name: z.string().min(2, 'Tên ít nhất 2 ký tự'),
     email: z.email('Email không hợp lệ'),
@@ -54,19 +53,16 @@ const otpSchema = z.object({
   otp: z.string().length(6, 'OTP gồm 6 số').regex(/^\d+$/, 'Chỉ nhập số'),
 });
 
-const bankSchema = z.object({
-  bankName: z.string().min(2, 'Vui lòng nhập tên ngân hàng'),
-  accountNumber: z.string().min(6, 'Số tài khoản không hợp lệ'),
-  accountName: z.string().min(2, 'Vui lòng nhập tên chủ tài khoản'),
-  branch: z.string().optional(),
+const phoneSchema = z.object({
+  phone: z.string().refine((v) => /^(0|\+84)\d{9}$/.test(v), 'Số điện thoại không hợp lệ'),
 });
 
-type FormData = z.infer<typeof formSchema>;
-type TenantFormData = z.infer<typeof tenantFormSchema>;
+type LandlordData = z.infer<typeof landlordSchema>;
+type TenantData = z.infer<typeof tenantSchema>;
 type OtpData = z.infer<typeof otpSchema>;
-type BankData = z.infer<typeof bankSchema>;
+type PhoneData = z.infer<typeof phoneSchema>;
 type Role = 'tenant' | 'landlord';
-type Step = 'form' | 'otp' | 'bank';
+type Step = 'form' | 'phone' | 'otp';
 
 // ── Styles ───────────────────────────────────────────────────────────────────
 
@@ -76,12 +72,12 @@ const inputClass =
 const submitBtn =
   'w-full h-12 bg-[#ff385c] hover:bg-[#e00b41] text-white text-base font-medium rounded-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center';
 
-// ── Step indicator ───────────────────────────────────────────────────────────
+// ── Step indicator (chỉ cho landlord — 2 bước sau form ban đầu) ──────────────
 
-function StepDots({ current, total }: { current: number; total: number }) {
+function StepDots({ current }: { current: 0 | 1 }) {
   return (
     <div className="flex items-center justify-center gap-2">
-      {Array.from({ length: total }).map((_, i) => (
+      {([0, 1] as const).map((i) => (
         <span
           key={i}
           className={cn(
@@ -100,23 +96,18 @@ export default function RegisterPage() {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
   const setUser = useAuthStore((s) => s.setUser);
-  const user = useAuthStore((s) => s.user);
 
   const [role, setRole] = useState<Role>('tenant');
   const [step, setStep] = useState<Step>('form');
-  const [userId, setUserId] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const totalSteps = role === 'landlord' ? 3 : 2;
-  const currentStepIndex = step === 'form' ? 0 : step === 'otp' ? 1 : role === 'landlord' ? 2 : 1;
+  // ── Step 1 (email): Register form ─────────────────────────────────────────
 
-  // ── Step 1: Register form ──────────────────────────────────────────────────
+  const landlordForm = useForm<LandlordData>({ resolver: zodResolver(landlordSchema) });
+  const tenantForm = useForm<TenantData>({ resolver: zodResolver(tenantSchema) });
 
-  const landlordForm = useForm<FormData>({ resolver: zodResolver(formSchema) });
-  const tenantForm = useForm<TenantFormData>({ resolver: zodResolver(tenantFormSchema) });
-
-  const handleRegisterSubmit = async (values: FormData | TenantFormData) => {
+  const handleRegisterSubmit = async (values: LandlordData | TenantData) => {
     try {
       setError('');
       const data = await registerApi({
@@ -127,17 +118,33 @@ export default function RegisterPage() {
         role,
       });
       setAuth(data.user as unknown as User, data.accessToken, data.refreshToken);
-      setUserId(data.user.id);
 
       if (role === 'landlord') {
         await requestLandlordApi();
         setStep('otp');
       } else {
-        setStep('bank');
+        router.push('/');
       }
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Đăng ký thất bại, vui lòng thử lại.');
+    }
+  };
+
+  // ── Step 1 (Google, landlord): Collect phone ───────────────────────────────
+
+  const phoneForm = useForm<PhoneData>({ resolver: zodResolver(phoneSchema) });
+
+  const handlePhoneSubmit = async ({ phone }: PhoneData) => {
+    try {
+      setError('');
+      const updatedUser = await updatePhoneApi(phone);
+      setUser(updatedUser);
+      await requestLandlordApi();
+      setStep('otp');
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(msg || 'Không thể cập nhật số điện thoại, vui lòng thử lại.');
     }
   };
 
@@ -149,10 +156,9 @@ export default function RegisterPage() {
     try {
       setError('');
       await verifyPhoneApi(otp);
-      // Refresh user để store có role='landlord' mới nhất từ backend
       const updatedUser = await getMeApi();
       setUser(updatedUser);
-      setStep('bank');
+      router.push('/hosting');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'OTP không đúng hoặc đã hết hạn.');
@@ -168,31 +174,9 @@ export default function RegisterPage() {
     }
   };
 
-  // ── Step 3 / Step 2 (tenant): Bank account ────────────────────────────────
-
-  const bankForm = useForm<BankData>({ resolver: zodResolver(bankSchema) });
-
-  const handleBankSubmit = async (values: BankData) => {
-    const id = userId || user?.id;
-    if (!id) {
-      setError('Không thể xác định tài khoản. Vui lòng thử lại.');
-      return;
-    }
-    try {
-      setError('');
-      await updateBankAccountApi(id, values);
-      router.push(role === 'landlord' ? '/hosting' : '/');
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || 'Không thể lưu tài khoản ngân hàng.');
-    }
-  };
-
-  const handleSkipBank = () => {
-    router.push(role === 'landlord' ? '/hosting' : '/');
-  };
-
   // ── Render ─────────────────────────────────────────────────────────────────
+
+  const stepDotIndex = step === 'otp' ? 1 : 0;
 
   return (
     <>
@@ -200,23 +184,24 @@ export default function RegisterPage() {
       <div>
         <h1 className="text-[1.375rem] font-bold text-[#222222]">
           {step === 'form' && 'Tạo tài khoản'}
+          {step === 'phone' && 'Thêm số điện thoại'}
           {step === 'otp' && 'Xác thực số điện thoại'}
-          {step === 'bank' && 'Tài khoản ngân hàng'}
         </h1>
         <p className="text-sm font-medium text-[#6a6a6a] mt-1">
           {step === 'form' && 'Bắt đầu tìm nhà trọ ngay hôm nay'}
+          {step === 'phone' && 'Chủ nhà cần xác thực danh tính qua số điện thoại'}
           {step === 'otp' && 'Nhập mã OTP đã gửi đến số điện thoại của bạn'}
-          {step === 'bank' && (role === 'landlord' ? 'Để nhận tiền thuê từ khách hàng' : 'Để hoàn tiền khi cần thiết')}
         </p>
       </div>
 
-      {/* Step dots */}
-      <StepDots current={currentStepIndex} total={totalSteps} />
+      {/* Step dots — chỉ hiện cho landlord ở bước phone/otp */}
+      {role === 'landlord' && step !== 'form' && (
+        <StepDots current={stepDotIndex as 0 | 1} />
+      )}
 
       {/* ── STEP 1: FORM ─────────────────────────────────────────────── */}
       {step === 'form' && (
         <>
-          {/* Role toggle */}
           <div className="flex items-center bg-[#f7f7f7] rounded-[10px] p-1 gap-1">
             {(['tenant', 'landlord'] as Role[]).map((r) => (
               <button
@@ -236,21 +221,12 @@ export default function RegisterPage() {
           </div>
 
           {role === 'tenant' ? (
+            <GoogleButton onError={setError} redirectTo="/" />
+          ) : (
             <GoogleButton
               onError={setError}
-              redirectTo="/"
-              onSuccess={async (data) => {
-                setUserId(data.user.id);
-                setStep('bank');
-              }}
+              onSuccess={() => setStep('phone')}
             />
-          ) : (
-            <div className="flex items-center gap-3 bg-[#f7f7f7] border border-[#dddddd] rounded-xl px-4 py-3.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#929292] shrink-0" />
-              <p className="text-xs font-medium text-[#929292]">
-                Chủ nhà cần xác thực số điện thoại — vui lòng đăng ký bằng email bên dưới.
-              </p>
-            </div>
           )}
 
           <div className="flex items-center gap-3">
@@ -259,7 +235,6 @@ export default function RegisterPage() {
             <Separator className="flex-1" />
           </div>
 
-          {/* Landlord form (phone required) */}
           {role === 'landlord' && (
             <form onSubmit={landlordForm.handleSubmit(handleRegisterSubmit)} className="space-y-4">
               <FormFields
@@ -277,7 +252,6 @@ export default function RegisterPage() {
             </form>
           )}
 
-          {/* Tenant form (phone optional) */}
           {role === 'tenant' && (
             <form onSubmit={tenantForm.handleSubmit(handleRegisterSubmit)} className="space-y-4">
               <FormFields
@@ -304,11 +278,44 @@ export default function RegisterPage() {
         </>
       )}
 
-      {/* ── STEP 2 (landlord): OTP ───────────────────────────────────── */}
+      {/* ── STEP phone (landlord Google): Nhập SĐT ───────────────────── */}
+      {step === 'phone' && (
+        <form onSubmit={phoneForm.handleSubmit(handlePhoneSubmit)} className="space-y-5">
+          <div className="bg-[#f7f7f7] rounded-xl p-4 text-sm text-[#6a6a6a] leading-relaxed">
+            Chủ nhà cần xác thực số điện thoại để đảm bảo an toàn cho người thuê. Mã OTP sẽ được gửi đến số này.
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold text-[#222222]">
+              Số điện thoại <span className="text-[#c13515]">*</span>
+            </Label>
+            <Input
+              type="tel"
+              autoComplete="tel"
+              placeholder="0912 345 678"
+              inputMode="numeric"
+              className={inputClass}
+              {...phoneForm.register('phone')}
+            />
+            {phoneForm.formState.errors.phone && (
+              <p className="text-xs font-medium text-[#c13515]">{phoneForm.formState.errors.phone.message}</p>
+            )}
+          </div>
+
+          {error && <ErrorBox message={error} />}
+
+          <button type="submit" disabled={phoneForm.formState.isSubmitting} className={submitBtn}>
+            {phoneForm.formState.isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Gửi mã OTP'}
+          </button>
+        </form>
+      )}
+
+      {/* ── STEP otp (landlord): Xác thực OTP ───────────────────────── */}
       {step === 'otp' && (
         <form onSubmit={otpForm.handleSubmit(handleOtpSubmit)} className="space-y-5">
           <div className="bg-[#f7f7f7] rounded-xl p-4 text-sm text-[#6a6a6a] leading-relaxed">
-            Mã OTP gồm 6 chữ số đã được gửi đến số điện thoại bạn đăng ký. Mã có hiệu lực trong <span className="font-semibold text-[#222222]">5 phút</span>.
+            Mã OTP gồm 6 chữ số đã được gửi đến số điện thoại bạn đăng ký. Mã có hiệu lực trong{' '}
+            <span className="font-semibold text-[#222222]">5 phút</span>.
           </div>
 
           <div className="space-y-1.5">
@@ -344,65 +351,6 @@ export default function RegisterPage() {
           </p>
         </form>
       )}
-
-      {/* ── STEP 3 / STEP 2 (tenant): Bank account ─────────────────── */}
-      {step === 'bank' && (
-        <form onSubmit={bankForm.handleSubmit(handleBankSubmit)} className="space-y-4">
-          {role === 'landlord' && (
-            <div className="flex items-start gap-2.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-3.5">
-              <CheckCircle2 className="w-4 h-4 text-[#16a34a] mt-0.5 shrink-0" />
-              <p className="text-sm text-[#15803d]">
-                Số điện thoại đã xác thực thành công. Bổ sung tài khoản ngân hàng để nhận thanh toán.
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-[#222222]">Tên ngân hàng</Label>
-            <Input placeholder="VD: Vietcombank, BIDV, Techcombank..." className={inputClass} {...bankForm.register('bankName')} />
-            {bankForm.formState.errors.bankName && (
-              <p className="text-xs font-medium text-[#c13515]">{bankForm.formState.errors.bankName.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-[#222222]">Số tài khoản</Label>
-            <Input placeholder="VD: 1234567890" className={inputClass} {...bankForm.register('accountNumber')} />
-            {bankForm.formState.errors.accountNumber && (
-              <p className="text-xs font-medium text-[#c13515]">{bankForm.formState.errors.accountNumber.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-[#222222]">Tên chủ tài khoản</Label>
-            <Input placeholder="VD: NGUYEN VAN A" className={`${inputClass} uppercase`} {...bankForm.register('accountName')} />
-            {bankForm.formState.errors.accountName && (
-              <p className="text-xs font-medium text-[#c13515]">{bankForm.formState.errors.accountName.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-[#222222]">
-              Chi nhánh <span className="text-[#929292] font-normal">(tuỳ chọn)</span>
-            </Label>
-            <Input placeholder="VD: Chi nhánh Hà Nội" className={inputClass} {...bankForm.register('branch')} />
-          </div>
-
-          {error && <ErrorBox message={error} />}
-
-          <button type="submit" disabled={bankForm.formState.isSubmitting} className={submitBtn}>
-            {bankForm.formState.isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Hoàn tất đăng ký'}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSkipBank}
-            className="w-full h-10 text-sm font-medium text-[#6a6a6a] hover:text-[#222222] transition-colors underline underline-offset-2"
-          >
-            Bỏ qua, cập nhật sau
-          </button>
-        </form>
-      )}
     </>
   );
 }
@@ -416,8 +364,8 @@ function FormFields({
   showPassword,
   onTogglePassword,
 }: {
-  register: UseFormRegister<FormData> | UseFormRegister<TenantFormData>;
-  errors: FieldErrors<FormData> | FieldErrors<TenantFormData>;
+  register: UseFormRegister<LandlordData> | UseFormRegister<TenantData>;
+  errors: FieldErrors<LandlordData> | FieldErrors<TenantData>;
   phoneRequired: boolean;
   showPassword: boolean;
   onTogglePassword: () => void;

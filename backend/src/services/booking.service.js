@@ -207,7 +207,7 @@ const confirmBooking = async (id, landlordId) => {
     const booking = await Booking.findOneAndUpdate(
       { _id: id, landlord: landlordId, status: 'pending' },
       { $set: { status: 'confirmed', paymentDeadline } },
-      { new: true, session },
+      { returnDocument: 'after', session },
     );
 
     if (!booking) {
@@ -287,7 +287,7 @@ const cancelBooking = async (id, userId, userRole, reason) => {
     const updated = await Booking.findOneAndUpdate(
       { _id: id, status: { $in: cancellableStatuses } },
       { $set: { status: 'cancelled', cancelledBy, cancelReason: reason || null } },
-      { new: true, session },
+      { returnDocument: 'after', session },
     );
     if (!updated) throw new AppError(`Cannot cancel a booking with status "${booking.status}"`, 409);
 
@@ -325,7 +325,7 @@ const completeBooking = async (id, userId, userRole) => {
     const updated = await Booking.findOneAndUpdate(
       { _id: id, status: 'active' },
       { $set: { status: 'completed' } },
-      { new: true, session },
+      { returnDocument: 'after', session },
     );
     if (!updated) throw new AppError(`Cannot complete a booking with status "${booking.status}"`, 409);
 
@@ -364,7 +364,7 @@ const activateBooking = async (id, userId, userRole) => {
     const updated = await Booking.findOneAndUpdate(
       { _id: id, status: 'confirmed', paymentStatus: 'paid' },
       { $set: { status: 'active' } },
-      { new: true, session },
+      { returnDocument: 'after', session },
     );
     if (!updated) throw new AppError('Booking state changed before activation could complete', 409);
 
