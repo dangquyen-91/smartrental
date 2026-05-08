@@ -18,6 +18,7 @@ import roommateRoutes from './routes/roommate.routes.js';
 import serviceRoutes from './routes/service.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
 import subscriptionRoutes from './routes/subscription.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 import errorHandler from './middleware/error-handler.middleware.js';
 import startSubscriptionExpiryJob from './jobs/subscription-expiry.job.js';
 import ServiceCatalog from './models/service-catalog.model.js';
@@ -59,6 +60,7 @@ app.use('/api/roommates', roommateRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.use((_req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
 app.use(errorHandler);
