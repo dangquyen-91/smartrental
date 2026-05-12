@@ -181,7 +181,9 @@ export default function AdminServicesPage() {
 
             {orders.map((order, i) => {
               const providerName = getProviderName(order.assignedProvider);
-              const isConfirmedUnassigned = order.status === 'confirmed' && !order.assignedProvider;
+              const isPaid = order.paymentStatus === 'paid';
+              const isConfirmedUnassigned = order.status === 'confirmed' && !order.assignedProvider && isPaid;
+              const canAssign = isPaid && order.status !== 'done' && order.status !== 'cancelled';
               const isAssigning = assigningId === order.id;
 
               return (
@@ -266,7 +268,7 @@ export default function AdminServicesPage() {
                       <>
                         <UserCheck className="w-3.5 h-3.5 text-[#16a34a] shrink-0" />
                         <span className="text-xs text-[#222222] truncate">{providerName}</span>
-                        {order.status !== 'done' && order.status !== 'cancelled' && (
+                        {canAssign && (
                           <button
                             onClick={() => startAssign(order.id)}
                             className="text-xs text-[#6a6a6a] hover:text-[#222222] underline shrink-0 transition-colors"
@@ -275,10 +277,12 @@ export default function AdminServicesPage() {
                           </button>
                         )}
                       </>
+                    ) : !isPaid ? (
+                      <span className="text-xs text-[#929292] italic">Chờ thanh toán</span>
                     ) : (
                       <button
                         onClick={() => startAssign(order.id)}
-                        disabled={order.status === 'done' || order.status === 'cancelled'}
+                        disabled={!canAssign}
                         className={cn(
                           'flex items-center gap-1.5 h-7 px-2.5 rounded-[6px] text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
                           isConfirmedUnassigned

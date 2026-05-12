@@ -431,7 +431,7 @@ export default function NewListingPage() {
   const [showBankModal, setShowBankModal] = useState(false);
 
   useEffect(() => {
-    if (user && !user.bankAccount) {
+    if (user && !user.bankAccount?.bankName) {
       setShowBankModal(true);
     }
   }, [user]);

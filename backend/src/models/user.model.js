@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema(
       branch:        { type: String, default: null },
       verifiedAt:    { type: Date,   default: null },
     },
+    savedProperties: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Property', default: [] }],
   },
   {
     timestamps: true,
@@ -44,7 +45,8 @@ const userSchema = new mongoose.Schema(
         isActive: ret.isActive,
         authProvider: ret.authProvider,
         isPhoneVerified: ret.isPhoneVerified,
-        bankAccount: ret.bankAccount ?? null,
+        bankAccount: ret.bankAccount?.bankName ? ret.bankAccount : null,
+        savedProperties: (ret.savedProperties ?? []).map((id) => id.toString()),
         createdAt: ret.createdAt,
         updatedAt: ret.updatedAt,
       }),

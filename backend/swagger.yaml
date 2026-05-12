@@ -907,12 +907,12 @@ components:
           description: Số tiền trả cho provider (90% price) — tính khi webhook xác nhận paid
         payoutStatus:
           type: string
-          nullable: true
-          enum: [pending, paid]
+          enum: [none, pending, paid]
           example: pending
           description: |
-            - **pending**: Đã thanh toán, chờ admin chuyển tiền cho provider
-            - **paid**: Admin đã xác nhận chuyển tiền
+            - **none**: Chưa thanh toán hoặc đã hoàn tiền
+            - **pending**: Tenant đã thanh toán, chờ admin chuyển khoản cho provider
+            - **paid**: Admin đã xác nhận chuyển khoản
         payoutDate:
           type: string
           format: date-time
@@ -3210,7 +3210,7 @@ paths:
         **Điều kiện:**
         - Đơn phải thuộc tenant đang đăng nhập
         - `paymentStatus` phải là `unpaid`
-        - `status` không được là `cancelled`
+        - `status` phải là `confirmed` (chủ trọ đã xác nhận) — không cho phép thanh toán khi còn `pending`
 
         Link thanh toán hết hạn sau **15 phút**.
 
@@ -3662,11 +3662,12 @@ paths:
         ```
         [Tenant]   POST /order              → pending
         [Landlord] PATCH status=confirmed   → confirmed
-        [Admin]    PATCH /:id/assign        → gán provider
+        [Tenant]   POST /payment/service    → thanh toán (chỉ khi confirmed)
+        [Admin]    PATCH /:id/assign        → gán provider (chỉ khi paid)
         [Provider] PATCH status=in_progress → in_progress
         [Provider] PATCH status=done        → done
         ```
-        Huỷ: tenant (pending), landlord (pending/confirmed), admin (bất kỳ)
+        Huỷ: tenant (pending), landlord (pending/confirmed), admin (bất kỳ), provider (confirmed)
       responses:
         '200':
           description: Danh sách dịch vụ
@@ -3839,8 +3840,12 @@ paths:
       description: |
         Gán một user có role **provider** để thực hiện đơn.
 
+        **Điều kiện:**
+        - `paymentStatus` phải là `paid` — không gán được khi tenant chưa thanh toán
+        - `status` không được là `done` hoặc `cancelled`
+
         Provider được gán sẽ thấy đơn này trong `GET /api/services/provider-orders`
-        và có thể cập nhật trạng thái `confirmed → in_progress → done`.
+        và có thể cập nhật trạng thái `confirmed → in_progress → done` hoặc từ chối `confirmed → cancelled`.
       security:
         - bearerAuth: []
       parameters:
@@ -3898,10 +3903,11 @@ paths:
         |---|---|
         | **tenant** | `pending → cancelled` |
         | **landlord** | `pending → confirmed`, `pending/confirmed → cancelled` |
-        | **provider** | `confirmed → in_progress`, `in_progress → done` (chỉ đơn được gán) |
+        | **provider** | `confirmed → in_progress`, `confirmed → cancelled` (từ chối), `in_progress → done` (chỉ đơn được gán) |
         | **admin** | mọi transition hợp lệ |
 
         **Provider** chỉ update được đơn đã được gán cho mình qua `/assign`.
+        Khi provider từ chối (`confirmed → cancelled`), nên truyền `cancelReason` để admin biết lý do và gán lại người khác.
       security:
         - bearerAuth: []
       parameters:

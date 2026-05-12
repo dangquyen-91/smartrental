@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Loader2, CheckCircle2, RefreshCw, Banknote, Wrench } from 'lucide-react';
+import { Loader2, CheckCircle2, RefreshCw, Banknote, Wrench, Copy, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   useAdminPendingPayouts,
   useAdminPendingRefunds,
@@ -42,57 +43,81 @@ const SERVICE_TYPE_LABEL: Record<string, string> = {
   registration: 'Đăng ký',
 };
 
+// ─── BankAccountCard ──────────────────────────────────────────────────────────
+
+function BankAccountCard({ bank }: { bank: User['bankAccount'] }) {
+  const copy = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`Đã copy ${label}`);
+  };
+
+  if (!bank?.bankName) {
+    return (
+      <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[8px] bg-[#fff7ed] border border-[#fed7aa]">
+        <AlertTriangle className="w-3.5 h-3.5 text-[#ea580c] shrink-0" />
+        <span className="text-xs font-medium text-[#ea580c]">Chưa cài đặt tài khoản ngân hàng</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 px-2.5 py-1.5 rounded-[8px] bg-[#f0fdf4] border border-[#bbf7d0]">
+      <span className="text-xs font-semibold text-[#15803d]">{bank.bankName}</span>
+      <span className="text-[#bbf7d0]">·</span>
+      <button
+        onClick={() => copy(bank.accountNumber!, 'số tài khoản')}
+        className="flex items-center gap-1 text-xs font-mono font-bold text-[#15803d] hover:text-[#166534] transition-colors group"
+        title="Click để copy"
+      >
+        {bank.accountNumber}
+        <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+      </button>
+      <span className="text-[#bbf7d0]">·</span>
+      <span className="text-xs text-[#166534]">{bank.accountName}</span>
+    </div>
+  );
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function BookingPayoutRow({ booking }: { booking: Booking }) {
   const markPayout = useMarkBookingPayout();
   const landlord = getUser(booking.landlord);
   const property = getProperty(booking.property);
+  const landlordPayout = (booking as Booking & { landlordPayout?: number }).landlordPayout ?? 0;
+  const platformFee   = (booking as Booking & { platformFee?: number }).platformFee ?? 0;
 
   return (
-    <div className="flex items-start gap-4 px-5 py-4 border-b border-[#dddddd] last:border-0">
-      <div className="w-9 h-9 rounded-full bg-[#fff0f3] flex items-center justify-center shrink-0 mt-0.5">
-        <Banknote className="w-4 h-4 text-[#ff385c]" />
-      </div>
+    <div className="px-5 py-4 border-b border-[#dddddd] last:border-0 space-y-3">
+      <div className="flex items-start gap-4">
+        <div className="w-9 h-9 rounded-full bg-[#fff0f3] flex items-center justify-center shrink-0 mt-0.5">
+          <Banknote className="w-4 h-4 text-[#ff385c]" />
+        </div>
 
-      <div className="flex-1 min-w-0 space-y-0.5">
-        <p className="text-sm font-semibold text-[#222222] truncate">
-          {property?.title ?? 'Property'}
-        </p>
-        <p className="text-xs text-[#6a6a6a]">
-          Chủ trọ: <span className="font-medium text-[#222222]">{landlord?.name ?? '—'}</span>
-          {landlord?.email && <span className="text-[#929292]"> · {landlord.email}</span>}
-        </p>
-        {landlord?.bankAccount && (
-          <p className="text-xs text-[#929292]">
-            {landlord.bankAccount.bankName} · {landlord.bankAccount.accountNumber} ·{' '}
-            {landlord.bankAccount.accountName}
+        <div className="flex-1 min-w-0 space-y-1">
+          <p className="text-sm font-semibold text-[#222222] truncate">{property?.title ?? '—'}</p>
+          <p className="text-xs text-[#6a6a6a]">
+            Chủ trọ: <span className="font-medium text-[#222222]">{landlord?.name ?? '—'}</span>
+            {landlord?.email && <span className="text-[#929292]"> · {landlord.email}</span>}
+            {landlord?.phone && <span className="text-[#929292]"> · {landlord.phone}</span>}
           </p>
-        )}
-        <p className="text-xs text-[#929292]">Thanh toán: {fmtDate(booking.paidDate)}</p>
-      </div>
+          <BankAccountCard bank={landlord?.bankAccount} />
+          <p className="text-xs text-[#929292]">Khách thanh toán: {fmtDate(booking.paidDate)}</p>
+        </div>
 
-      <div className="text-right shrink-0">
-        <p className="text-sm font-bold text-[#222222]">
-          {fmt((booking as Booking & { landlordPayout?: number }).landlordPayout ?? 0)}
-        </p>
-        <p className="text-xs text-[#929292]">
-          Phí nền tảng: {fmt((booking as Booking & { platformFee?: number }).platformFee ?? 0)}
-        </p>
+        <div className="text-right shrink-0 space-y-0.5">
+          <p className="text-base font-bold text-[#ff385c]">{fmt(landlordPayout)}</p>
+          <p className="text-xs text-[#929292]">Platform: {fmt(platformFee)}</p>
+          <button
+            onClick={() => markPayout.mutate(booking.id)}
+            disabled={markPayout.isPending}
+            className="mt-2 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#ff385c] text-white hover:bg-[#e00b41] transition-colors disabled:opacity-50"
+          >
+            {markPayout.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+            Đã chuyển
+          </button>
+        </div>
       </div>
-
-      <button
-        onClick={() => markPayout.mutate(booking.id)}
-        disabled={markPayout.isPending}
-        className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#ff385c] text-white hover:bg-[#e00b41] transition-colors disabled:opacity-50"
-      >
-        {markPayout.isPending ? (
-          <Loader2 className="w-3 h-3 animate-spin" />
-        ) : (
-          <CheckCircle2 className="w-3 h-3" />
-        )}
-        Xác nhận payout
-      </button>
     </div>
   );
 }
@@ -103,49 +128,39 @@ function ServicePayoutRow({ order }: { order: ServiceOrder }) {
   const property = getProperty(order.property);
 
   return (
-    <div className="flex items-start gap-4 px-5 py-4 border-b border-[#dddddd] last:border-0">
-      <div className="w-9 h-9 rounded-full bg-[#fefce8] flex items-center justify-center shrink-0 mt-0.5">
-        <Wrench className="w-4 h-4 text-[#ca8a04]" />
-      </div>
+    <div className="px-5 py-4 border-b border-[#dddddd] last:border-0 space-y-3">
+      <div className="flex items-start gap-4">
+        <div className="w-9 h-9 rounded-full bg-[#fefce8] flex items-center justify-center shrink-0 mt-0.5">
+          <Wrench className="w-4 h-4 text-[#ca8a04]" />
+        </div>
 
-      <div className="flex-1 min-w-0 space-y-0.5">
-        <p className="text-sm font-semibold text-[#222222]">
-          {SERVICE_TYPE_LABEL[order.type] ?? order.type} · {property?.title ?? 'Property'}
-        </p>
-        <p className="text-xs text-[#6a6a6a]">
-          Provider: <span className="font-medium text-[#222222]">{provider?.name ?? '—'}</span>
-          {provider?.email && <span className="text-[#929292]"> · {provider.email}</span>}
-        </p>
-        {provider?.bankAccount && (
-          <p className="text-xs text-[#929292]">
-            {provider.bankAccount.bankName} · {provider.bankAccount.accountNumber} ·{' '}
-            {provider.bankAccount.accountName}
+        <div className="flex-1 min-w-0 space-y-1">
+          <p className="text-sm font-semibold text-[#222222]">
+            {SERVICE_TYPE_LABEL[order.type] ?? order.type}
+            {property?.title && <span className="font-normal text-[#6a6a6a]"> · {property.title}</span>}
           </p>
-        )}
-        <p className="text-xs text-[#929292]">Ngày hoàn thành: {fmtDate(order.payoutDate)}</p>
-      </div>
+          <p className="text-xs text-[#6a6a6a]">
+            Provider: <span className="font-medium text-[#222222]">{provider?.name ?? '—'}</span>
+            {provider?.email && <span className="text-[#929292]"> · {provider.email}</span>}
+            {provider?.phone && <span className="text-[#929292]"> · {provider.phone}</span>}
+          </p>
+          <BankAccountCard bank={provider?.bankAccount} />
+          <p className="text-xs text-[#929292]">Lịch thực hiện: {fmtDate(order.scheduledAt)}</p>
+        </div>
 
-      <div className="text-right shrink-0">
-        <p className="text-sm font-bold text-[#222222]">
-          {fmt(order.providerPayout ?? 0)}
-        </p>
-        <p className="text-xs text-[#929292]">
-          Phí nền tảng: {fmt(order.platformFee ?? 0)}
-        </p>
+        <div className="text-right shrink-0 space-y-0.5">
+          <p className="text-base font-bold text-[#ca8a04]">{fmt(order.providerPayout ?? 0)}</p>
+          <p className="text-xs text-[#929292]">Platform: {fmt(order.platformFee ?? 0)}</p>
+          <button
+            onClick={() => markPayout.mutate(order.id)}
+            disabled={markPayout.isPending}
+            className="mt-2 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#ca8a04] text-white hover:bg-[#a16207] transition-colors disabled:opacity-50"
+          >
+            {markPayout.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+            Đã chuyển
+          </button>
+        </div>
       </div>
-
-      <button
-        onClick={() => markPayout.mutate(order.id)}
-        disabled={markPayout.isPending}
-        className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#ca8a04] text-white hover:bg-[#a16207] transition-colors disabled:opacity-50"
-      >
-        {markPayout.isPending ? (
-          <Loader2 className="w-3 h-3 animate-spin" />
-        ) : (
-          <CheckCircle2 className="w-3 h-3" />
-        )}
-        Xác nhận payout
-      </button>
     </div>
   );
 }
@@ -156,50 +171,39 @@ function RefundRow({ booking }: { booking: Booking }) {
   const property = getProperty(booking.property);
 
   return (
-    <div className="flex items-start gap-4 px-5 py-4 border-b border-[#dddddd] last:border-0">
-      <div className="w-9 h-9 rounded-full bg-[#fff5f5] flex items-center justify-center shrink-0 mt-0.5">
-        <RefreshCw className="w-4 h-4 text-[#c13515]" />
-      </div>
+    <div className="px-5 py-4 border-b border-[#dddddd] last:border-0">
+      <div className="flex items-start gap-4">
+        <div className="w-9 h-9 rounded-full bg-[#fff5f5] flex items-center justify-center shrink-0 mt-0.5">
+          <RefreshCw className="w-4 h-4 text-[#c13515]" />
+        </div>
 
-      <div className="flex-1 min-w-0 space-y-0.5">
-        <p className="text-sm font-semibold text-[#222222] truncate">
-          {property?.title ?? 'Property'}
-        </p>
-        <p className="text-xs text-[#6a6a6a]">
-          Người thuê: <span className="font-medium text-[#222222]">{tenant?.name ?? '—'}</span>
-          {tenant?.email && <span className="text-[#929292]"> · {tenant.email}</span>}
-        </p>
-        {tenant?.bankAccount && (
-          <p className="text-xs text-[#929292]">
-            {tenant.bankAccount.bankName} · {tenant.bankAccount.accountNumber} ·{' '}
-            {tenant.bankAccount.accountName}
+        <div className="flex-1 min-w-0 space-y-1">
+          <p className="text-sm font-semibold text-[#222222] truncate">{property?.title ?? '—'}</p>
+          <p className="text-xs text-[#6a6a6a]">
+            Người thuê: <span className="font-medium text-[#222222]">{tenant?.name ?? '—'}</span>
+            {tenant?.email && <span className="text-[#929292]"> · {tenant.email}</span>}
+            {tenant?.phone && <span className="text-[#929292]"> · {tenant.phone}</span>}
           </p>
-        )}
-        <p className="text-xs text-[#929292]">
-          Đã huỷ: {fmtDate(booking.updatedAt)}
-          {booking.cancelReason && <span> · &ldquo;{booking.cancelReason}&rdquo;</span>}
-        </p>
-      </div>
+          <BankAccountCard bank={tenant?.bankAccount} />
+          <p className="text-xs text-[#929292]">
+            Huỷ lúc: {fmtDate(booking.updatedAt)}
+            {booking.cancelReason && <span> · &ldquo;{booking.cancelReason}&rdquo;</span>}
+          </p>
+        </div>
 
-      <div className="text-right shrink-0">
-        <p className="text-sm font-bold text-[#222222]">{fmt(booking.totalPrice)}</p>
-        <p className="text-xs text-[#929292]">
-          Đặt cọc: {fmt(booking.depositAmount ?? 0)}
-        </p>
+        <div className="text-right shrink-0 space-y-0.5">
+          <p className="text-base font-bold text-[#c13515]">{fmt(booking.totalPrice)}</p>
+          <p className="text-xs text-[#929292]">Cọc: {fmt(booking.depositAmount ?? 0)}</p>
+          <button
+            onClick={() => markRefunded.mutate(booking.id)}
+            disabled={markRefunded.isPending}
+            className="mt-2 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#c13515] text-white hover:bg-[#b32505] transition-colors disabled:opacity-50"
+          >
+            {markRefunded.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+            Đã hoàn tiền
+          </button>
+        </div>
       </div>
-
-      <button
-        onClick={() => markRefunded.mutate(booking.id)}
-        disabled={markRefunded.isPending}
-        className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#c13515] text-white hover:bg-[#b32505] transition-colors disabled:opacity-50"
-      >
-        {markRefunded.isPending ? (
-          <Loader2 className="w-3 h-3 animate-spin" />
-        ) : (
-          <RefreshCw className="w-3 h-3" />
-        )}
-        Xác nhận hoàn tiền
-      </button>
     </div>
   );
 }

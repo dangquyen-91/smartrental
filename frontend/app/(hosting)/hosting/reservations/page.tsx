@@ -17,6 +17,8 @@ import {
   AlertCircle,
   Timer,
   RotateCcw,
+  Banknote,
+  Hourglass,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -304,14 +306,28 @@ function ReservationCard({
 
       {/* Footer */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 mt-4 border-t border-hairline-gray">
-        {/* Price + payment */}
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-sm font-semibold text-ink-black">
-            {formatVnd(booking.totalPrice)}
-          </span>
-          <span className={cn('text-xs font-medium', paymentCfg.className)}>
-            · {paymentCfg.label}
-          </span>
+        {/* Price + payment + payout */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-sm font-semibold text-ink-black">
+              {formatVnd(booking.totalPrice)}
+            </span>
+            <span className={cn('text-xs font-medium', paymentCfg.className)}>
+              · {paymentCfg.label}
+            </span>
+          </div>
+          {booking.paymentStatus === 'paid' && booking.payoutStatus === 'pending' && (
+            <span className="flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+              <Hourglass className="size-3 shrink-0" />
+              Chờ nhận tiền
+            </span>
+          )}
+          {booking.paymentStatus === 'paid' && booking.payoutStatus === 'paid' && (
+            <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+              <Banknote className="size-3 shrink-0" />
+              Đã nhận tiền
+            </span>
+          )}
         </div>
 
         {/* Actions */}

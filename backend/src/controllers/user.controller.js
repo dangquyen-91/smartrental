@@ -1,5 +1,6 @@
 import * as userService from '../services/user.service.js';
 import * as R from '../utils/response.js';
+import AppError from '../utils/app-error.js';
 
 const getUsers = async (req, res, next) => {
   try {
@@ -56,4 +57,24 @@ const updateBankAccount = async (req, res, next) => {
   }
 };
 
-export { getUsers, getUserById, updateUser, deleteUser, changePassword, updateBankAccount };
+const toggleWishlist = async (req, res, next) => {
+  try {
+    const { propertyId } = req.params;
+    if (!propertyId) throw new AppError('Property ID is required', 400);
+    const result = await userService.toggleWishlist(req.user.id, propertyId);
+    return R.success(res, result, result.saved ? 'Đã lưu vào danh sách yêu thích' : 'Đã xoá khỏi danh sách yêu thích');
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getWishlist = async (req, res, next) => {
+  try {
+    const properties = await userService.getWishlist(req.user.id);
+    return R.success(res, { properties });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export { getUsers, getUserById, updateUser, deleteUser, changePassword, updateBankAccount, toggleWishlist, getWishlist };

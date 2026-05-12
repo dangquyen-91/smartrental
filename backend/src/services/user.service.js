@@ -86,8 +86,9 @@ const updateBankAccount = async (id, data, requesterId, requesterRole) => {
   const user = await User.findById(id);
   if (!user) throw new AppError('User not found', 404);
 
-  if (!['landlord', 'provider', 'admin'].includes(user.role)) {
-    throw new AppError('Only registered users can set up bank accounts', 403);
+  // Tất cả role đều có thể cần bank account (tenant hoàn tiền deposit, landlord/provider nhận payout)
+  if (!['tenant', 'landlord', 'provider', 'admin'].includes(user.role)) {
+    throw new AppError('Access denied', 403);
   }
 
   const { bankName, accountNumber, accountName, branch } = data;
@@ -116,4 +117,31 @@ const changePassword = async (id, currentPassword, newPassword, requesterId) => 
   await user.save();
 };
 
-export { getUsers, getUserById, updateUser, deleteUser, changePassword, updateBankAccount };
+const toggleWishlist = async (userId, propertyId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new AppError('User not found', 404);
+
+  const idx = user.savedProperties.findIndex((id) => id.toString() === propertyId);
+  if (idx === -1) {
+    user.savedProperties.push(propertyId);
+  } else {
+    user.savedProperties.splice(idx, 1);
+  }
+
+  await user.save();
+  return { saved: idx === -1, count: user.savedProperties.length };
+};
+
+const getWishlist = async (userId) => {
+  const user = await User.findById(userId)
+    .populate({
+      path: 'savedProperties',
+      select: 'title type status price area address images isFeatured createdAt',
+    })
+    .select('savedProperties');
+
+  if (!user) throw new AppError('User not found', 404);
+  return user.savedProperties;
+};
+
+export { getUsers, getUserById, updateUser, deleteUser, changePassword, updateBankAccount, toggleWishlist, getWishlist };

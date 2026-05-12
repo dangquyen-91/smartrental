@@ -28,7 +28,7 @@ const ALLOWED_TRANSITIONS = {
     tenant:   [],
     landlord: ['cancelled'],
     admin:    ['in_progress', 'cancelled'],
-    provider: ['in_progress'],
+    provider: ['in_progress', 'cancelled'],
   },
   in_progress: {
     tenant:   [],
@@ -112,6 +112,9 @@ const assignProvider = async (id, providerId) => {
 
   if (['done', 'cancelled'].includes(order.status)) {
     throw new AppError(`Cannot assign provider to a "${order.status}" order`, 400);
+  }
+  if (order.paymentStatus !== 'paid') {
+    throw new AppError('Cannot assign provider before tenant has paid', 400);
   }
 
   const provider = await User.findOne({ _id: providerId, role: 'provider', isActive: true });
