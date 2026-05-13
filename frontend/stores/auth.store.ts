@@ -10,6 +10,7 @@ interface AuthStore {
   setAuth: (user: User, accessToken: string, refreshToken: string) => void;
   setUser: (user: User) => void;
   setAccessToken: (token: string) => void;
+  setTokens: (accessToken: string, refreshToken: string) => void;
   clearAuth: () => void;
   setHasHydrated: (v: boolean) => void;
 }
@@ -40,6 +41,7 @@ export const useAuthStore = create<AuthStore>()(
       },
       setUser: (user) => set({ user }),
       setAccessToken: (token) => set({ accessToken: token }),
+      setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
       clearAuth: () => {
         clearSessionCookie();
         set({ user: null, accessToken: null, refreshToken: null });

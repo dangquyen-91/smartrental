@@ -51,7 +51,7 @@ api.interceptors.response.use(
     original._retry = true;
     isRefreshing = true;
 
-    const { refreshToken, setAccessToken, clearAuth } = useAuthStore.getState();
+    const { refreshToken, setTokens, clearAuth } = useAuthStore.getState();
 
     try {
       const { data } = await axios.post(
@@ -60,7 +60,8 @@ api.interceptors.response.use(
         { timeout: 10000 },
       );
       const newToken: string = data.data.accessToken;
-      setAccessToken(newToken);
+      const newRefreshToken: string = data.data.refreshToken;
+      setTokens(newToken, newRefreshToken);
       processQueue(null, newToken);
       original.headers.Authorization = `Bearer ${newToken}`;
       return api(original);
