@@ -1,0 +1,1051 @@
+'use client';
+
+import { use, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import {
+  ArrowLeft,
+  Share2,
+  Heart,
+  MapPin,
+  Maximize2,
+  BedDouble,
+  Bath,
+  Wifi,
+  Shield,
+  Wind,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  CalendarDays,
+  Phone,
+  User,
+  Sofa,
+  Camera,
+  ShoppingCart,
+  Flame,
+  Droplets,
+  Zap,
+  Dog,
+  Dumbbell,
+  Tv,
+  UtensilsCrossed,
+  Sun,
+  Package,
+  Lock,
+  AirVent,
+  WashingMachine,
+  ParkingCircle,
+  ArrowUpDown,
+  LockKeyhole,
+  Link2,
+  Check,
+  MessageCircle,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import AppNavbar from '@/components/layout/app-navbar';
+import { PriceDisplay } from '@/components/ui/price-display';
+import { useProperty } from '@/hooks/use-properties';
+import { useCreateBooking } from '@/hooks/use-bookings';
+import { useAuth } from '@/hooks/use-auth';
+import { useWishlist, useToggleWishlist } from '@/hooks/use-wishlist';
+import { cn } from '@/lib/utils';
+import type { Property } from '@/types';
+
+// ─── share modal ──────────────────────────────────────────────────────────────
+
+const FacebookIcon = () => (
+  <svg viewBox="0 0 24 24" className="size-5" fill="#1877F2">
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+  </svg>
+);
+
+const TwitterXIcon = () => (
+  <svg viewBox="0 0 24 24" className="size-5" fill="currentColor">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
+
+const WhatsAppIcon = () => (
+  <svg viewBox="0 0 24 24" className="size-5" fill="#25D366">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+  </svg>
+);
+
+const ZaloIcon = () => (
+  <svg viewBox="0 0 50 50" className="size-5" fill="#0068FF">
+    <path d="M25 2C12.3 2 2 12.3 2 25s10.3 23 23 23 23-10.3 23-23S37.7 2 25 2zm-2.8 32.2H17V20.4h5.2v13.8zm-2.6-15.6c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.4 3-3 3zm18.6 15.6h-5.2v-6.7c0-1.6 0-3.7-2.3-3.7s-2.6 1.8-2.6 3.6v6.8H23v-13.8h4.9v1.9c.7-1.3 2.4-2.3 4.6-2.3 4.9 0 5.8 3.2 5.8 7.4v6.8z" />
+  </svg>
+);
+
+function ShareModal({
+  url,
+  title,
+  onClose,
+}: {
+  url: string;
+  title: string;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Không thể sao chép liên kết.');
+    }
+  };
+
+  const enc = encodeURIComponent(url);
+  const encTitle = encodeURIComponent(title);
+
+  const platforms = [
+    {
+      label: 'Facebook',
+      icon: <FacebookIcon />,
+      bg: 'bg-[#1877F2]/10 hover:bg-[#1877F2]/20',
+      href: `https://www.facebook.com/sharer/sharer.php?u=${enc}`,
+    },
+    {
+      label: 'Twitter / X',
+      icon: <TwitterXIcon />,
+      bg: 'bg-[#f7f7f7] hover:bg-[#ebebeb]',
+      href: `https://twitter.com/intent/tweet?url=${enc}&text=${encTitle}`,
+    },
+    {
+      label: 'WhatsApp',
+      icon: <WhatsAppIcon />,
+      bg: 'bg-[#25D366]/10 hover:bg-[#25D366]/20',
+      href: `https://wa.me/?text=${encTitle}%20${enc}`,
+    },
+    {
+      label: 'Zalo',
+      icon: <ZaloIcon />,
+      bg: 'bg-[#0068FF]/10 hover:bg-[#0068FF]/20',
+      href: `https://zalo.me/share/?url=${enc}&title=${encTitle}`,
+    },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div
+        ref={ref}
+        className="relative bg-white rounded-panel w-full max-w-sm shadow-[rgba(0,0,0,0.02)_0_0_0_1px,rgba(0,0,0,0.04)_0_2px_6px_0,rgba(0,0,0,0.16)_0_8px_32px_0] overflow-hidden"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#dddddd]">
+          <h3 className="text-base font-semibold text-[#222222]">Chia sẻ tin đăng này</h3>
+          <button
+            onClick={onClose}
+            className="size-8 flex items-center justify-center rounded-full bg-[#f7f7f7] hover:bg-[#ebebeb] transition-colors"
+          >
+            <X className="size-4 text-[#222222]" />
+          </button>
+        </div>
+
+        {/* Thumbnail preview */}
+        <div className="px-6 py-4 border-b border-[#dddddd]">
+          <div className="flex items-center gap-3 p-3 bg-[#f7f7f7] rounded-[10px]">
+            <div className="size-10 rounded-lg bg-[#ff385c]/10 flex items-center justify-center shrink-0">
+              <MessageCircle className="size-5 text-[#ff385c]" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[#222222] truncate">{title}</p>
+              <p className="text-xs text-[#929292] truncate">{url}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Platform grid */}
+        <div className="px-6 py-5">
+          <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider mb-3">
+            Chia sẻ lên mạng xã hội
+          </p>
+          <div className="grid grid-cols-4 gap-3">
+            {platforms.map(({ label, icon, bg, href }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={onClose}
+                className="flex flex-col items-center gap-1.5 group"
+              >
+                <div
+                  className={cn(
+                    'size-12 rounded-full flex items-center justify-center transition-colors',
+                    bg,
+                  )}
+                >
+                  {icon}
+                </div>
+                <span className="text-[11px] font-medium text-[#6a6a6a] group-hover:text-[#222222] transition-colors text-center leading-tight">
+                  {label}
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Copy link */}
+        <div className="px-6 pb-5">
+          <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider mb-2">
+            Hoặc sao chép liên kết
+          </p>
+          <div className="flex items-center gap-2 p-3 bg-[#f7f7f7] rounded-[10px] border border-[#dddddd]">
+            <Link2 className="size-4 text-[#929292] shrink-0" />
+            <span className="flex-1 text-xs text-[#6a6a6a] truncate">{url}</span>
+            <button
+              onClick={handleCopy}
+              className={cn(
+                'flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0',
+                copied
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-[#222222] text-white hover:bg-[#3a3a3a]',
+              )}
+            >
+              {copied ? (
+                <>
+                  <Check className="size-3.5" />
+                  Đã sao chép
+                </>
+              ) : (
+                'Sao chép'
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+const TYPE_LABEL: Record<Property['type'], string> = {
+  room: 'Phòng trọ',
+  apartment: 'Căn hộ',
+  house: 'Nhà nguyên căn',
+  studio: 'Studio',
+};
+
+const STATUS_CONFIG: Record<
+  Property['status'],
+  { label: string; color: string }
+> = {
+  available: { label: 'Còn trống', color: 'bg-emerald-50 text-emerald-700' },
+  rented: { label: 'Đã thuê', color: 'bg-stone-100 text-stone-500' },
+  maintenance: { label: 'Đang bảo trì', color: 'bg-amber-50 text-amber-700' },
+};
+
+const AMENITY_ICONS: Record<string, React.ElementType> = {
+  // wifi
+  wifi: Wifi,
+  'wi-fi': Wifi,
+  'wi fi': Wifi,
+  // air con
+  ac: AirVent,
+  'air conditioning': AirVent,
+  'điều hòa': AirVent,
+  'máy lạnh': AirVent,
+  'may lanh': AirVent,
+  // parking
+  parking: ParkingCircle,
+  'bãi đỗ xe': ParkingCircle,
+  'đỗ xe': ParkingCircle,
+  'chỗ để xe': ParkingCircle,
+  // security / camera
+  security: Shield,
+  'bảo vệ': Shield,
+  'an ninh': Shield,
+  'camera an ninh': Camera,
+  camera: Camera,
+  // furniture
+  'nội thất': Sofa,
+  'nội thất đầy đủ': Sofa,
+  'fully furnished': Sofa,
+  furnished: Sofa,
+  // laundry
+  'máy giặt': WashingMachine,
+  'giặt sấy': WashingMachine,
+  laundry: WashingMachine,
+  // drying yard
+  'sân phơi': Sun,
+  'phơi đồ': Sun,
+  // kitchen
+  bếp: UtensilsCrossed,
+  'nhà bếp': UtensilsCrossed,
+  kitchen: UtensilsCrossed,
+  // tv
+  tv: Tv,
+  tivi: Tv,
+  'truyền hình': Tv,
+  // hot water
+  'nước nóng': Droplets,
+  'water heater': Droplets,
+  // electricity
+  điện: Zap,
+  electricity: Zap,
+  // gas
+  gas: Flame,
+  'bình gas': Flame,
+  // elevator
+  'thang máy': ArrowUpDown,
+  elevator: ArrowUpDown,
+  lift: ArrowUpDown,
+  // gym
+  gym: Dumbbell,
+  'phòng gym': Dumbbell,
+  fitness: Dumbbell,
+  // pet
+  'thú cưng': Dog,
+  pet: Dog,
+  'chó mèo': Dog,
+  // market / supermarket
+  'gần chợ': ShoppingCart,
+  'siêu thị': ShoppingCart,
+  'gần chợ/siêu thị': ShoppingCart,
+  chợ: ShoppingCart,
+  supermarket: ShoppingCart,
+  // storage
+  kho: Package,
+  'kho chứa': Package,
+  storage: Package,
+  // lock / private
+  'khóa cửa': Lock,
+  private: Lock,
+  'riêng tư': Lock,
+  // balcony / outdoor
+  'ban công': Wind,
+  balcony: Wind,
+  default: Maximize2,
+};
+
+function getAmenityIcon(name: string): React.ElementType {
+  const key = name.toLowerCase().trim();
+  if (AMENITY_ICONS[key]) return AMENITY_ICONS[key];
+  // partial match fallback
+  for (const [pattern, Icon] of Object.entries(AMENITY_ICONS)) {
+    if (pattern !== 'default' && key.includes(pattern)) return Icon;
+  }
+  return AMENITY_ICONS.default;
+}
+
+function formatVnd(n: number) {
+  return new Intl.NumberFormat('vi-VN').format(n) + '₫';
+}
+
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// ─── skeleton ────────────────────────────────────────────────────────────────
+
+function PropertyDetailSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <AppNavbar />
+      <div className="max-w-6xl mx-auto px-6 pt-6 pb-12">
+        <div className="h-5 w-48 bg-hairline-gray rounded mb-6" />
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_0.45fr] gap-2 h-[420px]">
+          <div className="bg-hairline-gray rounded-panel h-full" />
+          <div className="hidden lg:grid grid-rows-2 gap-2">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-hairline-gray rounded-panel" />
+              <div className="bg-hairline-gray rounded-panel" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-hairline-gray rounded-panel" />
+              <div className="bg-hairline-gray rounded-panel" />
+            </div>
+          </div>
+        </div>
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_370px] gap-12">
+          <div className="space-y-4">
+            <div className="h-7 w-3/4 bg-hairline-gray rounded" />
+            <div className="h-4 w-1/2 bg-hairline-gray rounded" />
+            <div className="h-4 w-full bg-hairline-gray rounded" />
+            <div className="h-4 w-5/6 bg-hairline-gray rounded" />
+          </div>
+          <div className="h-64 bg-hairline-gray rounded-panel" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── image cell ──────────────────────────────────────────────────────────────
+
+function ImageCell({
+  idx,
+  className,
+  urls,
+  title,
+  count,
+  onOpen,
+}: {
+  idx: number;
+  className?: string;
+  urls: string[];
+  title: string;
+  count: number;
+  onOpen: (i: number) => void;
+}) {
+  return (
+    <button
+      onClick={() => onOpen(idx)}
+      className={cn('relative overflow-hidden group/img', className)}
+    >
+      <Image
+        src={urls[idx]}
+        alt={idx === 0 ? title : ''}
+        fill
+        sizes="(max-width: 768px) 100vw, 50vw"
+        className="object-cover group-hover/img:brightness-90 transition-[filter] duration-200"
+        priority={idx === 0}
+      />
+      {idx === 4 && count > 5 && (
+        <div className="absolute inset-0 bg-ink-black/50 flex items-center justify-center pointer-events-none">
+          <span className="text-white font-semibold text-lg">+{count - 5}</span>
+        </div>
+      )}
+    </button>
+  );
+}
+
+// ─── image grid ──────────────────────────────────────────────────────────────
+
+function ImageGrid({
+  images,
+  title,
+}: {
+  images: { url: string }[];
+  title: string;
+}) {
+  const [lightbox, setLightbox] = useState<number | null>(null);
+  const urls = images.length > 0 ? images.map((i) => i.url) : ['/placeholder.jpg'];
+  const count = urls.length;
+
+  const open = (i: number) => setLightbox(i);
+  const close = () => setLightbox(null);
+  const prev = () => setLightbox((n) => (n! === 0 ? urls.length - 1 : n! - 1));
+  const next = () => setLightbox((n) => (n! === urls.length - 1 ? 0 : n! + 1));
+
+  return (
+    <>
+      {/* outer wrapper: clips rounded corners for the whole grid */}
+      <div className="relative h-[400px] lg:h-[480px] rounded-panel overflow-hidden">
+        {count === 1 ? (
+          /* ── 1 image: full width ── */
+          <ImageCell idx={0} className="w-full h-full" urls={urls} title={title} count={count} onOpen={open} />
+        ) : count === 2 ? (
+          /* ── 2 images: 60/40 split ── */
+          <div className="grid grid-cols-[1.5fr_1fr] gap-2 h-full">
+            <ImageCell idx={0} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+            <ImageCell idx={1} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+          </div>
+        ) : count === 3 ? (
+          /* ── 3 images: large left + 2 stacked right ── */
+          <div className="grid grid-cols-2 gap-2 h-full">
+            <ImageCell idx={0} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+            <div className="grid grid-rows-2 gap-2 h-full">
+              <ImageCell idx={1} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+              <ImageCell idx={2} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+            </div>
+          </div>
+        ) : count === 4 ? (
+          /* ── 4 images: large left + 3 stacked right ── */
+          <div className="grid grid-cols-2 gap-2 h-full">
+            <ImageCell idx={0} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+            <div className="grid grid-rows-3 gap-2 h-full">
+              <ImageCell idx={1} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+              <ImageCell idx={2} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+              <ImageCell idx={3} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+            </div>
+          </div>
+        ) : (
+          /* ── 5+ images: Airbnb-style large left + 2×2 right ── */
+          <div className="grid grid-cols-2 gap-2 h-full">
+            <ImageCell idx={0} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+            <div className="grid grid-rows-2 gap-2 h-full">
+              <div className="grid grid-cols-2 gap-2">
+                <ImageCell idx={1} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+                <ImageCell idx={2} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <ImageCell idx={3} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+                <ImageCell idx={4} className="h-full" urls={urls} title={title} count={count} onOpen={open} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Show all button */}
+        <button
+          onClick={() => open(0)}
+          className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-white border border-hairline-gray rounded-lg px-3 py-1.5 text-sm font-semibold text-ink-black hover:bg-soft-cloud transition-colors shadow-sm"
+        >
+          <Maximize2 className="size-3.5" />
+          Xem tất cả ảnh
+        </button>
+      </div>
+
+      {/* Lightbox */}
+      {lightbox !== null && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+          onClick={close}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); close(); }}
+            className="absolute top-4 right-4 size-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+          >
+            <X className="size-5" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); prev(); }}
+            className="absolute left-4 size-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+          >
+            <ChevronLeft className="size-6" />
+          </button>
+          <Image
+            src={urls[lightbox]}
+            alt={title}
+            width={0}
+            height={0}
+            sizes="100vw"
+            className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg w-auto h-auto"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            onClick={(e) => { e.stopPropagation(); next(); }}
+            className="absolute right-4 size-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+          >
+            <ChevronRight className="size-6" />
+          </button>
+          <span className="absolute bottom-4 text-white/70 text-sm">
+            {lightbox + 1} / {urls.length}
+          </span>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── booking panel ────────────────────────────────────────────────────────────
+
+function BookingPanel({ property, contactRevealed }: { property: Property; contactRevealed: boolean }) {
+  const { isAuthenticated, user } = useAuth();
+  const router = useRouter();
+  const { mutate: createBooking, isPending, error } = useCreateBooking();
+
+  const [startDate, setStartDate] = useState(todayStr());
+  const [duration, setDuration] = useState(1);
+  const [success, setSuccess] = useState(false);
+
+  const isOwner =
+    typeof property.owner === 'object'
+      ? property.owner.id === user?.id
+      : property.owner === user?.id;
+
+  const unavailable = property.status !== 'available';
+
+  const totalRent = duration * property.price;
+  const platformFee = Math.round(property.price * 0.1);
+  const initialPayment = property.price; // tháng đầu tiên (platform giữ 10%, chuyển 90% cho chủ)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+    createBooking(
+      { property: property.id, startDate, duration },
+      {
+        onSuccess: () => setSuccess(true),
+      }
+    );
+  };
+
+  if (success) {
+    return (
+      <div className="border border-hairline-gray rounded-panel p-6 shadow-[rgba(0,0,0,0.02)_0_0_0_1px,rgba(0,0,0,0.04)_0_2px_6px_0,rgba(0,0,0,0.1)_0_4px_8px_0]">
+        <div className="text-center py-4">
+          <div className="size-12 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
+            <CalendarDays className="size-6 text-emerald-600" />
+          </div>
+          <h3 className="text-base font-semibold text-ink-black mb-1">Đã gửi yêu cầu đặt phòng!</h3>
+          <p className="text-sm text-ash-gray mb-4">Chủ nhà sẽ xác nhận trong vòng 24h.</p>
+          <Link
+            href="/trips"
+            className="inline-block w-full text-center py-3 bg-rausch hover:bg-deep-rausch text-white font-semibold rounded-lg transition-colors"
+          >
+            Xem đơn thuê của tôi
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border border-hairline-gray rounded-panel p-6 shadow-[rgba(0,0,0,0.02)_0_0_0_1px,rgba(0,0,0,0.04)_0_2px_6px_0,rgba(0,0,0,0.1)_0_4px_8px_0]">
+      {/* Price */}
+      <div className="mb-5">
+        <PriceDisplay amount={property.price} period="month" size="lg" />
+      </div>
+
+      {isOwner ? (
+        <div className="text-center py-4 text-sm text-ash-gray border border-hairline-gray rounded-lg">
+          Đây là bất động sản của bạn
+        </div>
+      ) : unavailable ? (
+        <div className="text-center py-4 text-sm text-ash-gray border border-hairline-gray rounded-lg">
+          Phòng này hiện {(STATUS_CONFIG[property.status]?.label ?? property.status).toLowerCase()}
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-3">
+          {/* Date + duration row */}
+          <div className="border border-hairline-gray rounded-lg overflow-hidden divide-y divide-hairline-gray">
+            <div className="px-4 py-3">
+              <label className="block text-[11px] font-semibold text-ink-black uppercase tracking-wide mb-1">
+                Ngày vào
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                min={todayStr()}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full text-sm font-medium text-ink-black outline-none bg-transparent"
+                required
+              />
+            </div>
+            <div className="px-4 py-3">
+              <label className="block text-[11px] font-semibold text-ink-black uppercase tracking-wide mb-1">
+                Thời hạn thuê
+              </label>
+              <select
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value))}
+                className="w-full text-sm font-medium text-ink-black outline-none bg-transparent"
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                  <option key={m} value={m}>
+                    {m} tháng
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Price breakdown */}
+          <div className="space-y-2 pt-1">
+            <div className="flex justify-between text-sm">
+              <span className="text-ash-gray underline decoration-dotted">
+                {formatVnd(property.price)} × {duration} tháng
+              </span>
+              <span className="text-ink-black font-medium">{formatVnd(totalRent)}</span>
+            </div>
+            <div className="flex justify-between text-sm text-ash-gray">
+              <span className="underline decoration-dotted">Phí dịch vụ (10%)</span>
+              <span>{formatVnd(platformFee)}</span>
+            </div>
+            <div className="border-t border-hairline-gray pt-2 flex justify-between text-sm font-semibold text-ink-black">
+              <span>Thanh toán tháng đầu</span>
+              <span>{formatVnd(initialPayment)}</span>
+            </div>
+          </div>
+
+          {error && (
+            <p className="text-xs text-error-red">
+              Không thể đặt phòng. Vui lòng thử lại.
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={isPending}
+            className="w-full py-3.5 bg-rausch hover:bg-deep-rausch disabled:opacity-60 text-white font-semibold rounded-lg transition-all active:scale-[0.98]"
+          >
+            {isPending ? 'Đang gửi...' : isAuthenticated ? 'Đặt phòng' : 'Đăng nhập để đặt phòng'}
+          </button>
+
+          {isAuthenticated && (
+            <p className="text-center text-xs text-ash-gray">
+              Bạn chưa bị tính phí vào lúc này
+            </p>
+          )}
+        </form>
+      )}
+
+      {/* Contact */}
+      <div className="mt-4 pt-4 border-t border-hairline-gray">
+        {contactRevealed && property.contact?.phone ? (
+          <div className="flex items-center gap-2 text-sm text-ash-gray">
+            <Phone className="size-4 shrink-0" />
+            <span>{property.contact.name ?? 'Liên hệ'}: </span>
+            <a href={`tel:${property.contact.phone}`} className="font-medium text-ink-black hover:text-rausch transition-colors">
+              {property.contact.phone}
+            </a>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-sm text-ash-gray">
+            <LockKeyhole className="size-4 shrink-0 text-hairline-gray" />
+            <span className="italic">SĐT hiển thị sau khi đặt phòng &amp; thanh toán</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── mobile sticky bottom bar ─────────────────────────────────────────────────
+
+function MobileReserveBar({ property, contactRevealed }: { property: Property; contactRevealed: boolean }) {
+  const [open, setOpen] = useState(false);
+  if (property.status !== 'available') return null;
+  return (
+    <>
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-hairline-gray px-6 py-4 flex items-center justify-between">
+        <div>
+          <PriceDisplay amount={property.price} period="month" size="md" />
+        </div>
+        <button
+          onClick={() => setOpen(true)}
+          className="px-6 py-3 bg-rausch hover:bg-deep-rausch text-white font-semibold rounded-lg transition-all active:scale-95 text-sm"
+        >
+          Đặt phòng
+        </button>
+      </div>
+      {/* bottom sheet */}
+      {open && (
+        <div className="lg:hidden fixed inset-0 z-40 flex items-end">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
+          <div className="relative w-full bg-white rounded-t-2xl p-6 shadow-xl">
+            <button
+              onClick={() => setOpen(false)}
+              className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-soft-cloud"
+            >
+              <X className="size-4 text-ink-black" />
+            </button>
+            <h3 className="text-base font-semibold text-ink-black mb-4">{property.title}</h3>
+            <BookingPanel property={property} contactRevealed={contactRevealed} />
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── main page ────────────────────────────────────────────────────────────────
+
+export default function PropertyDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const { data, isLoading, isError } = useProperty(id);
+
+  // ── wishlist ─────────────────────────────────────────────────────────────────
+  const { data: savedIds = [] } = useWishlist();
+  const { mutate: toggleWishlist, isPending: isTogglingWishlist } = useToggleWishlist(id);
+  const [heartAnim, setHeartAnim] = useState(false);
+  const saved = savedIds.includes(id);
+
+  const { isAuthenticated } = useAuth();
+
+  const toggleSaved = () => {
+    if (!isAuthenticated) {
+      toast('Đăng nhập để lưu tin đăng yêu thích', {
+        action: { label: 'Đăng nhập', onClick: () => window.location.href = '/login' },
+      });
+      return;
+    }
+    setHeartAnim(true);
+    setTimeout(() => setHeartAnim(false), 400);
+    toggleWishlist();
+  };
+
+  // ── share ────────────────────────────────────────────────────────────────────
+  const [shareOpen, setShareOpen] = useState(false);
+
+  const handleShare = async (title: string) => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        return;
+      } catch {
+        // user cancelled or not supported — fall through to modal
+      }
+    }
+    setShareOpen(true);
+  };
+
+  if (isLoading) return <PropertyDetailSkeleton />;
+
+  if (isError || !data?.data?.property) {
+    return (
+      <>
+        <AppNavbar />
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
+          <h2 className="text-xl font-semibold text-ink-black mb-2">Không tìm thấy bất động sản</h2>
+          <p className="text-ash-gray text-sm mb-6">Tin đăng này có thể đã bị xoá hoặc không tồn tại.</p>
+          <Link href="/" className="px-5 py-2.5 bg-rausch text-white font-semibold rounded-lg text-sm hover:bg-deep-rausch transition-colors">
+            Về trang chủ
+          </Link>
+        </div>
+      </>
+    );
+  }
+
+  const p = data.data.property;
+  const contactRevealed = data.data.contactRevealed ?? false;
+  const statusCfg = STATUS_CONFIG[p.status] ?? { label: p.status, color: 'bg-stone-100 text-stone-500' };
+  const ownerUser = typeof p.owner === 'object' ? p.owner : null;
+  const address = [p.address?.street, p.address?.ward, p.address?.district, p.address?.city]
+    .filter(Boolean)
+    .join(', ');
+
+  return (
+    <div className="min-h-screen bg-white pb-24 lg:pb-0">
+      <AppNavbar />
+
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-12">
+        {/* Breadcrumb + actions */}
+        <div className="flex items-center justify-between mb-5">
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 text-sm font-medium text-ink-black hover:text-rausch transition-colors"
+          >
+            <ArrowLeft className="size-4" />
+            Quay lại
+          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleShare(p.title)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-ink-black border border-hairline-gray rounded-lg hover:bg-soft-cloud transition-colors"
+            >
+              <Share2 className="size-4" />
+              <span className="hidden sm:inline">Chia sẻ</span>
+            </button>
+            <button
+              onClick={toggleSaved}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-ink-black border border-hairline-gray rounded-lg hover:bg-soft-cloud transition-colors"
+            >
+              <Heart
+                className={cn(
+                  'size-4 transition-all duration-200',
+                  saved ? 'fill-rausch stroke-rausch' : 'stroke-ink-black',
+                  heartAnim && 'scale-125',
+                )}
+              />
+              <span className="hidden sm:inline">{saved ? 'Đã lưu' : 'Lưu'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Title */}
+        <h1 className="text-[1.5rem] font-bold text-ink-black leading-tight mb-2">{p.title}</h1>
+        <div className="flex flex-wrap items-center gap-2 mb-5">
+          <span className="flex items-center gap-1 text-sm text-ash-gray">
+            <MapPin className="size-3.5 shrink-0" />
+            {address}
+          </span>
+          <span className="text-hairline-gray">·</span>
+          <span className="text-sm text-ash-gray">{TYPE_LABEL[p.type]}</span>
+          <span
+            className={cn(
+              'text-xs font-semibold px-2 py-0.5 rounded-full',
+              statusCfg.color
+            )}
+          >
+            {statusCfg.label}
+          </span>
+          {p.isFeatured && (
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
+              Nổi bật
+            </span>
+          )}
+        </div>
+
+        {/* Image grid */}
+        <ImageGrid images={p.images ?? []} title={p.title} />
+
+        {/* Two-column layout */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_370px] gap-12">
+          {/* ── Left: property info ── */}
+          <div>
+            {/* Key stats */}
+            <div className="flex flex-wrap gap-5 pb-7 border-b border-hairline-gray">
+              <Stat icon={Maximize2} label="Diện tích" value={`${p.area} m²`} />
+              {p.bedrooms !== undefined && (
+                <Stat icon={BedDouble} label="Phòng ngủ" value={String(p.bedrooms)} />
+              )}
+              {p.bathrooms !== undefined && (
+                <Stat icon={Bath} label="Phòng tắm" value={String(p.bathrooms)} />
+              )}
+              {p.pricePerM2 !== undefined && (
+                <Stat icon={null} label="Giá / m²" value={formatVnd(p.pricePerM2)} />
+              )}
+            </div>
+
+            {/* Description */}
+            {p.description && (
+              <section className="py-7 border-b border-hairline-gray">
+                <h2 className="text-lg font-semibold text-ink-black mb-3">Mô tả</h2>
+                <p className="text-sm font-medium text-charcoal leading-relaxed whitespace-pre-line">
+                  {p.description}
+                </p>
+              </section>
+            )}
+
+            {/* Amenities */}
+            {(p.amenities ?? []).length > 0 && (
+              <section id="amenities" className="py-7 border-b border-hairline-gray">
+                <h2 className="text-lg font-semibold text-ink-black mb-5">Tiện nghi</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-6">
+                  {(p.amenities ?? []).map((a) => {
+                    const Icon = getAmenityIcon(a);
+                    return (
+                      <div key={a} className="flex items-center gap-3">
+                        <Icon className="size-5 text-ink-black shrink-0" />
+                        <span className="text-sm font-medium text-ink-black capitalize">{a}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* Host info */}
+            {ownerUser && (
+              <section id="host" className="py-7 border-b border-hairline-gray">
+                <h2 className="text-lg font-semibold text-ink-black mb-4">Chủ nhà</h2>
+                <div className="flex items-center gap-4">
+                  <div className="size-14 rounded-full bg-ink-black flex items-center justify-center text-white text-xl font-semibold shrink-0 overflow-hidden">
+                    {ownerUser.avatar ? (
+                      <Image src={ownerUser.avatar} alt={ownerUser.name} width={56} height={56} className="size-full object-cover" />
+                    ) : (
+                      ownerUser.name?.charAt(0).toUpperCase() ?? '?'
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-base font-semibold text-ink-black">{ownerUser.name}</p>
+                    {contactRevealed && ownerUser.phone ? (
+                      <a
+                        href={`tel:${ownerUser.phone}`}
+                        className="text-sm text-ash-gray flex items-center gap-1 mt-0.5 hover:text-rausch transition-colors"
+                      >
+                        <Phone className="size-3.5" />
+                        {ownerUser.phone}
+                      </a>
+                    ) : (
+                      <p className="text-sm text-ash-gray flex items-center gap-1.5 mt-0.5">
+                        <LockKeyhole className="size-3.5 text-hairline-gray" />
+                        <span className="italic">Hiển thị sau khi đặt phòng &amp; thanh toán</span>
+                      </p>
+                    )}
+                    <p className="text-xs text-stone-gray mt-1 flex items-center gap-1">
+                      <User className="size-3" />
+                      Chủ nhà đã xác minh
+                    </p>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* Things to know */}
+            <section className="py-7">
+              <h2 className="text-lg font-semibold text-ink-black mb-5">Cần biết trước khi thuê</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <ThingsToKnow
+                  title="Quy định"
+                  items={['Không hút thuốc trong nhà', 'Không nuôi thú cưng (hỏi chủ nhà)', 'Giữ gìn vệ sinh chung']}
+                />
+                <ThingsToKnow
+                  title="An toàn"
+                  items={['Có khóa cửa an toàn', 'Hệ thống camera an ninh', 'Phòng cháy chữa cháy']}
+                />
+                <ThingsToKnow
+                  title="Chính sách thanh toán"
+                  items={[`Thanh toán tháng đầu qua nền tảng (${formatVnd(p.price)})`, `Phí dịch vụ 10% (${formatVnd(Math.round(p.price * 0.1))})`, 'Các tháng tiếp theo thanh toán trực tiếp cho chủ nhà']}
+                />
+              </div>
+            </section>
+          </div>
+
+          {/* ── Right: booking panel (desktop sticky) ── */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-28">
+              <BookingPanel property={p} contactRevealed={contactRevealed} />
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      {/* Mobile bottom bar */}
+      <MobileReserveBar property={p} contactRevealed={contactRevealed} />
+
+      {/* Share modal */}
+      {shareOpen && (
+        <ShareModal
+          url={typeof window !== 'undefined' ? window.location.href : ''}
+          title={p.title}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── small sub-components ─────────────────────────────────────────────────────
+
+function Stat({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ElementType | null;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-2.5">
+      {Icon && <Icon className="size-5 text-ash-gray shrink-0" />}
+      <div>
+        <p className="text-xs text-ash-gray">{label}</p>
+        <p className="text-sm font-semibold text-ink-black">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function ThingsToKnow({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div>
+      <h3 className="text-sm font-semibold text-ink-black mb-2">{title}</h3>
+      <ul className="space-y-1.5">
+        {items.map((item) => (
+          <li key={item} className="text-sm text-ash-gray flex items-start gap-1.5">
+            <span className="mt-1.5 size-1 rounded-full bg-hairline-gray shrink-0" />
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
