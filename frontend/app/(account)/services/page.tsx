@@ -120,7 +120,7 @@ function ServiceOrderCard({
   const meta       = SERVICE_META[order.type];
   const statusCfg  = STATUS_CONFIG[order.status];
   const paymentCfg = PAYMENT_CONFIG[order.paymentStatus];
-  const canPay     = order.paymentStatus === 'unpaid' && ['pending', 'confirmed'].includes(order.status);
+  const canPay     = order.paymentStatus === 'unpaid' && order.status === 'confirmed';
   const canCancel  = order.status === 'pending';
 
   return (
@@ -475,7 +475,7 @@ function PaymentToast() {
     const result = params.get('payment');
     if (result === 'success') {
       handled.current = true;
-      toast.success('Thanh toán thành công! Chờ chủ nhà xác nhận dịch vụ.');
+      toast.success('Thanh toán thành công! Chờ nhân viên được phân công và thực hiện dịch vụ.');
       setTimeout(() => qc.invalidateQueries({ queryKey: ['services'] }), 1500);
       router.replace('/services');
     } else if (result === 'cancel') {

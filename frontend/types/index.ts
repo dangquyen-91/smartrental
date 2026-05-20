@@ -10,7 +10,9 @@ export interface User {
     accountNumber: string;
     accountName: string;
   };
+  savedProperties?: string[];
   isActive: boolean;
+  isPhoneVerified?: boolean;
   authProvider?: 'local' | 'google';
   createdAt: string;
 }
@@ -82,7 +84,14 @@ export interface Booking {
   paymentCode?: number;
   paymentDeadline?: string;
   depositAmount?: number;
+  paidDate?: string;
+  platformFee?: number;
+  landlordPayout?: number;
+  payoutStatus?: 'pending' | 'paid' | null;
+  cancelledBy?: 'tenant' | 'landlord' | 'admin' | null;
+  cancelReason?: string | null;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ServiceCatalogEntry {

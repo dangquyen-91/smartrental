@@ -33,6 +33,12 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Don't try to refresh on login/register — the 401 is a credential error
+    const noRefreshUrls = ['/auth/login', '/auth/register', '/auth/google'];
+    if (noRefreshUrls.some((u) => original.url?.includes(u))) {
+      return Promise.reject(error);
+    }
+
     if (isRefreshing) {
       return new Promise<string>((resolve, reject) => {
         failedQueue.push({ resolve, reject });
@@ -45,7 +51,7 @@ api.interceptors.response.use(
     original._retry = true;
     isRefreshing = true;
 
-    const { refreshToken, setAccessToken, clearAuth } = useAuthStore.getState();
+    const { refreshToken, setTokens, clearAuth } = useAuthStore.getState();
 
     try {
       const { data } = await axios.post(
@@ -54,7 +60,8 @@ api.interceptors.response.use(
         { timeout: 10000 },
       );
       const newToken: string = data.data.accessToken;
-      setAccessToken(newToken);
+      const newRefreshToken: string = data.data.refreshToken;
+      setTokens(newToken, newRefreshToken);
       processQueue(null, newToken);
       original.headers.Authorization = `Bearer ${newToken}`;
       return api(original);

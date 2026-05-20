@@ -83,7 +83,7 @@ const upsertProfile = async (userId, data) => {
   const profile = await RoommateProfile.findOneAndUpdate(
     { user: userId },
     { ...data, user: userId },
-    { new: true, upsert: true, runValidators: true }
+    { returnDocument: 'after', upsert: true, runValidators: true }
   )
     .populate('user', 'name avatar gender')
     .populate('property', 'title address');

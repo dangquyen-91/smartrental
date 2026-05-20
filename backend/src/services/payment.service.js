@@ -51,8 +51,8 @@ const createServicePaymentLink = async (orderId, tenantId) => {
     .populate('tenant', 'name email phone');
   if (!order) throw new AppError('Service order not found', 404);
   if (order.paymentStatus === 'paid') throw new AppError('Order already paid', 400);
-  if (!['pending', 'confirmed'].includes(order.status)) {
-    throw new AppError(`Cannot pay for an order with status "${order.status}"`, 400);
+  if (order.status !== 'confirmed') {
+    throw new AppError('Service order must be confirmed by landlord before payment', 400);
   }
 
   await cancelOldPayosLink(order.paymentCode);

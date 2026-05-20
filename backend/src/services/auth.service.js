@@ -24,8 +24,9 @@ const register = async ({ name, email, password, phone }) => {
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 
-  user.refreshToken = refreshToken;
-  await user.save();
+  // Dùng findByIdAndUpdate thay vì user.save() để tránh pre-save hook
+  // chạy lại và hash password lần 2
+  await User.findByIdAndUpdate(user._id, { refreshToken });
 
   return {
     accessToken,
@@ -36,10 +37,14 @@ const register = async ({ name, email, password, phone }) => {
 
 const login = async (email, password) => {
   const user = await User.findOne({ email });
-  if (!user || !(await user.matchPassword(password))) {
-    throw new AppError('Invalid email or password', 401);
-  }
+  if (!user) throw new AppError('Email hoặc mật khẩu không đúng', 401);
   if (!user.isActive) throw new AppError('Account is deactivated', 403);
+  if (!(await user.matchPassword(password))) {
+    const hint = user.authProvider === 'google'
+      ? 'Tài khoản này dùng Google — vui lòng đăng nhập bằng Google'
+      : 'Email hoặc mật khẩu không đúng';
+    throw new AppError(hint, 401);
+  }
 
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
@@ -162,16 +167,13 @@ const googleLogin = async (googleAccessToken) => {
       authProvider: 'google',
       role: 'tenant',
     });
-  } else if (user.authProvider !== 'google') {
-    // Existing local account — mark as google-linked on first Google login
-    user.authProvider = 'google';
   }
   if (!user.isActive) throw new AppError('Account is deactivated', 403);
 
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
-  user.refreshToken = refreshToken;
-  await user.save();
+  // Dùng findByIdAndUpdate để tránh pre-save hook chạy lại sau create()
+  await User.findByIdAndUpdate(user._id, { refreshToken });
 
   return {
     accessToken,
@@ -201,4 +203,13 @@ const verifyGoogleToken = async (userId, googleAccessToken) => {
   if (user.email !== email) throw new AppError('Tài khoản Google không khớp', 401);
 };
 
-export { register, login, refresh, logout, getMe, requestLandlord, verifyPhone, googleLogin, verifyPassword, verifyGoogleToken };
+const updatePhone = async (userId, phone) => {
+  const phoneExists = await User.findOne({ phone, _id: { $ne: userId } });
+  if (phoneExists) throw new AppError('Số điện thoại đã được sử dụng', 400);
+
+  const user = await User.findByIdAndUpdate(userId, { phone }, { returnDocument: 'after' }).select('-password -refreshToken');
+  if (!user) throw new AppError('User not found', 404);
+  return user;
+};
+
+export { register, login, refresh, logout, getMe, requestLandlord, verifyPhone, googleLogin, verifyPassword, verifyGoogleToken, updatePhone };

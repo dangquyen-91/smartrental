@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -39,14 +39,198 @@ import {
   ParkingCircle,
   ArrowUpDown,
   LockKeyhole,
+  Link2,
+  Check,
+  MessageCircle,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import AppNavbar from '@/components/layout/app-navbar';
 import { PriceDisplay } from '@/components/ui/price-display';
 import { useProperty } from '@/hooks/use-properties';
 import { useCreateBooking } from '@/hooks/use-bookings';
 import { useAuth } from '@/hooks/use-auth';
+import { useWishlist, useToggleWishlist } from '@/hooks/use-wishlist';
 import { cn } from '@/lib/utils';
 import type { Property } from '@/types';
+
+// ─── share modal ──────────────────────────────────────────────────────────────
+
+const FacebookIcon = () => (
+  <svg viewBox="0 0 24 24" className="size-5" fill="#1877F2">
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+  </svg>
+);
+
+const TwitterXIcon = () => (
+  <svg viewBox="0 0 24 24" className="size-5" fill="currentColor">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
+
+const WhatsAppIcon = () => (
+  <svg viewBox="0 0 24 24" className="size-5" fill="#25D366">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+  </svg>
+);
+
+const ZaloIcon = () => (
+  <svg viewBox="0 0 50 50" className="size-5" fill="#0068FF">
+    <path d="M25 2C12.3 2 2 12.3 2 25s10.3 23 23 23 23-10.3 23-23S37.7 2 25 2zm-2.8 32.2H17V20.4h5.2v13.8zm-2.6-15.6c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.4 3-3 3zm18.6 15.6h-5.2v-6.7c0-1.6 0-3.7-2.3-3.7s-2.6 1.8-2.6 3.6v6.8H23v-13.8h4.9v1.9c.7-1.3 2.4-2.3 4.6-2.3 4.9 0 5.8 3.2 5.8 7.4v6.8z" />
+  </svg>
+);
+
+function ShareModal({
+  url,
+  title,
+  onClose,
+}: {
+  url: string;
+  title: string;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Không thể sao chép liên kết.');
+    }
+  };
+
+  const enc = encodeURIComponent(url);
+  const encTitle = encodeURIComponent(title);
+
+  const platforms = [
+    {
+      label: 'Facebook',
+      icon: <FacebookIcon />,
+      bg: 'bg-[#1877F2]/10 hover:bg-[#1877F2]/20',
+      href: `https://www.facebook.com/sharer/sharer.php?u=${enc}`,
+    },
+    {
+      label: 'Twitter / X',
+      icon: <TwitterXIcon />,
+      bg: 'bg-[#f7f7f7] hover:bg-[#ebebeb]',
+      href: `https://twitter.com/intent/tweet?url=${enc}&text=${encTitle}`,
+    },
+    {
+      label: 'WhatsApp',
+      icon: <WhatsAppIcon />,
+      bg: 'bg-[#25D366]/10 hover:bg-[#25D366]/20',
+      href: `https://wa.me/?text=${encTitle}%20${enc}`,
+    },
+    {
+      label: 'Zalo',
+      icon: <ZaloIcon />,
+      bg: 'bg-[#0068FF]/10 hover:bg-[#0068FF]/20',
+      href: `https://zalo.me/share/?url=${enc}&title=${encTitle}`,
+    },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div
+        ref={ref}
+        className="relative bg-white rounded-panel w-full max-w-sm shadow-[rgba(0,0,0,0.02)_0_0_0_1px,rgba(0,0,0,0.04)_0_2px_6px_0,rgba(0,0,0,0.16)_0_8px_32px_0] overflow-hidden"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#dddddd]">
+          <h3 className="text-base font-semibold text-[#222222]">Chia sẻ tin đăng này</h3>
+          <button
+            onClick={onClose}
+            className="size-8 flex items-center justify-center rounded-full bg-[#f7f7f7] hover:bg-[#ebebeb] transition-colors"
+          >
+            <X className="size-4 text-[#222222]" />
+          </button>
+        </div>
+
+        {/* Thumbnail preview */}
+        <div className="px-6 py-4 border-b border-[#dddddd]">
+          <div className="flex items-center gap-3 p-3 bg-[#f7f7f7] rounded-[10px]">
+            <div className="size-10 rounded-lg bg-[#ff385c]/10 flex items-center justify-center shrink-0">
+              <MessageCircle className="size-5 text-[#ff385c]" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[#222222] truncate">{title}</p>
+              <p className="text-xs text-[#929292] truncate">{url}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Platform grid */}
+        <div className="px-6 py-5">
+          <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider mb-3">
+            Chia sẻ lên mạng xã hội
+          </p>
+          <div className="grid grid-cols-4 gap-3">
+            {platforms.map(({ label, icon, bg, href }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={onClose}
+                className="flex flex-col items-center gap-1.5 group"
+              >
+                <div
+                  className={cn(
+                    'size-12 rounded-full flex items-center justify-center transition-colors',
+                    bg,
+                  )}
+                >
+                  {icon}
+                </div>
+                <span className="text-[11px] font-medium text-[#6a6a6a] group-hover:text-[#222222] transition-colors text-center leading-tight">
+                  {label}
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Copy link */}
+        <div className="px-6 pb-5">
+          <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider mb-2">
+            Hoặc sao chép liên kết
+          </p>
+          <div className="flex items-center gap-2 p-3 bg-[#f7f7f7] rounded-[10px] border border-[#dddddd]">
+            <Link2 className="size-4 text-[#929292] shrink-0" />
+            <span className="flex-1 text-xs text-[#6a6a6a] truncate">{url}</span>
+            <button
+              onClick={handleCopy}
+              className={cn(
+                'flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0',
+                copied
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-[#222222] text-white hover:bg-[#3a3a3a]',
+              )}
+            >
+              {copied ? (
+                <>
+                  <Check className="size-3.5" />
+                  Đã sao chép
+                </>
+              ) : (
+                'Sao chép'
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -409,7 +593,7 @@ function BookingPanel({ property, contactRevealed }: { property: Property; conta
             href="/trips"
             className="inline-block w-full text-center py-3 bg-rausch hover:bg-deep-rausch text-white font-semibold rounded-lg transition-colors"
           >
-            Xem chuyến đi của tôi
+            Xem đơn thuê của tôi
           </Link>
         </div>
       </div>
@@ -574,7 +758,42 @@ export default function PropertyDetailPage({
 }) {
   const { id } = use(params);
   const { data, isLoading, isError } = useProperty(id);
-  const [wishlist, setWishlist] = useState(false);
+
+  // ── wishlist ─────────────────────────────────────────────────────────────────
+  const { data: savedIds = [] } = useWishlist();
+  const { mutate: toggleWishlist, isPending: isTogglingWishlist } = useToggleWishlist(id);
+  const [heartAnim, setHeartAnim] = useState(false);
+  const saved = savedIds.includes(id);
+
+  const { isAuthenticated } = useAuth();
+
+  const toggleSaved = () => {
+    if (!isAuthenticated) {
+      toast('Đăng nhập để lưu tin đăng yêu thích', {
+        action: { label: 'Đăng nhập', onClick: () => window.location.href = '/login' },
+      });
+      return;
+    }
+    setHeartAnim(true);
+    setTimeout(() => setHeartAnim(false), 400);
+    toggleWishlist();
+  };
+
+  // ── share ────────────────────────────────────────────────────────────────────
+  const [shareOpen, setShareOpen] = useState(false);
+
+  const handleShare = async (title: string) => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        return;
+      } catch {
+        // user cancelled or not supported — fall through to modal
+      }
+    }
+    setShareOpen(true);
+  };
 
   if (isLoading) return <PropertyDetailSkeleton />;
 
@@ -616,16 +835,25 @@ export default function PropertyDetailPage({
             Quay lại
           </Link>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-ink-black border border-hairline-gray rounded-lg hover:bg-soft-cloud transition-colors">
+            <button
+              onClick={() => handleShare(p.title)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-ink-black border border-hairline-gray rounded-lg hover:bg-soft-cloud transition-colors"
+            >
               <Share2 className="size-4" />
               <span className="hidden sm:inline">Chia sẻ</span>
             </button>
             <button
-              onClick={() => setWishlist((v) => !v)}
+              onClick={toggleSaved}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-ink-black border border-hairline-gray rounded-lg hover:bg-soft-cloud transition-colors"
             >
-              <Heart className={cn('size-4', wishlist && 'fill-rausch stroke-rausch')} />
-              <span className="hidden sm:inline">Lưu</span>
+              <Heart
+                className={cn(
+                  'size-4 transition-all duration-200',
+                  saved ? 'fill-rausch stroke-rausch' : 'stroke-ink-black',
+                  heartAnim && 'scale-125',
+                )}
+              />
+              <span className="hidden sm:inline">{saved ? 'Đã lưu' : 'Lưu'}</span>
             </button>
           </div>
         </div>
@@ -771,6 +999,15 @@ export default function PropertyDetailPage({
 
       {/* Mobile bottom bar */}
       <MobileReserveBar property={p} contactRevealed={contactRevealed} />
+
+      {/* Share modal */}
+      {shareOpen && (
+        <ShareModal
+          url={typeof window !== 'undefined' ? window.location.href : ''}
+          title={p.title}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
     </div>
   );
 }

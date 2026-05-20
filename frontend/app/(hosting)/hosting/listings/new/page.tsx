@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,12 +16,124 @@ import {
   Hotel,
   Building2,
   Box,
+  CreditCard,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useCreateProperty } from '@/hooks/use-properties';
 import { uploadImagesApi, deleteUploadedImageApi } from '@/lib/api/upload.api';
+import { updateBankAccountApi } from '@/lib/api/users.api';
+import { useAuthStore } from '@/stores/auth.store';
 import { cn } from '@/lib/utils';
 import type { Property } from '@/types';
+
+// ─── bank account schema ─────────────────────────────────────────────────────
+
+const bankSchema = z.object({
+  bankName: z.string().min(2, 'Vui lòng nhập tên ngân hàng'),
+  accountNumber: z.string().min(6, 'Số tài khoản không hợp lệ'),
+  accountName: z.string().min(2, 'Vui lòng nhập tên chủ tài khoản'),
+});
+type BankData = z.infer<typeof bankSchema>;
+
+// ─── bank account modal ───────────────────────────────────────────────────────
+
+function BankAccountModal({ userId, onSuccess }: { userId: string; onSuccess: () => void }) {
+  const setUser = useAuthStore((s) => s.setUser);
+  const [error, setError] = useState('');
+
+  const { register, handleSubmit, formState: { errors, isSubmitting } } =
+    useForm<BankData>({ resolver: zodResolver(bankSchema) });
+
+  const onSubmit = async (values: BankData) => {
+    try {
+      setError('');
+      const updatedUser = await updateBankAccountApi(userId, values);
+      setUser(updatedUser);
+      onSuccess();
+    } catch {
+      setError('Không thể lưu tài khoản ngân hàng, vui lòng thử lại.');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="bg-ink-black px-6 py-5">
+          <div className="flex items-center gap-3">
+            <div className="size-10 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
+              <CreditCard className="size-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-white">Thêm tài khoản ngân hàng</h2>
+              <p className="text-xs text-white/60 mt-0.5">Cần thiết để nhận thanh toán từ khách thuê</p>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
+          <div className="space-y-1.5">
+            <label className="block text-sm font-semibold text-ink-black">
+              Tên ngân hàng <span className="text-rausch">*</span>
+            </label>
+            <input
+              {...register('bankName')}
+              placeholder="VD: Vietcombank, BIDV, Techcombank..."
+              className={inputCls}
+            />
+            {errors.bankName && <p className="text-xs text-error-red">{errors.bankName.message}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-semibold text-ink-black">
+              Số tài khoản <span className="text-rausch">*</span>
+            </label>
+            <input
+              {...register('accountNumber')}
+              placeholder="VD: 1234567890"
+              inputMode="numeric"
+              className={inputCls}
+            />
+            {errors.accountNumber && <p className="text-xs text-error-red">{errors.accountNumber.message}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-semibold text-ink-black">
+              Tên chủ tài khoản <span className="text-rausch">*</span>
+            </label>
+            <input
+              {...register('accountName')}
+              placeholder="VD: NGUYEN VAN A"
+              className={cn(inputCls, 'uppercase')}
+            />
+            {errors.accountName && <p className="text-xs text-error-red">{errors.accountName.message}</p>}
+          </div>
+
+          {error && (
+            <p className="text-sm text-error-red bg-error-red/10 border border-error-red/20 rounded-lg px-3 py-2.5">
+              {error}
+            </p>
+          )}
+
+          <div className="flex items-center gap-3 pt-1">
+            <Link
+              href="/hosting/listings"
+              className="flex-1 py-2.5 text-sm font-semibold text-ash-gray border border-hairline-gray rounded-lg text-center hover:bg-soft-cloud transition-colors"
+            >
+              Quay lại
+            </Link>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 py-2.5 text-sm font-semibold text-white bg-rausch hover:bg-deep-rausch rounded-lg transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : 'Lưu & tiếp tục'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -315,6 +427,15 @@ export default function NewListingPage() {
   const [amenities, setAmenities] = useState<string[]>([]);
   const [submitError, setSubmitError] = useState('');
 
+  const user = useAuthStore((s) => s.user);
+  const [showBankModal, setShowBankModal] = useState(false);
+
+  useEffect(() => {
+    if (user && !user.bankAccount?.bankName) {
+      setShowBankModal(true);
+    }
+  }, [user]);
+
   const {
     register,
     handleSubmit,
@@ -373,6 +494,10 @@ export default function NewListingPage() {
   };
 
   return (
+    <>
+    {showBankModal && user && (
+      <BankAccountModal userId={user.id} onSuccess={() => setShowBankModal(false)} />
+    )}
     <form onSubmit={handleSubmit(onSubmit as Parameters<typeof handleSubmit>[0])} className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -590,5 +715,6 @@ export default function NewListingPage() {
         </div>
       </div>
     </form>
+    </>
   );
 }

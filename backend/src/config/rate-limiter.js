@@ -36,16 +36,20 @@ const createLimiter = ({ windowMs, max, prefix, message }) =>
     message: { success: false, message },
   });
 
-const apiLimiter = createLimiter({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  prefix: 'rl:api:',
-  message: 'Too many requests, please try again later',
-});
+const isDev = process.env.NODE_ENV !== 'production';
+
+const apiLimiter = isDev
+  ? (_req, _res, next) => next()
+  : createLimiter({
+      windowMs: 15 * 60 * 1000,
+      max: 500,
+      prefix: 'rl:api:',
+      message: 'Too many requests, please try again later',
+    });
 
 const authLimiter = createLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: isDev ? 200 : 20,
   prefix: 'rl:auth:',
   message: 'Too many auth attempts, please try again later',
 });

@@ -67,7 +67,7 @@ const ensurePlansSeeded = async () => {
   if (plansSeeded) return;
   await Promise.all(
     PLAN_SEEDS.map((seed) =>
-      Plan.findOneAndUpdate({ slug: seed.slug }, seed, { upsert: true, new: true })
+      Plan.findOneAndUpdate({ slug: seed.slug }, seed, { upsert: true, returnDocument: 'after' })
     )
   );
   plansSeeded = true;
@@ -153,7 +153,7 @@ const activateSubscription = async (paymentCode, session) => {
   const result = await Subscription.findOneAndUpdate(
     { _id: sub._id, paymentStatus: { $ne: 'paid' } },
     { $set: { status: 'active', paymentStatus: 'paid', startDate, endDate } },
-    { new: true, session },
+    { returnDocument: 'after', session },
   );
 
   return result;

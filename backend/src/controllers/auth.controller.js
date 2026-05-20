@@ -91,4 +91,13 @@ const verifyGoogleToken = async (req, res, next) => {
   }
 };
 
-export { register, login, refreshToken, logout, getMe, requestLandlord, verifyPhone, googleLogin, verifyPassword, verifyGoogleToken };
+const updatePhone = async (req, res, next) => {
+  try {
+    const user = await authService.updatePhone(req.user.id, req.body.phone);
+    return R.success(res, { user }, 'Phone updated');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export { register, login, refreshToken, logout, getMe, requestLandlord, verifyPhone, googleLogin, verifyPassword, verifyGoogleToken, updatePhone };

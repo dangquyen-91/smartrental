@@ -13,6 +13,8 @@ import {
   Clock,
   Loader2,
   X,
+  Banknote,
+  Hourglass,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -73,6 +75,63 @@ function isSoon(dateStr: string) {
   return diff > 0 && diff < 24 * 60 * 60 * 1000; // trong 24h
 }
 
+// ─── reject modal ────────────────────────────────────────────────────────────
+
+function RejectModal({
+  onConfirm,
+  onClose,
+  isPending,
+}: {
+  onConfirm: (reason: string) => void;
+  onClose: () => void;
+  isPending: boolean;
+}) {
+  const [reason, setReason] = useState('');
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative bg-white rounded-[20px] p-6 w-full max-w-sm shadow-[rgba(0,0,0,0.02)_0_0_0_1px,rgba(0,0,0,0.04)_0_2px_6px_0,rgba(0,0,0,0.1)_0_8px_32px_0]">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-[#f7f7f7] hover:bg-[#dddddd] transition-colors"
+        >
+          <X className="size-4 text-[#222222]" />
+        </button>
+        <h3 className="text-[17px] font-semibold text-[#222222] text-center mb-2">Từ chối đơn dịch vụ?</h3>
+        <p className="text-sm text-[#6a6a6a] text-center mb-4 leading-relaxed">
+          Đơn sẽ bị huỷ và admin sẽ cần gán nhân viên khác.
+        </p>
+        <textarea
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Lý do từ chối (bắt buộc)..."
+          maxLength={300}
+          rows={3}
+          className="w-full px-3 py-2.5 border border-[#dddddd] rounded-[8px] text-sm text-[#222222] placeholder:text-[#929292] resize-none focus:outline-none focus:border-[#c13515] focus:ring-2 focus:ring-[#c13515]/20 mb-1"
+        />
+        <p className="text-xs text-[#929292] text-right mb-4">{reason.length}/300</p>
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+          >
+            Giữ lại
+          </button>
+          <button
+            onClick={() => onConfirm(reason.trim())}
+            disabled={isPending || !reason.trim()}
+            className="flex-1 py-2.5 text-sm font-semibold text-white bg-[#c13515] hover:bg-[#b32505] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center justify-center gap-2"
+          >
+            {isPending && <Loader2 className="size-4 animate-spin" />}
+            {isPending ? 'Đang xử lý...' : 'Từ chối'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── confirm modal ────────────────────────────────────────────────────────────
 
 function ConfirmActionModal({
@@ -130,10 +189,12 @@ function ConfirmActionModal({
 function ProviderOrderCard({
   order,
   onAction,
+  onReject,
   isActioning,
 }: {
   order: ServiceOrder;
   onAction: (order: ServiceOrder) => void;
+  onReject: (order: ServiceOrder) => void;
   isActioning: boolean;
 }) {
   const property = typeof order.property === 'object' ? (order.property as Property) : null;
@@ -220,11 +281,22 @@ function ProviderOrderCard({
           </p>
         )}
 
-        {/* Done state */}
-        {order.status === 'done' && (
+        {/* Done state — payout status */}
+        {order.status === 'done' && order.payoutStatus === 'pending' && (
+          <span className="flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 w-fit">
+            <Hourglass className="size-3.5 shrink-0" />
+            Chờ nhận tiền — {formatVnd(order.providerPayout ?? order.price * 0.9)}
+          </span>
+        )}
+        {order.status === 'done' && order.payoutStatus === 'paid' && (
           <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 w-fit">
-            <CheckCircle2 className="size-3.5 shrink-0" />
-            Đã hoàn thành — {formatVnd(order.providerPayout ?? order.price * 0.9)} sẽ được thanh toán
+            <Banknote className="size-3.5 shrink-0" />
+            Đã nhận {formatVnd(order.providerPayout ?? 0)}
+            {order.payoutDate && (
+              <span className="text-emerald-500">
+                · {new Date(order.payoutDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+              </span>
+            )}
           </span>
         )}
 
@@ -234,14 +306,24 @@ function ProviderOrderCard({
 
           <div className="flex gap-2 shrink-0">
             {canStart && (
-              <button
-                onClick={() => onAction(order)}
-                disabled={isActioning}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#222222] hover:bg-[#3f3f3f] disabled:opacity-60 rounded-lg transition-all active:scale-95"
-              >
-                {isActioning ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
-                Bắt đầu
-              </button>
+              <>
+                <button
+                  onClick={() => onReject(order)}
+                  disabled={isActioning}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-[#c13515] border border-[#f5c6c6] hover:border-[#c13515] hover:bg-red-50 disabled:opacity-60 rounded-lg transition-all"
+                >
+                  <X className="size-4" />
+                  Từ chối
+                </button>
+                <button
+                  onClick={() => onAction(order)}
+                  disabled={isActioning}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#222222] hover:bg-[#3f3f3f] disabled:opacity-60 rounded-lg transition-all active:scale-95"
+                >
+                  {isActioning ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
+                  Bắt đầu
+                </button>
+              </>
             )}
             {canComplete && (
               <button
@@ -290,8 +372,9 @@ function EmptyState({ tabId }: { tabId: TabId }) {
 type PendingAction = { order: ServiceOrder; nextStatus: ServiceOrder['status'] };
 
 export default function ProviderServicesPage() {
-  const [activeTab, setActiveTab]       = useState<TabId>('todo');
+  const [activeTab, setActiveTab]         = useState<TabId>('todo');
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [rejectingOrder, setRejectingOrder] = useState<ServiceOrder | null>(null);
 
   const { data, isLoading } = useProviderServiceOrders();
   const { mutate: updateStatus, isPending: isUpdating, variables: updatingId } = useUpdateServiceStatus();
@@ -336,6 +419,19 @@ export default function ProviderServicesPage() {
           setPendingAction(null);
           if (pendingAction.nextStatus === 'in_progress') setActiveTab('in_progress');
           if (pendingAction.nextStatus === 'done')        setActiveTab('done');
+        },
+      },
+    );
+  };
+
+  const confirmReject = (reason: string) => {
+    if (!rejectingOrder) return;
+    updateStatus(
+      { id: rejectingOrder.id, status: 'cancelled', cancelReason: reason },
+      {
+        onSuccess: () => {
+          toast.success('Đã từ chối đơn dịch vụ. Admin sẽ gán nhân viên khác.');
+          setRejectingOrder(null);
         },
       },
     );
@@ -404,6 +500,7 @@ export default function ProviderServicesPage() {
               key={order.id}
               order={order}
               onAction={handleAction}
+              onReject={setRejectingOrder}
               isActioning={isUpdating && updatingId?.id === order.id}
             />
           ))}
@@ -416,6 +513,15 @@ export default function ProviderServicesPage() {
           {...modalConfig}
           onConfirm={confirmAction}
           onClose={() => setPendingAction(null)}
+          isPending={isUpdating}
+        />
+      )}
+
+      {/* Reject modal */}
+      {rejectingOrder && (
+        <RejectModal
+          onConfirm={confirmReject}
+          onClose={() => setRejectingOrder(null)}
           isPending={isUpdating}
         />
       )}

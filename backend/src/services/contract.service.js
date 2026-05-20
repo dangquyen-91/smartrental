@@ -103,7 +103,7 @@ const signContract = async (contractId, userId) => {
   const contract = await Contract.findOneAndUpdate(
     { _id: contractId, status: { $in: ['awaiting_signatures'] }, ...alreadySignedFilter },
     { $set: { [`${signField}.signed`]: true, [`${signField}.signedAt`]: now } },
-    { new: true },
+    { returnDocument: 'after' },
   )
     .populate('tenant', 'name email phone address')
     .populate('landlord', 'name email phone address')

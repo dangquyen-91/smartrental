@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Wrench, CalendarDays, MapPin, User, Phone, Check, X, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useLandlordServiceOrders, useUpdateServiceStatus } from '@/hooks/use-services';
 import { ServiceOrderCardSkeleton } from '@/components/ui/skeleton';
@@ -56,7 +57,13 @@ export default function HostingServicesPage() {
   const handleConfirm = () => {
     if (!modal) return;
     const status: ServiceOrder['status'] = modal.action === 'confirm' ? 'confirmed' : 'cancelled';
-    updateStatus({ id: modal.orderId, status }, { onSuccess: () => setModal(null) });
+    const successMsg = modal.action === 'confirm'
+      ? 'Đã xác nhận yêu cầu dịch vụ.'
+      : 'Đã từ chối yêu cầu dịch vụ.';
+    updateStatus(
+      { id: modal.orderId, status },
+      { onSuccess: () => { setModal(null); toast.success(successMsg); } },
+    );
   };
 
   const fmt = (dt: string) =>

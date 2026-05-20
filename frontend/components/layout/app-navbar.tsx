@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Settings, LogOut, ChevronDown, Home, Building2, Users, Wrench } from 'lucide-react';
+import { User, Settings, LogOut, ChevronDown, Home, Building2, Users, Wrench, Heart } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useAuthStore } from '@/stores/auth.store';
 import { logoutApi } from '@/lib/api/auth.api';
@@ -101,16 +101,17 @@ export default function AppNavbar({ center }: AppNavbarProps) {
               </button>
 
               {open && (
-                <div className="absolute right-0 top-full mt-2 w-60 bg-white border border-[#dddddd] rounded-[16px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] py-2 z-50">
+                <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-[#dddddd] rounded-[16px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] py-2 z-50">
                   {/* Role badge */}
                   <div className="px-4 py-3 border-b border-[#dddddd]">
-                    <p className="text-sm font-semibold text-[#222222] truncate">{user.name}</p>
+                    <p className="text-sm font-semibold text-[#222222] wrap-break-word leading-snug">{user.name}</p>
                     <p className="text-xs text-[#6a6a6a] mt-0.5 truncate">{user.email}</p>
                   </div>
 
                   {/* Tenant links */}
                   <div className="py-1.5">
                     <MenuLink href="/trips" icon={Home} label="Đơn thuê của tôi" onClick={() => setOpen(false)} />
+                    <MenuLink href="/wishlist" icon={Heart} label="Yêu thích" onClick={() => setOpen(false)} />
                     <MenuLink href="/services" icon={Wrench} label="Dịch vụ của tôi" onClick={() => setOpen(false)} />
                     <MenuLink href="/roommate" icon={Users} label="Tìm bạn cùng phòng" onClick={() => setOpen(false)} />
                     <MenuLink href="/contracts" icon={Settings} label="Hợp đồng" onClick={() => setOpen(false)} />

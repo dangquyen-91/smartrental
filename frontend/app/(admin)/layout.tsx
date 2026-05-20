@@ -5,13 +5,14 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import AppNavbar from '@/components/layout/app-navbar';
-import { LayoutDashboard, Users, Building2, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Users, Building2, CreditCard, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV = [
   { label: 'Tổng quan', href: '/admin', icon: LayoutDashboard, exact: true },
   { label: 'Người dùng', href: '/admin/users', icon: Users },
   { label: 'Tin đăng', href: '/admin/properties', icon: Building2 },
+  { label: 'Dịch vụ', href: '/admin/services', icon: Wrench },
   { label: 'Giao dịch', href: '/admin/transactions', icon: CreditCard },
 ];
 

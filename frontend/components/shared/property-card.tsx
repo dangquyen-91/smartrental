@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { type Property } from "@/types";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { Badge } from "@/components/ui/badge";
+import { useWishlist, useToggleWishlist } from "@/hooks/use-wishlist";
 
 const typeLabel: Record<Property["type"], string> = {
   room: "Phòng trọ",
@@ -22,7 +23,9 @@ interface PropertyCardProps {
 
 export function PropertyCard({ property, className }: PropertyCardProps) {
   const [imgIndex, setImgIndex] = useState(0);
-  const [wishlisted, setWishlisted] = useState(false);
+  const { data: wishlistIds } = useWishlist();
+  const { mutate: toggleWishlist, isPending } = useToggleWishlist(property.id);
+  const wishlisted = wishlistIds?.includes(property.id) ?? false;
 
   const images =
     property.images.length > 0
@@ -54,14 +57,15 @@ export function PropertyCard({ property, className }: PropertyCardProps) {
         <button
           onClick={(e) => {
             e.preventDefault();
-            setWishlisted((v) => !v);
+            toggleWishlist();
           }}
-          className="absolute top-3 right-3 flex size-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-transform active:scale-95 hover:bg-white"
+          disabled={isPending}
+          className="absolute top-3 right-3 flex size-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-transform active:scale-95 hover:bg-white disabled:opacity-70"
           aria-label="Thêm vào yêu thích"
         >
           <Heart
             className={cn(
-              "size-4",
+              "size-4 transition-all",
               wishlisted ? "fill-rausch stroke-rausch" : "stroke-ink-black"
             )}
           />

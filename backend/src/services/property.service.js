@@ -1,5 +1,6 @@
 import Property from '../models/property.model.js';
 import Booking from '../models/booking.model.js';
+import User from '../models/user.model.js';
 import AppError from '../utils/app-error.js';
 import { assertListingSlot, assertFeaturedSlot } from './subscription.service.js';
 
@@ -118,6 +119,11 @@ const getPropertyById = async (id, requestingUserId) => {
 
 const createProperty = async (data, ownerId) => {
   await assertListingSlot(ownerId);
+
+  const owner = await User.findById(ownerId).select('bankAccount');
+  if (!owner?.bankAccount?.bankName) {
+    throw new AppError('Vui lòng thêm tài khoản ngân hàng trước khi đăng tin', 400);
+  }
 
   const {
     title, description, type, price, area,
