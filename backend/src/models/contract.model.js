@@ -7,6 +7,9 @@ const contractSchema = new mongoose.Schema(
     landlord: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     property: { type: mongoose.Schema.Types.ObjectId, ref: 'Property', required: true },
     terms: { type: String, maxlength: 2000, default: null },
+    electricityPrice: { type: Number, default: null },  // VNĐ/kwh
+    waterPrice: { type: Number, default: null },         // VNĐ/người
+    paymentMethod: { type: String, maxlength: 200, default: null },
     pdfUrl: { type: String, default: null },
     status: {
       type: String,
@@ -32,6 +35,9 @@ const contractSchema = new mongoose.Schema(
         landlord: ret.landlord,
         property: ret.property,
         terms: ret.terms,
+        electricityPrice: ret.electricityPrice,
+        waterPrice: ret.waterPrice,
+        paymentMethod: ret.paymentMethod,
         pdfUrl: ret.pdfUrl,
         status: ret.status,
         signedByTenant: ret.signedByTenant,

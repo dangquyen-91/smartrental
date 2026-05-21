@@ -14,17 +14,19 @@ const buildPagination = (page, limit) => {
 
 const populateContract = (query) =>
   query
-    .populate('booking', 'startDate endDate duration totalPrice status note')
-    .populate('tenant', 'name email phone address avatar')
-    .populate('landlord', 'name email phone address avatar')
+    .populate('booking', 'startDate endDate duration totalPrice status note depositAmount')
+    .populate('tenant', 'name email phone address avatar dateOfBirth')
+    .populate('landlord', 'name email phone address avatar dateOfBirth')
     .populate('property', 'title type address area bedrooms bathrooms price images');
 
 // ─── Generate Contract ───────────────────────────────────────────────────────
 
-const generateContract = async (bookingId, landlordId, terms) => {
+const generateContract = async (bookingId, landlordId, terms, extras = {}) => {
+  const { electricityPrice = null, waterPrice = null, paymentMethod = null } = extras;
+
   const booking = await Booking.findById(bookingId)
-    .populate('tenant', 'name email phone address')
-    .populate('landlord', 'name email phone address')
+    .populate('tenant', 'name email phone address dateOfBirth')
+    .populate('landlord', 'name email phone address dateOfBirth')
     .populate('property', 'title type address area bedrooms bathrooms price');
 
   if (!booking) throw new AppError('Booking not found', 404);
@@ -51,6 +53,9 @@ const generateContract = async (bookingId, landlordId, terms) => {
         landlord: booking.landlord._id,
         property: booking.property._id,
         terms: terms || null,
+        electricityPrice,
+        waterPrice,
+        paymentMethod,
         status: 'awaiting_signatures',
         signedByTenant: { signed: false, signedAt: null },
         signedByLandlord: { signed: false, signedAt: null },
@@ -69,6 +74,9 @@ const generateContract = async (bookingId, landlordId, terms) => {
     landlord: booking.landlord,
     property: booking.property,
     terms: terms || null,
+    electricityPrice,
+    waterPrice,
+    paymentMethod,
     signedByTenant: contract.signedByTenant,
     signedByLandlord: contract.signedByLandlord,
   });
@@ -102,10 +110,10 @@ const signContract = async (contractId, userId) => {
     { $set: { [`${signField}.signed`]: true, [`${signField}.signedAt`]: now } },
     { returnDocument: 'after' },
   )
-    .populate('tenant', 'name email phone address')
-    .populate('landlord', 'name email phone address')
+    .populate('tenant', 'name email phone address dateOfBirth')
+    .populate('landlord', 'name email phone address dateOfBirth')
     .populate('property', 'title type address area bedrooms bathrooms price')
-    .populate('booking', 'startDate endDate duration totalPrice status');
+    .populate('booking', 'startDate endDate duration totalPrice status depositAmount');
 
   if (!contract) throw new AppError('You have already signed this contract', 400);
 
@@ -127,6 +135,9 @@ const signContract = async (contractId, userId) => {
     landlord: contract.landlord,
     property: contract.property,
     terms: contract.terms,
+    electricityPrice: contract.electricityPrice,
+    waterPrice: contract.waterPrice,
+    paymentMethod: contract.paymentMethod,
     signedByTenant: contract.signedByTenant,
     signedByLandlord: contract.signedByLandlord,
   });

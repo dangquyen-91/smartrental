@@ -10,6 +10,19 @@ const generateContractValidation = validate([
     .optional()
     .trim()
     .isLength({ max: 2000 }).withMessage('Terms must not exceed 2000 characters'),
+
+  body('electricityPrice')
+    .optional()
+    .isFloat({ min: 0 }).withMessage('electricityPrice must be a non-negative number'),
+
+  body('waterPrice')
+    .optional()
+    .isFloat({ min: 0 }).withMessage('waterPrice must be a non-negative number'),
+
+  body('paymentMethod')
+    .optional()
+    .trim()
+    .isLength({ max: 200 }).withMessage('paymentMethod must not exceed 200 characters'),
 ]);
 
 const getContractsValidation = validate([

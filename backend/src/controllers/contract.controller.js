@@ -7,7 +7,12 @@ const generateContract = async (req, res, next) => {
     const contract = await contractService.generateContract(
       req.body.bookingId,
       req.user.id,
-      req.body.terms
+      req.body.terms,
+      {
+        electricityPrice: req.body.electricityPrice ?? null,
+        waterPrice:       req.body.waterPrice       ?? null,
+        paymentMethod:    req.body.paymentMethod    ?? null,
+      }
     );
     return R.created(res, { contract }, 'Contract generated successfully');
   } catch (err) {
@@ -94,6 +99,9 @@ const downloadContractPdf = async (req, res, next) => {
       landlord: contract.landlord,
       property: contract.property,
       terms: contract.terms,
+      electricityPrice: contract.electricityPrice,
+      waterPrice: contract.waterPrice,
+      paymentMethod: contract.paymentMethod,
       signedByTenant: contract.signedByTenant,
       signedByLandlord: contract.signedByLandlord,
     });

@@ -519,6 +519,11 @@ components:
               type: integer
             totalPrice:
               type: number
+            depositAmount:
+              type: number
+              nullable: true
+              description: Tiền đặt cọc (bằng 1 tháng tiền thuê)
+              example: 3500000
             status:
               type: string
               enum: [pending, confirmed, rejected, cancelled, active, completed]
@@ -542,6 +547,12 @@ components:
             address:
               type: string
               nullable: true
+              description: Nơi đăng ký hộ khẩu thường trú (hiển thị trên hợp đồng)
+            dateOfBirth:
+              type: string
+              format: date
+              nullable: true
+              example: '1999-03-15'
             avatar:
               type: string
               nullable: true
@@ -562,6 +573,12 @@ components:
             address:
               type: string
               nullable: true
+              description: Nơi đăng ký hộ khẩu (hiển thị trên hợp đồng)
+            dateOfBirth:
+              type: string
+              format: date
+              nullable: true
+              example: '1985-06-20'
             avatar:
               type: string
               nullable: true
@@ -595,6 +612,22 @@ components:
           maxLength: 2000
           description: Điều khoản bổ sung do landlord thêm vào
           example: Không nuôi thú cưng. Đóng tiền trước ngày 5 hàng tháng.
+        electricityPrice:
+          type: number
+          nullable: true
+          description: Giá điện (VNĐ/kwh) — tính theo chỉ số công tơ, thanh toán cuối tháng
+          example: 3500
+        waterPrice:
+          type: number
+          nullable: true
+          description: Giá nước (VNĐ/người) — thanh toán đầu tháng
+          example: 50000
+        paymentMethod:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: Hình thức thanh toán tiền thuê
+          example: Chuyển khoản ngân hàng
         pdfUrl:
           type: string
           format: uri
@@ -2687,12 +2720,21 @@ paths:
       description: |
         Chỉ landlord sở hữu booking mới được tạo hợp đồng.
 
-        **Điều kiện:** Booking phải ở trạng thái `confirmed`.
+        **Điều kiện:** Booking phải ở trạng thái `confirmed` hoặc `active`.
 
         Hệ thống tự động:
-        - Điền thông tin tenant, landlord, property, các điều khoản thuê
-        - Generate PDF và upload lên Cloudinary
+        - Điền thông tin hai bên (họ tên, SĐT, ngày sinh, địa chỉ HK)
+        - Điền các điều khoản tài chính: giá thuê, điện, nước, đặt cọc, thời hạn
+        - Generate PDF theo mẫu hợp đồng thuê nhà chuẩn và upload lên Cloudinary
         - Trả về `pdfUrl` để xem / download bản nháp
+
+        **Các field tuỳ chọn nhưng khuyến nghị điền:**
+        | Field | Mô tả | Mặc định nếu bỏ trống |
+        |---|---|---|
+        | `electricityPrice` | Giá điện (VNĐ/kwh) | `---` |
+        | `waterPrice` | Giá nước (VNĐ/người) | `---` |
+        | `paymentMethod` | Hình thức thanh toán | Tiền mặt hoặc chuyển khoản |
+        | `terms` | Điều khoản bổ sung | (không hiển thị) |
 
         Sau khi tạo, cả 2 bên dùng `PATCH /api/contracts/:id/sign` để ký.
       security:
@@ -2707,6 +2749,24 @@ paths:
               properties:
                 bookingId:
                   $ref: '#/components/schemas/MongoId'
+                electricityPrice:
+                  type: number
+                  nullable: true
+                  minimum: 0
+                  example: 3500
+                  description: Giá điện (VNĐ/kwh) — tính theo chỉ số công tơ, thanh toán cuối tháng
+                waterPrice:
+                  type: number
+                  nullable: true
+                  minimum: 0
+                  example: 50000
+                  description: Giá nước (VNĐ/người) — thanh toán đầu tháng
+                paymentMethod:
+                  type: string
+                  nullable: true
+                  maxLength: 200
+                  example: Chuyển khoản ngân hàng
+                  description: Hình thức thanh toán tiền thuê (mặc định "Tiền mặt hoặc chuyển khoản ngân hàng" nếu bỏ trống)
                 terms:
                   type: string
                   maxLength: 2000
