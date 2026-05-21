@@ -4,13 +4,13 @@ import Property from '../models/property.model.js';
 import User from '../models/user.model.js';
 import AppError from '../utils/app-error.js';
 
-// ─── Auto-expire unpaid confirmed bookings ───────────────────────────────────
+// ─── Auto-expire unpaid active bookings (tenant didn't pay after check-in) ───
 
 const PAYMENT_DEADLINE_HOURS = 24;
 
 const autoExpireBookings = async () => {
   const expired = await Booking.find({
-    status: 'confirmed',
+    status: 'active',
     paymentStatus: 'unpaid',
     paymentDeadline: { $lt: new Date(), $ne: null },
   }).select('_id property');
@@ -202,11 +202,10 @@ const confirmBooking = async (id, landlordId) => {
     session.startTransaction();
 
     // Atomic status transition — only succeeds if booking is still 'pending'
-    const paymentDeadline = new Date(Date.now() + PAYMENT_DEADLINE_HOURS * 60 * 60 * 1000);
-
+    // Payment deadline is NOT set here; it will be set when landlord does check-in
     const booking = await Booking.findOneAndUpdate(
       { _id: id, landlord: landlordId, status: 'pending' },
-      { $set: { status: 'confirmed', paymentDeadline } },
+      { $set: { status: 'confirmed' } },
       { returnDocument: 'after', session },
     );
 
@@ -341,7 +340,8 @@ const completeBooking = async (id, userId, userRole) => {
   }
 };
 
-// ─── Activate Booking (landlord / admin) ────────────────────────────────────
+// ─── Activate Booking / Check-in (landlord / admin) ─────────────────────────
+// Tenant pays AFTER check-in; payment deadline starts from this moment.
 
 const activateBooking = async (id, userId, userRole) => {
   const session = await mongoose.startSession();
@@ -356,14 +356,14 @@ const activateBooking = async (id, userId, userRole) => {
     if (booking.status !== 'confirmed') {
       throw new AppError(`Cannot activate a booking with status "${booking.status}"`, 400);
     }
-    if (booking.paymentStatus !== 'paid') {
-      throw new AppError('Tenant has not completed payment yet', 400);
-    }
 
-    // Atomic update — requires both status=confirmed AND paymentStatus=paid
+    // Set payment deadline from the moment of check-in
+    const paymentDeadline = new Date(Date.now() + PAYMENT_DEADLINE_HOURS * 60 * 60 * 1000);
+
+    // Atomic update — requires status=confirmed (payment not required before check-in)
     const updated = await Booking.findOneAndUpdate(
-      { _id: id, status: 'confirmed', paymentStatus: 'paid' },
-      { $set: { status: 'active' } },
+      { _id: id, status: 'confirmed' },
+      { $set: { status: 'active', paymentDeadline } },
       { returnDocument: 'after', session },
     );
     if (!updated) throw new AppError('Booking state changed before activation could complete', 409);

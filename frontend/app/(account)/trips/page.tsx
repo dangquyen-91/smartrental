@@ -192,12 +192,11 @@ function BookingCard({
   const paymentCfg = PAYMENT_CONFIG[booking.paymentStatus];
 
   const canCancel =
-    booking.status === 'pending' ||
-    (booking.status === 'confirmed' && booking.paymentStatus === 'unpaid');
+    booking.status === 'pending' || booking.status === 'confirmed';
   const canPay =
-    booking.status === 'confirmed' && booking.paymentStatus === 'unpaid';
+    booking.status === 'active' && booking.paymentStatus === 'unpaid';
   const awaitingCheckin =
-    booking.status === 'confirmed' && booking.paymentStatus === 'paid';
+    booking.status === 'confirmed';
   const showContract = ['active', 'completed'].includes(booking.status);
 
   return (
@@ -264,16 +263,16 @@ function BookingCard({
           </span>
         </div>
 
-        {/* Payment deadline countdown */}
+        {/* Payment deadline countdown — shown after check-in, before payment */}
         {canPay && booking.paymentDeadline && (
           <PaymentDeadlineCountdown deadline={booking.paymentDeadline} />
         )}
 
         {/* Awaiting landlord check-in */}
         {awaitingCheckin && (
-          <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 w-fit">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 w-fit">
             <CalendarCheck className="size-3.5 shrink-0" />
-            Đã thanh toán — chờ chủ nhà xác nhận check-in
+            Đã xác nhận — chờ chủ nhà check-in
           </span>
         )}
 

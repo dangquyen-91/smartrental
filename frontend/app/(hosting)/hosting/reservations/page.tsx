@@ -212,10 +212,9 @@ function ReservationCard({
   const paymentCfg = PAYMENT_CONFIG[booking.paymentStatus];
 
   const isPending = booking.status === 'pending';
-  const isConfirmedUnpaid =
-    booking.status === 'confirmed' && booking.paymentStatus === 'unpaid';
-  const isConfirmedPaid =
-    booking.status === 'confirmed' && booking.paymentStatus === 'paid';
+  const isConfirmed = booking.status === 'confirmed';
+  const isActiveUnpaid =
+    booking.status === 'active' && booking.paymentStatus === 'unpaid';
   const isActive = booking.status === 'active';
 
   return (
@@ -357,17 +356,9 @@ function ReservationCard({
             </>
           )}
 
-          {/* Confirmed + unpaid: countdown + reclaim */}
-          {isConfirmedUnpaid && (
+          {/* Confirmed: check-in button + reclaim */}
+          {isConfirmed && (
             <div className="flex items-center gap-2 flex-wrap">
-              {booking.paymentDeadline ? (
-                <PaymentDeadlineCountdown deadline={booking.paymentDeadline} />
-              ) : (
-                <span className="flex items-center gap-1 text-xs font-medium text-amber-600">
-                  <AlertCircle className="size-3.5 shrink-0" />
-                  Chờ người thuê thanh toán
-                </span>
-              )}
               <button
                 onClick={() => onReclaim(booking.id)}
                 disabled={isReclaiming}
@@ -380,23 +371,33 @@ function ReservationCard({
                 )}
                 Thu hồi
               </button>
+              <button
+                onClick={() => onActivate(booking.id)}
+                disabled={isActivating}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 rounded-lg transition-all active:scale-95"
+              >
+                {isActivating ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Check className="size-3.5" />
+                )}
+                Check-in
+              </button>
             </div>
           )}
 
-          {/* Confirmed + paid: check-in */}
-          {isConfirmedPaid && (
-            <button
-              onClick={() => onActivate(booking.id)}
-              disabled={isActivating}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 rounded-lg transition-all active:scale-95"
-            >
-              {isActivating ? (
-                <Loader2 className="size-3.5 animate-spin" />
+          {/* Active + unpaid: payment deadline countdown */}
+          {isActiveUnpaid && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {booking.paymentDeadline ? (
+                <PaymentDeadlineCountdown deadline={booking.paymentDeadline} />
               ) : (
-                <Check className="size-3.5" />
+                <span className="flex items-center gap-1 text-xs font-medium text-amber-600">
+                  <AlertCircle className="size-3.5 shrink-0" />
+                  Chờ người thuê thanh toán
+                </span>
               )}
-              Check-in
-            </button>
+            </div>
           )}
 
           {/* Active: complete */}
@@ -550,7 +551,7 @@ const EMPTY_CONFIG: Record<TabId, { message: string; sub: string }> = {
   },
   confirmed: {
     message: 'Chưa có yêu cầu đã xác nhận',
-    sub: 'Các booking đã xác nhận và đang chờ thanh toán sẽ hiển thị ở đây.',
+    sub: 'Các booking đã xác nhận và đang chờ check-in sẽ hiển thị ở đây.',
   },
   active: {
     message: 'Chưa có phòng đang cho thuê',

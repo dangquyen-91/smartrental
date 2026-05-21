@@ -98,8 +98,8 @@ const createBookingPaymentLink = async (bookingId, tenantId) => {
     .populate('property', 'title price');
   if (!booking) throw new AppError('Booking not found', 404);
 
-  if (booking.status !== 'confirmed') {
-    throw new AppError('Booking must be confirmed by landlord before payment', 400);
+  if (booking.status !== 'active') {
+    throw new AppError('Tenant can only pay after the landlord has done check-in', 400);
   }
   if (booking.paymentStatus === 'paid') {
     throw new AppError('Booking already paid', 400);
