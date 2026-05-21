@@ -3,9 +3,7 @@ import mongoose from 'mongoose';
 import payos from '../config/payos.js';
 import ServiceOrder from '../models/service-order.model.js';
 import Booking from '../models/booking.model.js';
-import Subscription from '../models/subscription.model.js';
 import AppError from '../utils/app-error.js';
-import { activateSubscription } from './subscription.service.js';
 
 const PLATFORM_FEE_RATE = 0.10;
 
@@ -152,56 +150,6 @@ const getBookingPaymentStatus = async (bookingId, tenantId) => {
   };
 };
 
-// ─── SUBSCRIPTION — Tạo link thanh toán ──────────────────────────────────────
-
-const createSubscriptionPaymentLink = async (subscriptionId, landlordId) => {
-  const sub = await Subscription.findOne({ _id: subscriptionId, landlord: landlordId })
-    .populate('plan')
-    .populate('landlord', 'name email phone');
-  if (!sub) throw new AppError('Subscription not found', 404);
-  if (sub.paymentStatus === 'paid') throw new AppError('Subscription already paid', 400);
-  if (sub.status === 'cancelled')   throw new AppError('Subscription has been cancelled', 400);
-
-  await cancelOldPayosLink(sub.paymentCode);
-
-  const orderCode = genOrderCode();
-  const response  = await buildPayosLink({
-    orderCode,
-    amount:      sub.plan.price,
-    description: `SR-SUB-${sub.plan.slug.toUpperCase()}`,
-    buyer:       sub.landlord,
-    items:       [{ name: sub.plan.name, quantity: 1, price: sub.plan.price }],
-    returnUrl:   process.env.PAYOS_SUB_RETURN_URL || process.env.PAYOS_RETURN_URL,
-    cancelUrl:   process.env.PAYOS_SUB_CANCEL_URL || process.env.PAYOS_CANCEL_URL,
-    ttlMinutes:  30,
-  });
-
-  sub.paymentCode = orderCode;
-  await sub.save();
-
-  return { checkoutUrl: response.checkoutUrl, orderCode, amount: sub.plan.price };
-};
-
-// ─── SUBSCRIPTION — Kiểm tra trạng thái ──────────────────────────────────────
-
-const getSubscriptionPaymentStatus = async (subscriptionId, landlordId) => {
-  const sub = await Subscription.findOne({ _id: subscriptionId, landlord: landlordId })
-    .populate('plan');
-  if (!sub)             throw new AppError('Subscription not found', 404);
-  if (!sub.paymentCode) throw new AppError('Payment not initiated yet', 400);
-
-  const info = await payos.paymentRequests.get(sub.paymentCode);
-
-  return {
-    orderCode:     info.orderCode,
-    status:        info.status,
-    amount:        info.amount,
-    transactions:  info.transactions,
-    paymentStatus: sub.paymentStatus,
-    plan:          sub.plan,
-  };
-};
-
 // ─── WEBHOOK — Xử lý callback từ PayOS ───────────────────────────────────────
 
 const handleWebhook = async (body) => {
@@ -254,14 +202,6 @@ const handleWebhook = async (body) => {
       return { rspCode: '00', message: 'Booking payment confirmed' };
     }
 
-    const subscription = await Subscription.findOne({ paymentCode: orderCode }).session(session);
-    if (subscription) {
-      const activated = await activateSubscription(orderCode, session);
-      await session.commitTransaction();
-      if (!activated) return { rspCode: '02', message: 'Subscription already activated' };
-      return { rspCode: '00', message: 'Subscription activated' };
-    }
-
     await session.abortTransaction();
     return { rspCode: '01', message: 'Order not found' };
 
@@ -279,6 +219,4 @@ export {
   createBookingPaymentLink,
   getBookingPaymentStatus,
   handleWebhook,
-  createSubscriptionPaymentLink,
-  getSubscriptionPaymentStatus,
 };

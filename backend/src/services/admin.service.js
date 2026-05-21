@@ -2,7 +2,6 @@ import Booking from '../models/booking.model.js';
 import User from '../models/user.model.js';
 import Property from '../models/property.model.js';
 import ServiceOrder from '../models/service-order.model.js';
-import Subscription from '../models/subscription.model.js';
 import AppError from '../utils/app-error.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -57,7 +56,6 @@ export const getDashboardStats = async () => {
     userAgg,
     propertyAgg,
     bookingAgg,
-    activeSubscriptions,
     bookingRevMonth,
     bookingRevLastMonth,
     bookingRevTotal,
@@ -87,7 +85,6 @@ export const getDashboardStats = async () => {
     Booking.aggregate([
       { $group: { _id: '$status', count: { $sum: 1 } } },
     ]),
-    Subscription.countDocuments({ status: 'active' }),
     Booking.aggregate([
       { $match: { paymentStatus: 'paid', paidDate: { $gte: startOfMonth } } },
       { $group: { _id: null, total: { $sum: '$platformFee' } } },
@@ -150,7 +147,6 @@ export const getDashboardStats = async () => {
     users,
     properties,
     bookings,
-    subscriptions: { active: activeSubscriptions },
     revenue: {
       total: totalRevenue,
       thisMonth: thisMonthRevenue,
@@ -171,7 +167,7 @@ export const getRevenueAnalytics = async (period = '30d') => {
   if (!VALID_PERIODS.includes(period)) throw new AppError('Invalid period. Use: 7d, 30d, 90d, 1y', 400);
   const { startDate, days } = parsePeriod(period);
 
-  const [bookingRevenue, serviceRevenue, subscriptionRevenue] = await Promise.all([
+  const [bookingRevenue, serviceRevenue] = await Promise.all([
     Booking.aggregate([
       { $match: { paymentStatus: 'paid', paidDate: { $gte: startDate } } },
       {
@@ -196,48 +192,28 @@ export const getRevenueAnalytics = async (period = '30d') => {
       },
       { $sort: { _id: 1 } },
     ]),
-    Subscription.aggregate([
-      { $match: { paymentStatus: 'paid', createdAt: { $gte: startDate } } },
-      { $lookup: { from: 'plans', localField: 'plan', foreignField: '_id', as: 'planDoc' } },
-      { $unwind: '$planDoc' },
-      {
-        $group: {
-          _id: dateGroupExpr('createdAt', days),
-          revenue: { $sum: '$planDoc.price' },
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]),
   ]);
 
   const dateSet = new Set([
     ...bookingRevenue.map((r) => r._id),
     ...serviceRevenue.map((r) => r._id),
-    ...subscriptionRevenue.map((r) => r._id),
   ]);
 
   const bMap = Object.fromEntries(bookingRevenue.map((r) => [r._id, r]));
   const sMap = Object.fromEntries(serviceRevenue.map((r) => [r._id, r]));
-  const subMap = Object.fromEntries(subscriptionRevenue.map((r) => [r._id, r]));
 
   const timeline = [...dateSet].sort().map((date) => ({
     date,
     booking: { fee: bMap[date]?.platformFee ?? 0, count: bMap[date]?.count ?? 0 },
     service: { fee: sMap[date]?.platformFee ?? 0, count: sMap[date]?.count ?? 0 },
-    subscription: { revenue: subMap[date]?.revenue ?? 0, count: subMap[date]?.count ?? 0 },
-    total:
-      (bMap[date]?.platformFee ?? 0) +
-      (sMap[date]?.platformFee ?? 0) +
-      (subMap[date]?.revenue ?? 0),
+    total: (bMap[date]?.platformFee ?? 0) + (sMap[date]?.platformFee ?? 0),
   }));
 
   const totals = {
     booking: bookingRevenue.reduce((s, r) => s + (r.platformFee ?? 0), 0),
     service: serviceRevenue.reduce((s, r) => s + (r.platformFee ?? 0), 0),
-    subscription: subscriptionRevenue.reduce((s, r) => s + (r.revenue ?? 0), 0),
   };
-  totals.total = totals.booking + totals.service + totals.subscription;
+  totals.total = totals.booking + totals.service;
 
   return { period, timeline, totals };
 };
@@ -521,61 +497,6 @@ export const getPropertyAnalytics = async () => {
     byCity: byCity.map((r) => ({ city: r._id, count: r.count })),
     topViewed: topViewed.map((p) => ({ ...p, id: p._id, _id: undefined })),
     occupancyRate,
-  };
-};
-
-// ─── Subscription Analytics ───────────────────────────────────────────────────
-
-export const getSubscriptionAnalytics = async () => {
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-  const [statusDist, byPlan, newThisMonth, expiredThisMonth, mrrAgg] = await Promise.all([
-    Subscription.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
-    Subscription.aggregate([
-      { $match: { status: 'active' } },
-      { $lookup: { from: 'plans', localField: 'plan', foreignField: '_id', as: 'planDoc' } },
-      { $unwind: '$planDoc' },
-      {
-        $group: {
-          _id: { planId: '$plan', planName: '$planDoc.name', planSlug: '$planDoc.slug' },
-          count: { $sum: 1 },
-          monthlyRevenue: { $sum: '$planDoc.price' },
-        },
-      },
-      { $sort: { count: -1 } },
-    ]),
-    Subscription.countDocuments({ status: 'active', createdAt: { $gte: startOfMonth } }),
-    Subscription.countDocuments({ status: 'expired', endDate: { $gte: startOfMonth } }),
-    Subscription.aggregate([
-      { $match: { status: 'active', paymentStatus: 'paid' } },
-      { $lookup: { from: 'plans', localField: 'plan', foreignField: '_id', as: 'planDoc' } },
-      { $unwind: '$planDoc' },
-      { $group: { _id: null, mrr: { $sum: '$planDoc.price' } } },
-    ]),
-  ]);
-
-  const activeCount = statusDist.find((r) => r._id === 'active')?.count ?? 0;
-  const churnRate =
-    activeCount + expiredThisMonth > 0
-      ? Math.round((expiredThisMonth / (activeCount + expiredThisMonth)) * 1000) / 10
-      : 0;
-
-  return {
-    summary: {
-      byStatus: Object.fromEntries(statusDist.map((r) => [r._id, r.count])),
-      newThisMonth,
-      expiredThisMonth,
-      churnRate,
-      mrr: mrrAgg[0]?.mrr ?? 0,
-    },
-    byPlan: byPlan.map((r) => ({
-      planId: r._id.planId,
-      planName: r._id.planName,
-      planSlug: r._id.planSlug,
-      count: r.count,
-      monthlyRevenue: r.monthlyRevenue,
-    })),
   };
 };
 

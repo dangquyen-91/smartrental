@@ -59,15 +59,6 @@ const getPropertyAnalytics = async (req, res, next) => {
   }
 };
 
-const getSubscriptionAnalytics = async (req, res, next) => {
-  try {
-    const data = await adminService.getSubscriptionAnalytics();
-    return R.success(res, data);
-  } catch (err) {
-    next(err);
-  }
-};
-
 // ─── User Management ──────────────────────────────────────────────────────────
 
 const getUsers = async (req, res, next) => {
@@ -159,7 +150,6 @@ export {
   getBookingAnalytics,
   getServiceAnalytics,
   getPropertyAnalytics,
-  getSubscriptionAnalytics,
   getUsers,
   updateUserStatus,
   updateUserRole,

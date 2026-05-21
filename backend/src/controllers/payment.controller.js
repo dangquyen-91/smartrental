@@ -53,32 +53,6 @@ const getBookingPaymentStatus = async (req, res, next) => {
   }
 };
 
-// ─── Subscription ────────────────────────────────────────────────────────────
-
-const createSubscriptionPaymentLink = async (req, res, next) => {
-  try {
-    const result = await paymentService.createSubscriptionPaymentLink(
-      req.params.subscriptionId,
-      req.user.id,
-    );
-    return R.success(res, result, 'Subscription payment link created');
-  } catch (err) {
-    next(err);
-  }
-};
-
-const getSubscriptionPaymentStatus = async (req, res, next) => {
-  try {
-    const result = await paymentService.getSubscriptionPaymentStatus(
-      req.params.subscriptionId,
-      req.user.id,
-    );
-    return R.success(res, result);
-  } catch (err) {
-    next(err);
-  }
-};
-
 // ─── Webhook ──────────────────────────────────────────────────────────────────
 
 const handleWebhook = async (req, res) => {
@@ -96,6 +70,4 @@ export {
   createBookingPaymentLink,
   getBookingPaymentStatus,
   handleWebhook,
-  createSubscriptionPaymentLink,
-  getSubscriptionPaymentStatus,
 };

@@ -18,7 +18,6 @@ router.get('/analytics/users', adminController.getUserAnalytics);
 router.get('/analytics/bookings', adminController.getBookingAnalytics);
 router.get('/analytics/services', adminController.getServiceAnalytics);
 router.get('/analytics/properties', adminController.getPropertyAnalytics);
-router.get('/analytics/subscriptions', adminController.getSubscriptionAnalytics);
 
 // ─── User Management ──────────────────────────────────────────────────────────
 // GET    /api/admin/users?page=1&limit=20&role=&search=&isActive=

@@ -3,7 +3,6 @@ import Contract from '../models/contract.model.js';
 import Booking from '../models/booking.model.js';
 import AppError from '../utils/app-error.js';
 import { generateAndUploadContractPdf } from '../utils/pdf-generator.js';
-import { assertContractAllowed } from './subscription.service.js';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -33,8 +32,6 @@ const generateContract = async (bookingId, landlordId, terms) => {
   if (booking.landlord._id.toString() !== landlordId) {
     throw new AppError('Access denied', 403);
   }
-
-  await assertContractAllowed(landlordId);
 
   if (!['confirmed', 'active'].includes(booking.status)) {
     throw new AppError(

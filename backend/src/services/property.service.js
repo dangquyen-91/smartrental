@@ -2,7 +2,6 @@ import Property from '../models/property.model.js';
 import Booking from '../models/booking.model.js';
 import User from '../models/user.model.js';
 import AppError from '../utils/app-error.js';
-import { assertListingSlot, assertFeaturedSlot } from './subscription.service.js';
 
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -118,8 +117,6 @@ const getPropertyById = async (id, requestingUserId) => {
 // ─── Create (goes live immediately) ─────────────────────────────────────────
 
 const createProperty = async (data, ownerId) => {
-  await assertListingSlot(ownerId);
-
   const owner = await User.findById(ownerId).select('bankAccount');
   if (!owner?.bankAccount?.bankName) {
     throw new AppError('Vui lòng thêm tài khoản ngân hàng trước khi đăng tin', 400);
@@ -160,11 +157,8 @@ const updateProperty = async (id, data, userId, userRole) => {
   if (data.isFeatured !== undefined) {
     if (userRole === 'admin') {
       property.isFeatured = data.isFeatured;
-    } else if (userRole === 'landlord' && data.isFeatured === true) {
-      await assertFeaturedSlot(userId);
-      property.isFeatured = true;
-    } else if (userRole === 'landlord' && data.isFeatured === false) {
-      property.isFeatured = false;
+    } else if (userRole === 'landlord') {
+      property.isFeatured = data.isFeatured;
     }
   }
 
