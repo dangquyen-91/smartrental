@@ -16,7 +16,13 @@ export async function getContractByBookingApi(bookingId: string) {
   return res.data;
 }
 
-export async function generateContractApi(data: { bookingId: string; terms?: string }) {
+export async function generateContractApi(data: {
+  bookingId: string;
+  terms?: string;
+  electricityPrice?: number | null;
+  waterPrice?: number | null;
+  paymentMethod?: string | null;
+}) {
   const res = await api.post<ApiResponse<Contract>>("/contracts/generate", data);
   return res.data;
 }

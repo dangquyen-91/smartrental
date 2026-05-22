@@ -5,6 +5,18 @@ export interface User {
   phone?: string;
   role: 'tenant' | 'landlord' | 'admin' | 'provider';
   avatar?: string;
+  address?: {
+    street?: string;
+    ward?: string;
+    district?: string;
+    city?: string;
+  };
+  dateOfBirth?: string | null;
+  nationalId?: {
+    number?: string | null;
+    issuedDate?: string | null;
+    issuedPlace?: string | null;
+  } | null;
   bankAccount?: {
     bankName: string;
     accountNumber: string;
@@ -132,6 +144,9 @@ export interface Contract {
   property: Property | string;
   terms: string;
   pdfUrl?: string;
+  electricityPrice?: number | null;
+  waterPrice?: number | null;
+  paymentMethod?: string | null;
   status: 'draft' | 'awaiting_signatures' | 'signed' | 'cancelled';
   signedByTenant: { signed: boolean; signedAt?: string | null };
   signedByLandlord: { signed: boolean; signedAt?: string | null };

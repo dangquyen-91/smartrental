@@ -34,6 +34,8 @@ tags:
     description: Dịch vụ đi kèm — danh mục dịch vụ, đặt dịch vụ, quản lý đơn
   - name: Payment
     description: Thanh toán qua PayOS — tạo link, webhook callback, kiểm tra trạng thái
+  - name: Reviews
+    description: Đánh giá phòng trọ — tenant đánh giá sau khi booking hoàn thành
 
 components:
 
@@ -49,6 +51,80 @@ components:
       type: string
       pattern: '^[a-f\d]{24}$'
       example: 664f1b2c3e4d5a6b7c8d9e0f
+
+    NationalId:
+      type: object
+      nullable: true
+      description: Số CMND/CCCD — dùng trên hợp đồng thuê nhà
+      properties:
+        number:
+          type: string
+          nullable: true
+          pattern: '^[0-9]{9,12}$'
+          example: '012345678901'
+          description: Số CMND (9 chữ số) hoặc CCCD (12 chữ số)
+        issuedDate:
+          type: string
+          format: date
+          nullable: true
+          example: '2015-06-15'
+          description: Ngày cấp
+        issuedPlace:
+          type: string
+          nullable: true
+          example: Cục Cảnh sát QLHC về TTXH
+          description: Nơi cấp
+
+    Review:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/MongoId'
+        booking:
+          $ref: '#/components/schemas/MongoId'
+        reviewer:
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/MongoId'
+            name:
+              type: string
+              example: Trần Thị Mai
+            avatar:
+              type: string
+              format: uri
+              nullable: true
+        reviewerRole:
+          type: string
+          enum: [tenant, landlord]
+          example: tenant
+        targetType:
+          type: string
+          enum: [property, landlord, tenant]
+          example: property
+          description: |
+            - **property**: Đánh giá bất động sản (tenant → property)
+            - **landlord**: Đánh giá chủ nhà
+            - **tenant**: Đánh giá người thuê
+        target:
+          $ref: '#/components/schemas/MongoId'
+          description: ObjectId của Property hoặc User tuỳ theo targetType
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 4
+        comment:
+          type: string
+          nullable: true
+          maxLength: 1000
+          example: Phòng sạch, chủ nhà thân thiện, vị trí thuận tiện.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
     Address:
       type: object
@@ -160,6 +236,9 @@ components:
           type: boolean
           example: false
           description: true khi đã xác thực SĐT qua OTP → được phép đăng tin (landlord)
+        nationalId:
+          $ref: '#/components/schemas/NationalId'
+          description: CMND/CCCD — hiển thị trên hợp đồng thuê nhà. null nếu chưa điền.
         bankAccount:
           type: object
           nullable: true
@@ -553,6 +632,9 @@ components:
               format: date
               nullable: true
               example: '1999-03-15'
+            nationalId:
+              $ref: '#/components/schemas/NationalId'
+              description: CMND/CCCD — hiển thị trên hợp đồng. null nếu chưa điền.
             avatar:
               type: string
               nullable: true
@@ -579,6 +661,9 @@ components:
               format: date
               nullable: true
               example: '1985-06-20'
+            nationalId:
+              $ref: '#/components/schemas/NationalId'
+              description: CMND/CCCD — hiển thị trên hợp đồng. null nếu chưa điền.
             avatar:
               type: string
               nullable: true
@@ -1650,6 +1735,32 @@ paths:
                   format: date
                 address:
                   type: string
+                  maxLength: 200
+                  example: 12 Nguyễn Văn Linh, Quận 7, TP.HCM
+                nationalId:
+                  type: object
+                  description: |
+                    CMND/CCCD — dùng trên hợp đồng. Gửi object để cập nhật (merge, không replace).
+                    Ví dụ chỉ cập nhật số: `{ "nationalId": { "number": "012345678901" } }`
+                  properties:
+                    number:
+                      type: string
+                      nullable: true
+                      pattern: '^[0-9]{9,12}$'
+                      example: '012345678901'
+                      description: Số CMND (9 chữ số) hoặc CCCD (12 chữ số)
+                    issuedDate:
+                      type: string
+                      format: date
+                      nullable: true
+                      example: '2015-06-15'
+                      description: Ngày cấp (phải là ngày trong quá khứ)
+                    issuedPlace:
+                      type: string
+                      nullable: true
+                      maxLength: 100
+                      example: Cục Cảnh sát QLHC về TTXH
+                      description: Nơi cấp
                 role:
                   type: string
                   enum: [tenant, landlord, admin, provider]
@@ -4077,6 +4188,303 @@ paths:
                             $ref: '#/components/schemas/Booking'
         '400':
           description: Booking chưa thanh toán / đã payout / landlord chưa có STK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─── REVIEWS ─────────────────────────────────────────────────────────────────
+
+  /api/reviews/property/{id}:
+    get:
+      tags: [Reviews]
+      summary: Đánh giá của một bất động sản (public)
+      description: |
+        Trả về danh sách đánh giá kèm:
+        - **averageRating**: điểm trung bình (làm tròn 1 chữ số thập phân)
+        - **totalReviews**: tổng số đánh giá
+        - **ratingDistribution**: phân bổ điểm từ 1–5 sao
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Danh sách đánh giá + thống kê rating
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          reviews:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Review'
+                          averageRating:
+                            type: number
+                            nullable: true
+                            example: 4.3
+                          totalReviews:
+                            type: integer
+                            example: 12
+                          ratingDistribution:
+                            type: object
+                            nullable: true
+                            description: Số lượng đánh giá theo từng mức điểm
+                            properties:
+                              1: { type: integer, example: 0 }
+                              2: { type: integer, example: 1 }
+                              3: { type: integer, example: 2 }
+                              4: { type: integer, example: 5 }
+                              5: { type: integer, example: 4 }
+                          pagination:
+                            $ref: '#/components/schemas/Pagination'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/reviews:
+    post:
+      tags: [Reviews]
+      summary: Gửi đánh giá (tenant only)
+      description: |
+        **Điều kiện:**
+        - Người gọi phải là **tenant** trong booking đó
+        - Booking phải ở trạng thái `completed`
+        - Chỉ được đánh giá `targetType = property` (hiện tại)
+        - Mỗi booking chỉ được gửi **một lần** mỗi loại (unique: booking × reviewerRole × targetType)
+
+        Hệ thống tự xác định `target` (PropertyId) từ booking — không cần truyền lên.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId, targetType, rating]
+              properties:
+                bookingId:
+                  $ref: '#/components/schemas/MongoId'
+                targetType:
+                  type: string
+                  enum: [property]
+                  example: property
+                  description: Hiện tại chỉ hỗ trợ `property`
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  example: 4
+                comment:
+                  type: string
+                  maxLength: 1000
+                  nullable: true
+                  example: Phòng sạch, chủ nhà thân thiện, vị trí thuận tiện.
+      responses:
+        '201':
+          description: Gửi đánh giá thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          review:
+                            $ref: '#/components/schemas/Review'
+        '400':
+          description: Booking chưa hoàn thành hoặc targetType không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Booking không tồn tại
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Đã đánh giá loại này cho booking này rồi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags: [Reviews]
+      summary: Tất cả đánh giá (admin only)
+      description: |
+        Lọc theo `targetType` và `includeDeleted` để quản lý.
+
+        Response mỗi review có thêm field `targetRef`:
+        - `targetType = property` → `targetRef = { _id, title, address }`
+        - `targetType = landlord/tenant` → `targetRef = { _id, name, email, avatar }`
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: targetType
+          in: query
+          description: Lọc theo loại đối tượng được đánh giá
+          schema:
+            type: string
+            enum: [property, landlord, tenant]
+        - name: includeDeleted
+          in: query
+          description: Bao gồm cả review đã bị xoá mềm (soft-deleted)
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Danh sách tất cả đánh giá
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: '#/components/schemas/Review'
+                            - type: object
+                              properties:
+                                targetRef:
+                                  type: object
+                                  nullable: true
+                                  description: Thông tin đối tượng được đánh giá (Property hoặc User)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/reviews/mine:
+    get:
+      tags: [Reviews]
+      summary: Đánh giá tôi đã viết
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Danh sách đánh giá của tôi
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          reviews:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Review'
+                          pagination:
+                            $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/reviews/booking/{id}:
+    get:
+      tags: [Reviews]
+      summary: Đánh giá theo booking ID
+      description: |
+        Trả về tất cả đánh giá thuộc booking đó.
+
+        Chỉ tenant hoặc landlord trong booking, hoặc admin mới xem được.
+
+        Mỗi review có thêm field `isOwn: boolean` — true nếu là review của người đang gọi.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Danh sách đánh giá của booking
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          reviews:
+                            type: array
+                            items:
+                              allOf:
+                                - $ref: '#/components/schemas/Review'
+                                - type: object
+                                  properties:
+                                    isOwn:
+                                      type: boolean
+                                      example: true
+                                      description: true nếu là review của người đang gọi API
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/reviews/{id}:
+    delete:
+      tags: [Reviews]
+      summary: Xoá mềm đánh giá (admin only)
+      description: |
+        Soft-delete — đánh giá không bị xoá khỏi DB mà chỉ bị ẩn (isDeleted=true).
+
+        Admin có thể xem lại bằng cách gọi `GET /api/reviews?includeDeleted=true`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Đã xoá mềm thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Đánh giá đã bị xoá rồi
           content:
             application/json:
               schema:

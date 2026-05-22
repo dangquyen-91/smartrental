@@ -15,8 +15,8 @@ const buildPagination = (page, limit) => {
 const populateContract = (query) =>
   query
     .populate('booking', 'startDate endDate duration totalPrice status note depositAmount')
-    .populate('tenant', 'name email phone address avatar dateOfBirth')
-    .populate('landlord', 'name email phone address avatar dateOfBirth')
+    .populate('tenant', 'name email phone address avatar dateOfBirth nationalId')
+    .populate('landlord', 'name email phone address avatar dateOfBirth nationalId')
     .populate('property', 'title type address area bedrooms bathrooms price images');
 
 // ─── Generate Contract ───────────────────────────────────────────────────────
@@ -25,8 +25,8 @@ const generateContract = async (bookingId, landlordId, terms, extras = {}) => {
   const { electricityPrice = null, waterPrice = null, paymentMethod = null } = extras;
 
   const booking = await Booking.findById(bookingId)
-    .populate('tenant', 'name email phone address dateOfBirth')
-    .populate('landlord', 'name email phone address dateOfBirth')
+    .populate('tenant', 'name email phone address dateOfBirth nationalId')
+    .populate('landlord', 'name email phone address dateOfBirth nationalId')
     .populate('property', 'title type address area bedrooms bathrooms price');
 
   if (!booking) throw new AppError('Booking not found', 404);
@@ -110,8 +110,8 @@ const signContract = async (contractId, userId) => {
     { $set: { [`${signField}.signed`]: true, [`${signField}.signedAt`]: now } },
     { returnDocument: 'after' },
   )
-    .populate('tenant', 'name email phone address dateOfBirth')
-    .populate('landlord', 'name email phone address dateOfBirth')
+    .populate('tenant', 'name email phone address dateOfBirth nationalId')
+    .populate('landlord', 'name email phone address dateOfBirth nationalId')
     .populate('property', 'title type address area bedrooms bathrooms price')
     .populate('booking', 'startDate endDate duration totalPrice status depositAmount');
 

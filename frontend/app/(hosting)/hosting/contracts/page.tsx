@@ -152,6 +152,9 @@ function GenerateModal({
 }) {
   const [selectedBookingId, setSelectedBookingId] = useState('');
   const [terms, setTerms] = useState('');
+  const [electricityPrice, setElectricityPrice] = useState('');
+  const [waterPrice, setWaterPrice] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
 
   const { data: bookingsData, isLoading: loadingBookings } = useLandlordBookings();
   const { mutate: generate, isPending } = useGenerateContract();
@@ -161,7 +164,6 @@ function GenerateModal({
     return all.filter(
       (b) =>
         (b.status === 'confirmed' || b.status === 'active') &&
-        b.paymentStatus === 'paid' &&
         !existingContractBookingIds.has(b.id),
     );
   }, [bookingsData?.data, existingContractBookingIds]);
@@ -173,13 +175,25 @@ function GenerateModal({
 
   const handleSubmit = () => {
     if (!selectedBookingId) return;
-    generate({ bookingId: selectedBookingId, terms: terms.trim() || undefined }, { onSuccess });
+    generate(
+      {
+        bookingId: selectedBookingId,
+        terms: terms.trim() || undefined,
+        electricityPrice: electricityPrice ? Number(electricityPrice) : null,
+        waterPrice: waterPrice ? Number(waterPrice) : null,
+        paymentMethod: paymentMethod || null,
+      },
+      { onSuccess },
+    );
   };
+
+  const inputCls =
+    'w-full h-11 px-3 text-sm text-[#222222] bg-white border border-[#dddddd] rounded-lg focus:outline-none focus:border-[#222222] focus:ring-2 focus:ring-[#222222]/10 transition-colors placeholder:text-[#929292]';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-panel p-6 w-full max-w-lg shadow-[rgba(0,0,0,0.02)_0_0_0_1px,rgba(0,0,0,0.04)_0_2px_6px_0,rgba(0,0,0,0.1)_0_8px_32px_0]">
+      <div className="relative bg-white rounded-panel p-6 w-full max-w-lg shadow-[rgba(0,0,0,0.02)_0_0_0_1px,rgba(0,0,0,0.04)_0_2px_6px_0,rgba(0,0,0,0.1)_0_8px_32px_0] max-h-[90vh] overflow-y-auto">
         <button onClick={onClose} className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-[#f7f7f7] hover:bg-[#dddddd] transition-colors">
           <X className="size-4 text-[#222222]" />
         </button>
@@ -189,25 +203,28 @@ function GenerateModal({
         </div>
         <h3 className="text-[17px] font-semibold text-[#222222] text-center mb-1">Tạo hợp đồng mới</h3>
         <p className="text-sm text-[#6a6a6a] text-center mb-6">
-          Chọn đặt phòng đã xác nhận và thanh toán để tạo hợp đồng điện tử.
+          Chọn đặt phòng đã xác nhận để tạo hợp đồng điện tử.
         </p>
 
+        {/* Booking selector */}
         <div className="mb-4">
-          <label className="block text-sm font-semibold text-[#222222] mb-2">Đặt phòng</label>
+          <label className="block text-sm font-semibold text-[#222222] mb-2">
+            Đặt phòng <span className="text-[#c13515]">*</span>
+          </label>
           {loadingBookings ? (
             <div className="h-11 bg-[#f7f7f7] animate-pulse rounded-lg" />
           ) : eligibleBookings.length === 0 ? (
             <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <AlertCircle className="size-4 text-amber-600 shrink-0" />
               <p className="text-sm text-amber-700">
-                Không có đặt phòng nào đủ điều kiện. Booking cần được xác nhận, đã thanh toán và chưa có hợp đồng.
+                Không có đặt phòng nào đủ điều kiện. Booking cần được xác nhận hoặc đang thuê và chưa có hợp đồng.
               </p>
             </div>
           ) : (
             <select
               value={selectedBookingId}
               onChange={(e) => setSelectedBookingId(e.target.value)}
-              className="w-full h-11 px-3 text-sm text-[#222222] bg-white border border-[#dddddd] rounded-lg focus:outline-none focus:border-[#222222] focus:ring-2 focus:ring-[#222222]/10 transition-colors"
+              className={inputCls}
             >
               <option value="">-- Chọn đặt phòng --</option>
               {eligibleBookings.map((b) => {
@@ -223,6 +240,7 @@ function GenerateModal({
           )}
         </div>
 
+        {/* Booking summary */}
         {selectedBooking && (
           <div className="mb-4 p-3 bg-[#f7f7f7] rounded-[10px] text-sm text-[#6a6a6a] space-y-1">
             {(() => {
@@ -240,6 +258,55 @@ function GenerateModal({
           </div>
         )}
 
+        {/* Utility prices */}
+        <div className="mb-4 grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-semibold text-[#222222] mb-2">
+              Giá điện <span className="text-[#6a6a6a] font-normal">(đ/kWh)</span>
+            </label>
+            <input
+              type="number"
+              min={0}
+              step={100}
+              placeholder="VD: 3500"
+              value={electricityPrice}
+              onChange={(e) => setElectricityPrice(e.target.value)}
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-[#222222] mb-2">
+              Giá nước <span className="text-[#6a6a6a] font-normal">(đ/m³)</span>
+            </label>
+            <input
+              type="number"
+              min={0}
+              step={100}
+              placeholder="VD: 15000"
+              value={waterPrice}
+              onChange={(e) => setWaterPrice(e.target.value)}
+              className={inputCls}
+            />
+          </div>
+        </div>
+
+        {/* Payment method */}
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-[#222222] mb-2">
+            Hình thức thanh toán <span className="text-[#6a6a6a] font-normal">(tuỳ chọn)</span>
+          </label>
+          <select
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+            className={inputCls}
+          >
+            <option value="">-- Chưa xác định --</option>
+            <option value="cash">Tiền mặt</option>
+            <option value="bank_transfer">Chuyển khoản ngân hàng</option>
+          </select>
+        </div>
+
+        {/* Additional terms */}
         <div className="mb-6">
           <label className="block text-sm font-semibold text-[#222222] mb-2">
             Điều khoản bổ sung <span className="text-[#6a6a6a] font-normal">(tuỳ chọn)</span>
@@ -280,7 +347,7 @@ function GenerateModal({
 // ─── empty state ──────────────────────────────────────────────────────────────
 
 const EMPTY_CONFIG: Record<TabId, { message: string; sub: string }> = {
-  pending:   { message: 'Chưa có hợp đồng chờ ký',    sub: 'Tạo hợp đồng từ đặt phòng đã xác nhận và thanh toán để bắt đầu.' },
+  pending:   { message: 'Chưa có hợp đồng chờ ký',    sub: 'Tạo hợp đồng từ đặt phòng đã xác nhận để bắt đầu.' },
   signed:    { message: 'Chưa có hợp đồng hoàn thành', sub: 'Hợp đồng hoàn tất khi cả hai bên đã ký sẽ lưu ở đây.' },
   cancelled: { message: 'Không có hợp đồng bị huỷ',    sub: 'Các hợp đồng đã huỷ sẽ được lưu ở đây.' },
 };

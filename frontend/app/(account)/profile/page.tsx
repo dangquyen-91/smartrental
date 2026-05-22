@@ -9,13 +9,13 @@ import Link from 'next/link';
 import {
   Loader2, Phone, CreditCard, User, CheckCircle2,
   Pencil, Shield, Building2, ArrowRight, FileText,
-  CalendarDays, Camera, Heart,
+  CalendarDays, Camera, Heart, Fingerprint,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getMeApi, updatePhoneApi, verifyPhoneApi, requestLandlordApi } from '@/lib/api/auth.api';
-import { updateBankAccountApi } from '@/lib/api/users.api';
+import { updateBankAccountApi, updateUserApi } from '@/lib/api/users.api';
 import { uploadImagesApi } from '@/lib/api/upload.api';
 import { useAuthStore } from '@/stores/auth.store';
 import { useAuth } from '@/hooks/use-auth';
@@ -47,9 +47,19 @@ const bankSchema = z.object({
   branch: z.string().optional(),
 });
 
+const nationalIdSchema = z.object({
+  number: z
+    .string()
+    .regex(/^\d{9}(\d{3})?$/, 'Số CMND/CCCD phải gồm 9 hoặc 12 chữ số')
+    .or(z.literal('')),
+  issuedDate: z.string().optional(),
+  issuedPlace: z.string().max(100, 'Nơi cấp tối đa 100 ký tự').optional(),
+});
+
 type PhoneForm = z.infer<typeof phoneSchema>;
 type OtpForm = z.infer<typeof otpSchema>;
 type BankForm = z.infer<typeof bankSchema>;
+type NationalIdForm = z.infer<typeof nationalIdSchema>;
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -259,11 +269,9 @@ function AvatarCard({
       </div>
 
       <p className="text-xs text-[#929292] mt-3">
-        Thành viên từ{' '}
-        {new Date(user.createdAt).toLocaleDateString('vi-VN', {
-          month: 'long',
-          year: 'numeric',
-        })}
+        {user.createdAt
+          ? `Thành viên từ ${new Date(user.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}`
+          : 'Thành viên SmartRental'}
       </p>
     </div>
   );
@@ -686,6 +694,149 @@ function BankSection({
   );
 }
 
+// ─── national ID section ──────────────────────────────────────────────────────
+
+function NationalIdSection({
+  user,
+  onUpdate,
+}: {
+  user: UserType;
+  onUpdate: (u: UserType) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const nid = user.nationalId?.number ? user.nationalId : null;
+
+  const form = useForm<NationalIdForm>({
+    resolver: zodResolver(nationalIdSchema),
+    defaultValues: {
+      number: nid?.number ?? '',
+      issuedDate: nid?.issuedDate ? nid.issuedDate.slice(0, 10) : '',
+      issuedPlace: nid?.issuedPlace ?? '',
+    },
+  });
+
+  const onSubmit = async (data: NationalIdForm) => {
+    try {
+      const updated = await updateUserApi(user.id, {
+        nationalId: {
+          number: data.number || null,
+          issuedDate: data.issuedDate || null,
+          issuedPlace: data.issuedPlace || null,
+        },
+      });
+      onUpdate(updated);
+      toast.success('Đã cập nhật thông tin CMND/CCCD');
+      setEditing(false);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Cập nhật thất bại, vui lòng thử lại.'));
+    }
+  };
+
+  const fmtDate = (d?: string | null) =>
+    d ? new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '---';
+
+  return (
+    <SectionCard
+      id="national-id"
+      icon={Fingerprint}
+      title="CMND / CCCD"
+      subtitle="Thông tin giấy tờ tuỳ thân — dùng trong hợp đồng thuê nhà"
+    >
+      {editing ? (
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <Label className="text-sm font-semibold text-[#222222]">
+              Số CMND/CCCD <span className="text-[#c13515]">*</span>
+            </Label>
+            <Input
+              placeholder="VD: 034123456789"
+              inputMode="numeric"
+              maxLength={12}
+              className={cn(INPUT, 'mt-1.5')}
+              {...form.register('number')}
+            />
+            <FieldError msg={form.formState.errors.number?.message} />
+          </div>
+
+          <div>
+            <Label className="text-sm font-semibold text-[#222222]">
+              Ngày cấp <span className="text-[#929292] font-normal">(tuỳ chọn)</span>
+            </Label>
+            <Input
+              type="date"
+              className={cn(INPUT, 'mt-1.5')}
+              {...form.register('issuedDate')}
+            />
+            <FieldError msg={form.formState.errors.issuedDate?.message} />
+          </div>
+
+          <div>
+            <Label className="text-sm font-semibold text-[#222222]">
+              Nơi cấp <span className="text-[#929292] font-normal">(tuỳ chọn)</span>
+            </Label>
+            <Input
+              placeholder="VD: Cục Cảnh sát QLHC về TTXH"
+              className={cn(INPUT, 'mt-1.5')}
+              {...form.register('issuedPlace')}
+            />
+            <FieldError msg={form.formState.errors.issuedPlace?.message} />
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            <PrimaryBtn loading={form.formState.isSubmitting} type="submit">
+              Lưu thay đổi
+            </PrimaryBtn>
+            <GhostBtn type="button" onClick={() => setEditing(false)}>Huỷ</GhostBtn>
+          </div>
+        </form>
+      ) : nid ? (
+        <div>
+          <div className="flex items-center gap-2 mb-5 p-3 bg-emerald-50 rounded-[10px] border border-emerald-100">
+            <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+            <span className="text-sm font-semibold text-emerald-700">
+              Đã cập nhật thông tin giấy tờ tuỳ thân
+            </span>
+          </div>
+          <div className="divide-y divide-[#f7f7f7]">
+            <InfoRow label="Số CMND/CCCD" value={nid.number ?? '---'} />
+            <InfoRow label="Ngày cấp" value={fmtDate(nid.issuedDate)} muted={!nid.issuedDate} />
+            <InfoRow label="Nơi cấp" value={nid.issuedPlace ?? '---'} muted={!nid.issuedPlace} />
+          </div>
+          <button
+            onClick={() => {
+              form.reset({
+                number: nid.number ?? '',
+                issuedDate: nid.issuedDate ? nid.issuedDate.slice(0, 10) : '',
+                issuedPlace: nid.issuedPlace ?? '',
+              });
+              setEditing(true);
+            }}
+            className="mt-5 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+          >
+            <Pencil className="size-3.5" />
+            Cập nhật thông tin
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center py-8 text-center">
+          <div className="size-14 bg-[#f7f7f7] rounded-full flex items-center justify-center mb-4">
+            <Fingerprint className="size-6 text-[#929292]" />
+          </div>
+          <p className="text-sm font-semibold text-[#222222] mb-1">
+            Chưa có thông tin giấy tờ tuỳ thân
+          </p>
+          <p className="text-xs text-[#6a6a6a] leading-relaxed mb-5 max-w-xs">
+            Bổ sung số CMND/CCCD để hợp đồng thuê nhà được điền đầy đủ thông tin pháp lý.
+          </p>
+          <PrimaryBtn type="button" onClick={() => setEditing(true)}>
+            Thêm CMND / CCCD
+          </PrimaryBtn>
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
@@ -776,6 +927,9 @@ export default function ProfilePage() {
 
           {/* Bank */}
           <BankSection user={user} onUpdate={handleUpdate} />
+
+          {/* National ID */}
+          <NationalIdSection user={user} onUpdate={handleUpdate} />
         </div>
       </div>
     </div>

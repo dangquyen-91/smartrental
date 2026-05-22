@@ -349,9 +349,11 @@ export const buildContractHtml = (data) => {
     <span class="label">Nơi đăng ký HK: </span><span class="val">${landlord.address || '---'}</span>
   </div>
   <div class="party-row">
-    <span class="label">CMND số: </span><span class="val">---</span>
+    <span class="label">CMND/CCCD số: </span><span class="val">${landlord.nationalId?.number || '---'}</span>
     &nbsp;&nbsp;&nbsp;&nbsp;
-    <span class="label">cấp ngày: </span><span class="val">---</span>
+    <span class="label">cấp ngày: </span><span class="val">${fmtDob(landlord.nationalId?.issuedDate)}</span>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <span class="label">nơi cấp: </span><span class="val">${landlord.nationalId?.issuedPlace || '---'}</span>
   </div>
   <div class="party-row">
     <span class="label">Số điện thoại: </span><span class="val">${landlord.phone || '---'}</span>
@@ -370,9 +372,11 @@ export const buildContractHtml = (data) => {
     <span class="label">Nơi đăng ký HK thường trú: </span><span class="val">${tenant.address || '---'}</span>
   </div>
   <div class="party-row">
-    <span class="label">Số CMND: </span><span class="val">---</span>
+    <span class="label">CMND/CCCD số: </span><span class="val">${tenant.nationalId?.number || '---'}</span>
     &nbsp;&nbsp;&nbsp;&nbsp;
-    <span class="label">cấp ngày: </span><span class="val">---</span>
+    <span class="label">cấp ngày: </span><span class="val">${fmtDob(tenant.nationalId?.issuedDate)}</span>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <span class="label">nơi cấp: </span><span class="val">${tenant.nationalId?.issuedPlace || '---'}</span>
   </div>
   <div class="party-row">
     <span class="label">Số điện thoại: </span><span class="val">${tenant.phone || '---'}</span>

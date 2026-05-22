@@ -19,6 +19,11 @@ const userSchema = new mongoose.Schema(
     phoneOtpExpiry: { type: Date, default: null },
     authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
     refreshToken: { type: String, default: null },
+    nationalId: {
+      number:      { type: String, default: null, trim: true },  // Số CMND/CCCD
+      issuedDate:  { type: Date,   default: null },               // Ngày cấp
+      issuedPlace: { type: String, default: null, trim: true },   // Nơi cấp
+    },
     bankAccount: {
       bankName:      { type: String, default: null },
       accountNumber: { type: String, default: null },
@@ -45,6 +50,7 @@ const userSchema = new mongoose.Schema(
         isActive: ret.isActive,
         authProvider: ret.authProvider,
         isPhoneVerified: ret.isPhoneVerified,
+        nationalId: ret.nationalId?.number ? ret.nationalId : null,
         bankAccount: ret.bankAccount?.bankName ? ret.bankAccount : null,
         savedProperties: (ret.savedProperties ?? []).map((id) => id.toString()),
         createdAt: ret.createdAt,

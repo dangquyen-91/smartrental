@@ -64,6 +64,15 @@ const updateUser = async (id, data, requesterId, requesterRole) => {
     if (data[field] !== undefined) user[field] = data[field];
   });
 
+  // nationalId là nested object — merge thay vì replace toàn bộ
+  if (data.nationalId !== undefined) {
+    user.nationalId = {
+      number:      data.nationalId.number      ?? user.nationalId?.number      ?? null,
+      issuedDate:  data.nationalId.issuedDate  ?? user.nationalId?.issuedDate  ?? null,
+      issuedPlace: data.nationalId.issuedPlace ?? user.nationalId?.issuedPlace ?? null,
+    };
+  }
+
   await user.save();
   return user.toJSON();
 };

@@ -31,6 +31,25 @@ const updateUserValidation = validate([
       return true;
     }),
   body('address').optional().trim().isLength({ max: 200 }).withMessage('address must be at most 200 characters'),
+
+  body('nationalId.number')
+    .optional({ nullable: true })
+    .trim()
+    .matches(/^[0-9]{9,12}$/).withMessage('Số CMND/CCCD phải là 9 hoặc 12 chữ số'),
+
+  body('nationalId.issuedDate')
+    .optional({ nullable: true })
+    .isISO8601().withMessage('issuedDate phải là ngày hợp lệ (YYYY-MM-DD)')
+    .custom((val) => {
+      if (new Date(val) >= new Date()) throw new Error('issuedDate phải là ngày trong quá khứ');
+      return true;
+    }),
+
+  body('nationalId.issuedPlace')
+    .optional({ nullable: true })
+    .trim()
+    .isLength({ max: 100 }).withMessage('issuedPlace tối đa 100 ký tự'),
+
   body('role').not().exists().withMessage('Role cannot be changed here'),
   body('isActive').not().exists().withMessage('isActive cannot be changed here'),
   body('password').not().exists().withMessage('Use /change-password to update password'),

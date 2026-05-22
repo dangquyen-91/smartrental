@@ -1,6 +1,14 @@
 import api from '@/lib/axios';
 import type { ApiResponse, Property, User } from '@/types';
 
+export const updateUserApi = async (
+  userId: string,
+  payload: Partial<Pick<User, 'name' | 'dateOfBirth' | 'address' | 'nationalId'>>,
+): Promise<User> => {
+  const { data } = await api.put<ApiResponse<{ user: User }>>(`/users/${userId}`, payload);
+  return data.data.user;
+};
+
 export const updateBankAccountApi = async (
   userId: string,
   payload: { bankName: string; accountNumber: string; accountName: string; branch?: string },
