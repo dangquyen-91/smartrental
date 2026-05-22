@@ -124,33 +124,6 @@ export interface ServiceOrder {
   updatedAt: string;
 }
 
-export interface Plan {
-  id: string;
-  name: string;
-  slug: 'free' | 'basic' | 'premium';
-  price: number;
-  durationDays: number;
-  maxListings: number;
-  maxFeatured: number;
-  maxContracts: number;       // -1 = unlimited, 0 = none, n = trial cap
-  priorityLevel: number;      // 0 = none, 1 = low, 2 = high
-  includesHighlight: boolean;
-  includesAnalytics: boolean;
-  description?: string;
-}
-
-export interface Subscription {
-  id: string;
-  landlord: User | string;
-  plan: Plan;
-  status: 'pending_payment' | 'active' | 'expired' | 'cancelled';
-  startDate?: string;
-  endDate?: string;
-  paymentCode?: number;
-  paymentStatus: 'unpaid' | 'paid';
-  createdAt: string;
-}
-
 export interface Contract {
   id: string;
   booking: Booking | string;
@@ -195,3 +168,48 @@ export interface RoommateRequest {
   message?: string;
   createdAt: string;
 }
+
+// ─── Review ──────────────────────────────────────────────────────────────────
+
+/** Populated target — shape depends on targetType */
+export interface ReviewTargetRef {
+  _id: string;
+  // property fields
+  title?: string;
+  address?: { street?: string; district?: string; city?: string };
+  // user fields
+  name?: string;
+  email?: string;
+  avatar?: string;
+}
+
+export interface Review {
+  id: string;
+  booking: string | Booking;
+  reviewer: User | string;
+  reviewerRole: 'tenant';
+  targetType: 'property';
+  target: string;
+  rating: number;
+  comment?: string | null;
+  /** present when booking reviews endpoint is called */
+  isOwn?: boolean;
+  /** populated only in admin getAllReviews response */
+  targetRef?: ReviewTargetRef | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PropertyReviewsData {
+  reviews: Review[];
+  averageRating: number | null;
+  totalReviews: number;
+  ratingDistribution: Record<string, number> | null;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+

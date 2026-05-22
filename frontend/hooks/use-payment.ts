@@ -3,7 +3,6 @@ import { toast } from "sonner";
 import {
   createBookingPaymentApi,
   createServicePaymentApi,
-  createSubscriptionPaymentApi,
 } from "@/lib/api/payment.api";
 import { getApiErrorMessage } from "@/lib/api-error";
 
@@ -43,20 +42,3 @@ export function useCreateServicePayment() {
   });
 }
 
-export function useCreateSubscriptionPayment() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: createSubscriptionPaymentApi,
-    onSuccess: (data) => {
-      const url = data.data?.checkoutUrl;
-      if (url) {
-        window.location.href = url;
-      } else {
-        toast.error("Không nhận được liên kết thanh toán.");
-      }
-      qc.invalidateQueries({ queryKey: ["subscriptions"] });
-    },
-    onError: (error) =>
-      toast.error(getApiErrorMessage(error, "Không thể tạo liên kết thanh toán.")),
-  });
-}

@@ -46,6 +46,7 @@ import {
 import { toast } from 'sonner';
 import AppNavbar from '@/components/layout/app-navbar';
 import { PriceDisplay } from '@/components/ui/price-display';
+import { PropertyReviewSection } from '@/components/shared/review-list';
 import { useProperty } from '@/hooks/use-properties';
 import { useCreateBooking } from '@/hooks/use-bookings';
 import { useAuth } from '@/hooks/use-auth';
@@ -967,6 +968,9 @@ export default function PropertyDetailPage({
                 </div>
               </section>
             )}
+
+            {/* Reviews */}
+            <PropertyReviewSection propertyId={p.id} />
 
             {/* Things to know */}
             <section className="py-7">

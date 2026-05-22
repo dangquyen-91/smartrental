@@ -16,7 +16,3 @@ export async function createServicePaymentApi(orderId: string) {
   return res.data;
 }
 
-export async function createSubscriptionPaymentApi(subscriptionId: string) {
-  const res = await api.post<ApiResponse<PaymentLink>>(`/payment/subscription/${subscriptionId}`);
-  return res.data;
-}

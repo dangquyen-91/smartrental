@@ -16,10 +16,12 @@ import {
   CalendarCheck,
   Loader2,
   Timer,
+  Star,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMyBookings, useCancelBooking } from '@/hooks/use-bookings';
 import { useCreateBookingPayment } from '@/hooks/use-payment';
+import { ReviewFormModal } from '@/components/shared/review-form-modal';
 import type { Booking, Property } from '@/types';
 
 // ─── constants ────────────────────────────────────────────────────────────────
@@ -172,11 +174,13 @@ function BookingCard({
   booking,
   onCancel,
   onPay,
+  onReview,
   isPayingThis,
 }: {
   booking: Booking;
   onCancel: (id: string) => void;
   onPay: (id: string) => void;
+  onReview: (id: string) => void;
   isPayingThis: boolean;
 }) {
   const property =
@@ -197,7 +201,8 @@ function BookingCard({
     booking.status === 'active' && booking.paymentStatus === 'unpaid';
   const awaitingCheckin =
     booking.status === 'confirmed';
-  const showContract = ['active', 'completed'].includes(booking.status);
+  const showContract    = ['active', 'completed'].includes(booking.status);
+  const canReview       = booking.status === 'completed';
 
   return (
     <article className="flex flex-col sm:flex-row gap-4 border border-hairline-gray rounded-[14px] p-4 sm:p-5 bg-white hover:shadow-[rgba(0,0,0,0.06)_0_2px_12px] transition-shadow">
@@ -302,6 +307,15 @@ function BookingCard({
                   <CreditCard className="size-3.5" />
                 )}
                 Thanh toán
+              </button>
+            )}
+            {canReview && (
+              <button
+                onClick={() => onReview(booking.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-600 border border-amber-200 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
+              >
+                <Star className="size-3.5 fill-amber-400 text-amber-400" />
+                Đánh giá
               </button>
             )}
             {canCancel && (
@@ -459,8 +473,9 @@ function PaymentToast() {
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function TripsPage() {
-  const [activeTab, setActiveTab] = useState<TabId>('upcoming');
-  const [cancelId, setCancelId] = useState<string | null>(null);
+  const [activeTab, setActiveTab]     = useState<TabId>('upcoming');
+  const [cancelId, setCancelId]             = useState<string | null>(null);
+  const [reviewBookingId, setReviewBookingId] = useState<string | null>(null);
 
   const { data, isLoading } = useMyBookings();
   const { mutate: cancelBooking, isPending: isCancelling } = useCancelBooking();
@@ -487,6 +502,14 @@ export default function TripsPage() {
       ) as Record<TabId, number>,
     [allBookings],
   );
+
+  // Property title for the booking being reviewed
+  const reviewPropertyTitle = useMemo(() => {
+    const booking = allBookings.find((b) => b.id === reviewBookingId);
+    if (!booking) return '';
+    const property = typeof booking.property === 'object' ? booking.property : null;
+    return property?.title ?? 'Căn phòng';
+  }, [allBookings, reviewBookingId]);
 
   const handleCancel = () => {
     if (!cancelId) return;
@@ -545,6 +568,7 @@ export default function TripsPage() {
               booking={booking}
               onCancel={setCancelId}
               onPay={(id) => createPayment(id)}
+              onReview={(id) => setReviewBookingId(id)}
               isPayingThis={isCreatingPayment && payingBookingId === booking.id}
             />
           ))}
@@ -557,6 +581,15 @@ export default function TripsPage() {
           onConfirm={handleCancel}
           onClose={() => setCancelId(null)}
           isPending={isCancelling}
+        />
+      )}
+
+      {/* Review modal */}
+      {reviewBookingId && (
+        <ReviewFormModal
+          bookingId={reviewBookingId}
+          propertyTitle={reviewPropertyTitle}
+          onClose={() => setReviewBookingId(null)}
         />
       )}
     </div>

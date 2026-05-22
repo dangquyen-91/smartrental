@@ -38,7 +38,6 @@ const LANDLORD_NAV: NavItem[] = [
   { label: 'Yêu cầu đặt phòng', href: '/dashboard/requests', icon: ClipboardList },
   { label: 'Hợp đồng', href: '/dashboard/contracts', icon: FileText },
   { label: 'Dịch vụ', href: '/dashboard/services', icon: Wrench },
-  { label: 'Gói đăng ký', href: '/plans', icon: CreditCard },
 ];
 
 const ADMIN_NAV: NavItem[] = [

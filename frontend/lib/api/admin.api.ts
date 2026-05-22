@@ -18,7 +18,6 @@ export interface DashboardStats {
     total: number;
     byStatus: Record<string, number>;
   };
-  subscriptions: { active: number };
   revenue: {
     total: number;
     thisMonth: number;
@@ -45,14 +44,13 @@ export interface RevenueTimeline {
   date: string;
   booking: { fee: number; count: number };
   service: { fee: number; count: number };
-  subscription: { revenue: number; count: number };
   total: number;
 }
 
 export interface RevenueAnalytics {
   period: Period;
   timeline: RevenueTimeline[];
-  totals: { booking: number; service: number; subscription: number; total: number };
+  totals: { booking: number; service: number; total: number };
 }
 
 export async function getAdminRevenueAnalyticsApi(period: Period = '30d') {
