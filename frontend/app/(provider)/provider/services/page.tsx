@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo } from 'react';
 import {
@@ -94,7 +94,7 @@ function RejectModal({
       <div className="relative bg-white rounded-[20px] p-6 w-full max-w-sm shadow-[rgba(0,0,0,0.02)_0_0_0_1px,rgba(0,0,0,0.04)_0_2px_6px_0,rgba(0,0,0,0.1)_0_8px_32px_0]">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-[#f7f7f7] hover:bg-[#dddddd] transition-colors"
+          className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-[#f7f8f0] hover:bg-[#dddddd] transition-colors"
         >
           <X className="size-4 text-[#222222]" />
         </button>
@@ -114,7 +114,7 @@ function RejectModal({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+            className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f8f0] transition-colors"
           >
             Giữ lại
           </button>
@@ -157,7 +157,7 @@ function ConfirmActionModal({
       <div className="relative bg-white rounded-[20px] p-6 w-full max-w-sm shadow-[rgba(0,0,0,0.02)_0_0_0_1px,rgba(0,0,0,0.04)_0_2px_6px_0,rgba(0,0,0,0.1)_0_8px_32px_0]">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-[#f7f7f7] hover:bg-[#dddddd] transition-colors"
+          className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-[#f7f8f0] hover:bg-[#dddddd] transition-colors"
         >
           <X className="size-4 text-[#222222]" />
         </button>
@@ -166,7 +166,7 @@ function ConfirmActionModal({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+            className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f8f0] transition-colors"
           >
             Huỷ bỏ
           </button>
@@ -210,10 +210,10 @@ function ProviderOrderCard({
   return (
     <article className="flex flex-col sm:flex-row gap-4 border border-[#dddddd] rounded-[14px] p-4 sm:p-5 bg-white hover:shadow-[rgba(0,0,0,0.06)_0_2px_12px] transition-shadow">
       {/* Icon tile */}
-      <div className="size-20 rounded-[10px] bg-[#f7f7f7] flex items-center justify-center shrink-0 relative">
+      <div className="size-20 rounded-[10px] bg-[#f7f8f0] flex items-center justify-center shrink-0 relative">
         <span className="text-3xl leading-none">{meta.emoji}</span>
         {today && (
-          <span className="absolute -top-1.5 -right-1.5 text-[10px] font-bold text-white bg-[#ff385c] px-1.5 py-0.5 rounded-full leading-none">
+          <span className="absolute -top-1.5 -right-1.5 text-[10px] font-bold text-white bg-[#933a12] px-1.5 py-0.5 rounded-full leading-none">
             HÔM NAY
           </span>
         )}
@@ -240,7 +240,7 @@ function ProviderOrderCard({
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           <span className={cn(
             'flex items-center gap-1.5 text-sm font-medium',
-            today ? 'text-[#ff385c]' : soon ? 'text-amber-600' : 'text-[#3f3f3f]',
+            today ? 'text-[#933a12]' : soon ? 'text-amber-600' : 'text-[#3f3f3f]',
           )}>
             <CalendarDays className="size-3.5 shrink-0" />
             {formatDateTime(order.scheduledAt)}
@@ -276,7 +276,7 @@ function ProviderOrderCard({
 
         {/* Note */}
         {order.note && (
-          <p className="text-xs text-[#6a6a6a] italic bg-[#f7f7f7] px-3 py-2 rounded-[8px]">
+          <p className="text-xs text-[#6a6a6a] italic bg-[#f7f8f0] px-3 py-2 rounded-[8px]">
             &ldquo;{order.note}&rdquo;
           </p>
         )}
@@ -329,7 +329,7 @@ function ProviderOrderCard({
               <button
                 onClick={() => onAction(order)}
                 disabled={isActioning}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-60 rounded-lg transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#933a12] hover:bg-[#7a2f0e] disabled:opacity-60 rounded-lg transition-all active:scale-95"
               >
                 {isActioning ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
                 Hoàn thành
@@ -354,7 +354,7 @@ function EmptyState({ tabId }: { tabId: TabId }) {
   const { message, sub } = EMPTY_CONFIG[tabId];
   return (
     <div className="flex flex-col items-center py-20 text-center">
-      <div className="size-16 bg-[#f7f7f7] rounded-full flex items-center justify-center mb-4">
+      <div className="size-16 bg-[#f7f8f0] rounded-full flex items-center justify-center mb-4">
         {tabId === 'done'
           ? <CheckCircle2 className="size-8 text-[#dddddd]" />
           : tabId === 'in_progress'
@@ -449,7 +449,7 @@ export default function ProviderServicesPage() {
           title: 'Đánh dấu hoàn thành?',
           description: 'Xác nhận bạn đã hoàn tất công việc và khách hàng đã nghiệm thu.',
           confirmLabel: 'Hoàn thành',
-          confirmClass: 'bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-60',
+          confirmClass: 'bg-[#933a12] hover:bg-[#7a2f0e] disabled:opacity-60',
         }
     : null;
 

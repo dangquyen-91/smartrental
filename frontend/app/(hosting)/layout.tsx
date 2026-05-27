@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -19,7 +19,7 @@ export default function HostingLayout({ children }: { children: React.ReactNode 
   if (!hasHydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#ff385c] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#933a12] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -29,11 +29,11 @@ export default function HostingLayout({ children }: { children: React.ReactNode 
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-white">
+    <div className="h-screen flex flex-col overflow-hidden bg-[#f7f8f0]">
       <AppNavbar />
       <div className="flex flex-1 overflow-hidden">
         <HostingSidebar />
-        <main className="flex-1 overflow-y-auto bg-[#f7f7f7] p-8">
+        <main className="flex-1 overflow-y-auto bg-[#f7f8f0] p-8">
           <div className="max-w-5xl mx-auto">
             {children}
           </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { X, Loader2, CheckCircle2 } from "lucide-react";
@@ -49,7 +49,7 @@ export function ReviewFormModal({ bookingId, propertyTitle, onClose }: ReviewFor
           <h2 className="text-base font-bold text-[#222222]">Đánh giá phòng</h2>
           <button
             onClick={onClose}
-            className="size-8 flex items-center justify-center rounded-full hover:bg-[#f7f7f7] transition-colors"
+            className="size-8 flex items-center justify-center rounded-full hover:bg-[#f7f8f0] transition-colors"
           >
             <X className="size-5 text-[#222222]" />
           </button>

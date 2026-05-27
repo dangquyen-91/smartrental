@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import {
@@ -36,7 +36,7 @@ export default function AdminPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-48">
-        <Loader2 className="w-6 h-6 animate-spin text-[#ff385c]" />
+        <Loader2 className="w-6 h-6 animate-spin text-[#933a12]" />
       </div>
     );
   }
@@ -54,10 +54,10 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Link
           href="/admin/users"
-          className="bg-white rounded-card border border-[#dddddd] p-5 hover:border-[#ff385c] transition-colors group"
+          className="bg-white rounded-card border border-[#dddddd] p-5 hover:border-[#933a12] transition-colors group"
         >
           <div className="w-10 h-10 rounded-[10px] bg-[#fff0f3] flex items-center justify-center mb-3">
-            <Users className="w-5 h-5 text-[#ff385c]" />
+            <Users className="w-5 h-5 text-[#933a12]" />
           </div>
           <p className="text-2xl font-bold text-[#222222]">{stats?.users.total ?? '—'}</p>
           <p className="text-xs font-medium text-[#6a6a6a] mt-0.5">Người dùng</p>
@@ -68,7 +68,7 @@ export default function AdminPage() {
 
         <Link
           href="/admin/properties"
-          className="bg-white rounded-card border border-[#dddddd] p-5 hover:border-[#ff385c] transition-colors group"
+          className="bg-white rounded-card border border-[#dddddd] p-5 hover:border-[#933a12] transition-colors group"
         >
           <div className="w-10 h-10 rounded-[10px] bg-[#eff6ff] flex items-center justify-center mb-3">
             <Building2 className="w-5 h-5 text-[#2563eb]" />
@@ -83,7 +83,7 @@ export default function AdminPage() {
 
         <Link
           href="/admin/transactions"
-          className="bg-white rounded-card border border-[#dddddd] p-5 hover:border-[#ff385c] transition-colors group"
+          className="bg-white rounded-card border border-[#dddddd] p-5 hover:border-[#933a12] transition-colors group"
         >
           <div className="w-10 h-10 rounded-[10px] bg-[#f0fdf4] flex items-center justify-center mb-3">
             <CreditCard className="w-5 h-5 text-[#16a34a]" />
@@ -109,18 +109,18 @@ export default function AdminPage() {
 
       {/* Pending Actions */}
       {hasPending && (
-        <div className="bg-white rounded-card border border-[#ff385c] p-5">
+        <div className="bg-white rounded-card border border-[#933a12] p-5">
           <div className="flex items-center gap-2 mb-4">
-            <AlertCircle className="w-4 h-4 text-[#ff385c]" />
+            <AlertCircle className="w-4 h-4 text-[#933a12]" />
             <p className="text-sm font-semibold text-[#222222]">Cần xử lý ngay</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {(pending?.payouts ?? 0) > 0 && (
               <Link
                 href="/admin/transactions?tab=payouts"
-                className="flex items-center gap-3 p-3 rounded-[10px] bg-[#f7f7f7] hover:bg-[#fff0f3] transition-colors"
+                className="flex items-center gap-3 p-3 rounded-[10px] bg-[#f7f8f0] hover:bg-[#fff0f3] transition-colors"
               >
-                <span className="w-8 h-8 rounded-full bg-[#ff385c] text-white text-xs font-bold flex items-center justify-center shrink-0">
+                <span className="w-8 h-8 rounded-full bg-[#933a12] text-white text-xs font-bold flex items-center justify-center shrink-0">
                   {pending?.payouts}
                 </span>
                 <div>
@@ -132,9 +132,9 @@ export default function AdminPage() {
             {(pending?.refunds ?? 0) > 0 && (
               <Link
                 href="/admin/transactions?tab=refunds"
-                className="flex items-center gap-3 p-3 rounded-[10px] bg-[#f7f7f7] hover:bg-[#fff0f3] transition-colors"
+                className="flex items-center gap-3 p-3 rounded-[10px] bg-[#f7f8f0] hover:bg-[#fff0f3] transition-colors"
               >
-                <span className="w-8 h-8 rounded-full bg-[#e00b41] text-white text-xs font-bold flex items-center justify-center shrink-0">
+                <span className="w-8 h-8 rounded-full bg-[#7a2f0e] text-white text-xs font-bold flex items-center justify-center shrink-0">
                   {pending?.refunds}
                 </span>
                 <div>
@@ -146,7 +146,7 @@ export default function AdminPage() {
             {(pending?.unassignedServiceOrders ?? 0) > 0 && (
               <Link
                 href="/admin/transactions"
-                className="flex items-center gap-3 p-3 rounded-[10px] bg-[#f7f7f7] hover:bg-[#fff0f3] transition-colors"
+                className="flex items-center gap-3 p-3 rounded-[10px] bg-[#f7f8f0] hover:bg-[#fff0f3] transition-colors"
               >
                 <span className="w-8 h-8 rounded-full bg-[#ca8a04] text-white text-xs font-bold flex items-center justify-center shrink-0">
                   {pending?.unassignedServiceOrders}
@@ -210,16 +210,16 @@ export default function AdminPage() {
           <Link
             key={href}
             href={href}
-            className="flex items-center gap-4 bg-white rounded-card border border-[#dddddd] p-5 hover:border-[#ff385c] hover:shadow-[0_2px_12px_rgba(255,56,92,0.08)] transition-all group"
+            className="flex items-center gap-4 bg-white rounded-card border border-[#dddddd] p-5 hover:border-[#933a12] hover:shadow-[0_2px_12px_rgba(255,56,92,0.08)] transition-all group"
           >
-            <div className="w-10 h-10 rounded-[10px] bg-[#f7f7f7] flex items-center justify-center shrink-0">
-              <Icon className="w-5 h-5 text-[#929292] group-hover:text-[#ff385c] transition-colors" />
+            <div className="w-10 h-10 rounded-[10px] bg-[#f7f8f0] flex items-center justify-center shrink-0">
+              <Icon className="w-5 h-5 text-[#929292] group-hover:text-[#933a12] transition-colors" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-[#222222]">{label}</p>
               <p className="text-xs text-[#6a6a6a] mt-0.5">{desc}</p>
             </div>
-            <ArrowRight className="w-4 h-4 text-[#929292] group-hover:text-[#ff385c] transition-colors shrink-0" />
+            <ArrowRight className="w-4 h-4 text-[#929292] group-hover:text-[#933a12] transition-colors shrink-0" />
           </Link>
         ))}
       </div>

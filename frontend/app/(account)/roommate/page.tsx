@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -74,7 +74,7 @@ function getAvatarFallback(name?: string) {
 function ScoreBadge({ score }: { score: number }) {
   const color = score >= 70 ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
     : score >= 40 ? 'text-amber-600 bg-amber-50 border-amber-200'
-    : 'text-[#6a6a6a] bg-[#f7f7f7] border-[#dddddd]';
+    : 'text-[#6a6a6a] bg-[#f7f8f0] border-[#dddddd]';
   return (
     <span className={cn('inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border', color)}>
       <Star size={11} fill="currentColor" />
@@ -179,7 +179,7 @@ function ProfileTab() {
       {/* ── Status preview card ────────────────────────────────────────── */}
       {profile ? (
         <div className="border border-[#dddddd] rounded-card p-4 bg-white flex items-start gap-4">
-          <div className="w-12 h-12 rounded-full bg-[#f7f7f7] border border-[#dddddd] overflow-hidden flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-full bg-[#f7f8f0] border border-[#dddddd] overflow-hidden flex items-center justify-center shrink-0">
             {profile.user?.avatar ? (
               <Image src={profile.user.avatar} alt={profile.user.name} width={48} height={48} className="object-cover w-full h-full" />
             ) : (
@@ -195,7 +195,7 @@ function ProfileTab() {
                   Đang tìm kiếm
                 </span>
               ) : (
-                <span className="text-xs font-medium bg-[#f7f7f7] text-[#6a6a6a] border border-[#dddddd] px-2 py-0.5 rounded-full">
+                <span className="text-xs font-medium bg-[#f7f8f0] text-[#6a6a6a] border border-[#dddddd] px-2 py-0.5 rounded-full">
                   Đã ẩn hồ sơ
                 </span>
               )}
@@ -209,7 +209,7 @@ function ProfileTab() {
           </div>
         </div>
       ) : (
-        <div className="border border-dashed border-[#dddddd] rounded-card px-4 py-4 bg-[#f7f7f7]">
+        <div className="border border-dashed border-[#dddddd] rounded-card px-4 py-4 bg-[#f7f8f0]">
           <p className="text-sm font-semibold text-[#222222] mb-0.5">Bạn chưa có hồ sơ</p>
           <p className="text-sm text-[#6a6a6a]">Điền thông tin bên dưới để bắt đầu tìm bạn cùng phòng.</p>
         </div>
@@ -226,7 +226,7 @@ function ProfileTab() {
           </div>
           <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
             <input type="checkbox" {...register('looking')} className="sr-only peer" />
-            <div className="w-10 h-5 bg-[#dddddd] rounded-full peer peer-checked:bg-[#ff385c] transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5" />
+            <div className="w-10 h-5 bg-[#dddddd] rounded-full peer peer-checked:bg-[#933a12] transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5" />
           </label>
         </div>
 
@@ -366,7 +366,7 @@ function ProfileTab() {
           <button
             type="submit"
             disabled={upsert.isPending || (!isDirty && !!profile)}
-            className="flex items-center gap-2 bg-[#ff385c] text-white text-sm font-medium px-6 py-2.5 rounded-lg hover:bg-[#e00b41] disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 bg-[#933a12] text-white text-sm font-medium px-6 py-2.5 rounded-lg hover:bg-[#7a2f0e] disabled:opacity-50 transition-colors"
           >
             {upsert.isPending && <Loader2 size={15} className="animate-spin" />}
             {profile ? 'Cập nhật hồ sơ' : 'Tạo hồ sơ'}
@@ -480,7 +480,7 @@ function MatchesTab() {
           <button
             onClick={() => setPage((p) => p - 1)}
             disabled={page === 1}
-            className="p-2 rounded-full border border-[#dddddd] hover:bg-[#f7f7f7] disabled:opacity-40 transition-colors"
+            className="p-2 rounded-full border border-[#dddddd] hover:bg-[#f7f8f0] disabled:opacity-40 transition-colors"
           >
             <ChevronLeft size={16} />
           </button>
@@ -490,7 +490,7 @@ function MatchesTab() {
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={page === pagination.totalPages}
-            className="p-2 rounded-full border border-[#dddddd] hover:bg-[#f7f7f7] disabled:opacity-40 transition-colors"
+            className="p-2 rounded-full border border-[#dddddd] hover:bg-[#f7f8f0] disabled:opacity-40 transition-colors"
           >
             <ChevronRight size={16} />
           </button>
@@ -522,7 +522,7 @@ function MatchCard({
       <div className="flex items-center gap-3">
         <button
           onClick={() => onViewProfile(user.id)}
-          className="w-11 h-11 rounded-full bg-[#f7f7f7] border border-[#dddddd] overflow-hidden flex items-center justify-center shrink-0 hover:ring-2 hover:ring-[#ff385c]/30 transition-all"
+          className="w-11 h-11 rounded-full bg-[#f7f8f0] border border-[#dddddd] overflow-hidden flex items-center justify-center shrink-0 hover:ring-2 hover:ring-[#933a12]/30 transition-all"
         >
           {user.avatar ? (
             <Image src={user.avatar} alt={user.name} width={44} height={44} className="object-cover w-full h-full" />
@@ -565,7 +565,7 @@ function MatchCard({
               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default'
               : isPending
               ? 'bg-amber-50 text-amber-700 border border-amber-200 cursor-default'
-              : 'bg-[#ff385c] text-white hover:bg-[#e00b41] disabled:opacity-60'
+              : 'bg-[#933a12] text-white hover:bg-[#7a2f0e] disabled:opacity-60'
           )}
         >
           {isAccepted ? <Check size={13} /> : isPending ? <Loader2 size={13} /> : <Send size={13} />}
@@ -573,7 +573,7 @@ function MatchCard({
         </button>
         <button
           onClick={() => onViewProfile(user.id)}
-          className="flex items-center gap-1 text-xs font-medium border border-[#dddddd] text-[#6a6a6a] px-2.5 py-2 rounded-lg hover:bg-[#f7f7f7] transition-colors"
+          className="flex items-center gap-1 text-xs font-medium border border-[#dddddd] text-[#6a6a6a] px-2.5 py-2 rounded-lg hover:bg-[#f7f8f0] transition-colors"
           title="Xem hồ sơ"
         >
           <Eye size={13} />
@@ -584,7 +584,7 @@ function MatchCard({
             'flex items-center gap-1.5 text-xs font-medium border px-3 py-2 rounded-lg transition-colors',
             isExplaining
               ? 'bg-amber-50 border-amber-200 text-amber-700'
-              : 'border-[#dddddd] text-[#6a6a6a] hover:bg-[#f7f7f7]'
+              : 'border-[#dddddd] text-[#6a6a6a] hover:bg-[#f7f8f0]'
           )}
         >
           <Sparkles size={13} />
@@ -640,7 +640,7 @@ function ProfileModal({ userId, onClose }: { userId: string; onClose: () => void
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#dddddd]">
           <span className="font-semibold text-[#222222]">Hồ sơ tìm bạn cùng phòng</span>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-[#f7f7f7] transition-colors">
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-[#f7f8f0] transition-colors">
             <X size={16} className="text-[#6a6a6a]" />
           </button>
         </div>
@@ -650,13 +650,13 @@ function ProfileModal({ userId, onClose }: { userId: string; onClose: () => void
           {isLoading && (
             <div className="space-y-4 animate-pulse">
               <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-full bg-[#f7f7f7]" />
+                <div className="w-14 h-14 rounded-full bg-[#f7f8f0]" />
                 <div className="space-y-2">
-                  <div className="h-4 w-32 bg-[#f7f7f7] rounded" />
-                  <div className="h-3 w-20 bg-[#f7f7f7] rounded" />
+                  <div className="h-4 w-32 bg-[#f7f8f0] rounded" />
+                  <div className="h-3 w-20 bg-[#f7f8f0] rounded" />
                 </div>
               </div>
-              {[...Array(4)].map((_, i) => <div key={i} className="h-8 bg-[#f7f7f7] rounded-lg" />)}
+              {[...Array(4)].map((_, i) => <div key={i} className="h-8 bg-[#f7f8f0] rounded-lg" />)}
             </div>
           )}
 
@@ -664,7 +664,7 @@ function ProfileModal({ userId, onClose }: { userId: string; onClose: () => void
             <>
               {/* Avatar + name */}
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-[#f7f7f7] border border-[#dddddd] overflow-hidden flex items-center justify-center shrink-0">
+                <div className="w-14 h-14 rounded-full bg-[#f7f8f0] border border-[#dddddd] overflow-hidden flex items-center justify-center shrink-0">
                   {profile.user?.avatar ? (
                     <Image src={profile.user.avatar} alt={profile.user.name} width={56} height={56} className="object-cover w-full h-full" />
                   ) : (
@@ -709,7 +709,7 @@ function ProfileModal({ userId, onClose }: { userId: string; onClose: () => void
                     {profile.user?.email && (
                       <a
                         href={`mailto:${profile.user.email}`}
-                        className="inline-flex items-center gap-1.5 text-xs font-medium bg-white border border-[#dddddd] text-[#6a6a6a] px-3 py-1.5 rounded-lg hover:bg-[#f7f7f7] transition-colors"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium bg-white border border-[#dddddd] text-[#6a6a6a] px-3 py-1.5 rounded-lg hover:bg-[#f7f8f0] transition-colors"
                       >
                         <AtSign size={11} />
                         {profile.user.email}
@@ -743,7 +743,7 @@ function ProfileModal({ userId, onClose }: { userId: string; onClose: () => void
                   <Link
                     href={`/properties/${property.id}`}
                     target="_blank"
-                    className="shrink-0 text-xs font-medium text-[#ff385c] border border-[#ff385c]/30 px-2.5 py-1.5 rounded-lg hover:bg-[#ff385c]/5 transition-colors"
+                    className="shrink-0 text-xs font-medium text-[#933a12] border border-[#933a12]/30 px-2.5 py-1.5 rounded-lg hover:bg-[#933a12]/5 transition-colors"
                   >
                     Xem phòng
                   </Link>
@@ -759,7 +759,7 @@ function ProfileModal({ userId, onClose }: { userId: string; onClose: () => void
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-[#f7f7f7] rounded-lg px-3 py-2">
+    <div className="bg-[#f7f8f0] rounded-lg px-3 py-2">
       <p className="text-[10px] text-[#6a6a6a] font-medium uppercase tracking-wide">{label}</p>
       <p className="text-sm text-[#222222] font-medium mt-0.5">{value}</p>
     </div>
@@ -812,7 +812,7 @@ function RequestCard({
           <div className="flex items-center gap-3">
             <button
               onClick={() => onViewProfile(other.id)}
-              className="w-10 h-10 rounded-full bg-[#f7f7f7] border border-[#dddddd] overflow-hidden flex items-center justify-center shrink-0 hover:ring-2 hover:ring-emerald-300 transition-all"
+              className="w-10 h-10 rounded-full bg-[#f7f8f0] border border-[#dddddd] overflow-hidden flex items-center justify-center shrink-0 hover:ring-2 hover:ring-emerald-300 transition-all"
             >
               {other.avatar
                 ? <Image src={other.avatar} alt={other.name} width={40} height={40} className="object-cover w-full h-full" />
@@ -833,7 +833,7 @@ function RequestCard({
             )}
             {other.email && (
               <a href={`mailto:${other.email}`}
-                className="inline-flex items-center gap-1.5 text-xs font-medium bg-white border border-[#dddddd] text-[#6a6a6a] px-3 py-1.5 rounded-lg hover:bg-[#f7f7f7] transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs font-medium bg-white border border-[#dddddd] text-[#6a6a6a] px-3 py-1.5 rounded-lg hover:bg-[#f7f8f0] transition-colors"
               >
                 <AtSign size={11} />{other.email}
               </a>
@@ -841,7 +841,7 @@ function RequestCard({
           </div>
           <button
             onClick={() => onViewProfile(other.id)}
-            className="inline-flex items-center gap-1.5 text-xs font-medium border border-[#dddddd] text-[#6a6a6a] px-3 py-1.5 rounded-lg hover:bg-[#f7f7f7] transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-medium border border-[#dddddd] text-[#6a6a6a] px-3 py-1.5 rounded-lg hover:bg-[#f7f8f0] transition-colors"
           >
             <Eye size={12} />Xem hồ sơ
           </button>
@@ -855,7 +855,7 @@ function RequestCard({
     return (
       <div className="border-2 border-[#222222] rounded-card bg-white overflow-hidden">
         <div className="px-4 py-3 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#f7f7f7] border border-[#dddddd] overflow-hidden flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-full bg-[#f7f8f0] border border-[#dddddd] overflow-hidden flex items-center justify-center shrink-0">
             {other.avatar
               ? <Image src={other.avatar} alt={other.name} width={40} height={40} className="object-cover w-full h-full" />
               : <span className="text-xs font-semibold text-[#6a6a6a]">{getAvatarFallback(other.name)}</span>}
@@ -867,7 +867,7 @@ function RequestCard({
         </div>
         {req.message && (
           <div className="px-4 pb-3">
-            <p className="text-xs text-[#6a6a6a] bg-[#f7f7f7] rounded-lg px-3 py-2 italic">"{req.message}"</p>
+            <p className="text-xs text-[#6a6a6a] bg-[#f7f8f0] rounded-lg px-3 py-2 italic">"{req.message}"</p>
           </div>
         )}
         {/* footer actions */}
@@ -883,7 +883,7 @@ function RequestCard({
           <button
             onClick={() => onRespond('rejected')}
             disabled={isResponding}
-            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium border border-[#dddddd] text-[#6a6a6a] py-2 rounded-lg hover:bg-[#f7f7f7] disabled:opacity-50 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium border border-[#dddddd] text-[#6a6a6a] py-2 rounded-lg hover:bg-[#f7f8f0] disabled:opacity-50 transition-colors"
           >
             <X size={13} />
             Từ chối
@@ -898,7 +898,7 @@ function RequestCard({
     return (
       <div className="border border-[#dddddd] rounded-card bg-white overflow-hidden">
         <div className="px-4 py-3 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#f7f7f7] border border-[#dddddd] overflow-hidden flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-full bg-[#f7f8f0] border border-[#dddddd] overflow-hidden flex items-center justify-center shrink-0">
             {other.avatar
               ? <Image src={other.avatar} alt={other.name} width={40} height={40} className="object-cover w-full h-full" />
               : <span className="text-xs font-semibold text-[#6a6a6a]">{getAvatarFallback(other.name)}</span>}
@@ -913,7 +913,7 @@ function RequestCard({
         </div>
         {req.message && (
           <div className="px-4 pb-3">
-            <p className="text-xs text-[#6a6a6a] bg-[#f7f7f7] rounded-lg px-3 py-2 italic">"{req.message}"</p>
+            <p className="text-xs text-[#6a6a6a] bg-[#f7f8f0] rounded-lg px-3 py-2 italic">"{req.message}"</p>
           </div>
         )}
         <div className="border-t border-[#dddddd] px-4 py-2.5">
@@ -933,7 +933,7 @@ function RequestCard({
   /* ── Rejected / Cancelled ── */
   return (
     <div className={cn('border rounded-card bg-white px-4 py-3 flex items-center gap-3 opacity-60', 'border-[#dddddd]')}>
-      <div className="w-10 h-10 rounded-full bg-[#f7f7f7] border border-[#dddddd] overflow-hidden flex items-center justify-center shrink-0">
+      <div className="w-10 h-10 rounded-full bg-[#f7f8f0] border border-[#dddddd] overflow-hidden flex items-center justify-center shrink-0">
         {other.avatar
           ? <Image src={other.avatar} alt={other.name} width={40} height={40} className="object-cover w-full h-full" />
           : <span className="text-xs font-semibold text-[#6a6a6a]">{getAvatarFallback(other.name)}</span>}
@@ -981,7 +981,7 @@ function RequestsTab() {
       )}
 
       {/* Sub tabs */}
-      <div className="flex gap-1 bg-[#f7f7f7] p-1 rounded-lg w-fit">
+      <div className="flex gap-1 bg-[#f7f8f0] p-1 rounded-lg w-fit">
         {SUBTABS.map((t) => (
           <button
             key={t.id}
@@ -993,7 +993,7 @@ function RequestsTab() {
           >
             {t.label}
             {t.count > 0 && (
-              <span className="inline-flex items-center justify-center min-w-4.5 h-4.5 px-1 text-[10px] font-bold bg-[#ff385c] text-white rounded-full">
+              <span className="inline-flex items-center justify-center min-w-4.5 h-4.5 px-1 text-[10px] font-bold bg-[#933a12] text-white rounded-full">
                 {t.count > 9 ? '9+' : t.count}
               </span>
             )}
@@ -1039,7 +1039,7 @@ function RequestsTab() {
 
 function Chip({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-block text-xs text-[#6a6a6a] bg-[#f7f7f7] border border-[#dddddd] px-2 py-0.5 rounded-full">
+    <span className="inline-block text-xs text-[#6a6a6a] bg-[#f7f8f0] border border-[#dddddd] px-2 py-0.5 rounded-full">
       {children}
     </span>
   );
@@ -1095,8 +1095,8 @@ function FormSkeleton() {
     <div className="space-y-6 max-w-xl animate-pulse">
       {[...Array(5)].map((_, i) => (
         <div key={i} className="space-y-2">
-          <div className="h-4 w-32 bg-[#f7f7f7] rounded" />
-          <div className="h-10 bg-[#f7f7f7] rounded-lg" />
+          <div className="h-4 w-32 bg-[#f7f8f0] rounded" />
+          <div className="h-10 bg-[#f7f8f0] rounded-lg" />
         </div>
       ))}
     </div>
@@ -1109,16 +1109,16 @@ function MatchSkeleton() {
       {[...Array(6)].map((_, i) => (
         <div key={i} className="border border-[#dddddd] rounded-card p-4 space-y-3 animate-pulse">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-[#f7f7f7]" />
+            <div className="w-11 h-11 rounded-full bg-[#f7f8f0]" />
             <div className="flex-1 space-y-1.5">
-              <div className="h-3 w-24 bg-[#f7f7f7] rounded" />
-              <div className="h-3 w-16 bg-[#f7f7f7] rounded" />
+              <div className="h-3 w-24 bg-[#f7f8f0] rounded" />
+              <div className="h-3 w-16 bg-[#f7f8f0] rounded" />
             </div>
           </div>
           <div className="flex gap-1.5">
-            {[...Array(3)].map((_, j) => <div key={j} className="h-5 w-16 bg-[#f7f7f7] rounded-full" />)}
+            {[...Array(3)].map((_, j) => <div key={j} className="h-5 w-16 bg-[#f7f8f0] rounded-full" />)}
           </div>
-          <div className="h-8 bg-[#f7f7f7] rounded-lg" />
+          <div className="h-8 bg-[#f7f8f0] rounded-lg" />
         </div>
       ))}
     </div>
@@ -1130,12 +1130,12 @@ function RequestSkeleton() {
     <div className="space-y-3">
       {[...Array(3)].map((_, i) => (
         <div key={i} className="border border-[#dddddd] rounded-card p-4 flex items-center gap-3 animate-pulse">
-          <div className="w-10 h-10 rounded-full bg-[#f7f7f7]" />
+          <div className="w-10 h-10 rounded-full bg-[#f7f8f0]" />
           <div className="flex-1 space-y-1.5">
-            <div className="h-3 w-28 bg-[#f7f7f7] rounded" />
-            <div className="h-3 w-20 bg-[#f7f7f7] rounded" />
+            <div className="h-3 w-28 bg-[#f7f8f0] rounded" />
+            <div className="h-3 w-20 bg-[#f7f8f0] rounded" />
           </div>
-          <div className="h-6 w-20 bg-[#f7f7f7] rounded-full" />
+          <div className="h-6 w-20 bg-[#f7f8f0] rounded-full" />
         </div>
       ))}
     </div>
@@ -1175,7 +1175,7 @@ export default function RoommatePage() {
             {tab.icon}
             {tab.label}
             {tab.id === 'requests' && pendingCount > 0 && (
-              <span className="flex items-center justify-center min-w-4.5 h-4.5 px-1 text-[10px] font-bold bg-[#ff385c] text-white rounded-full">
+              <span className="flex items-center justify-center min-w-4.5 h-4.5 px-1 text-[10px] font-bold bg-[#933a12] text-white rounded-full">
                 {pendingCount > 9 ? '9+' : pendingCount}
               </span>
             )}

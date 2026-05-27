@@ -255,7 +255,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-[#f7f8f0] flex flex-col">
       <AppNavbar />
 
       <main className="flex-1">
@@ -452,9 +452,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
             <div>
-              <p className="font-bold text-base text-ink-black mb-3">
-                Smart<span className="text-rausch">Rental</span>
-              </p>
+              <img src="/logo.svg" alt="SmartRental" className="h-14 w-auto mb-3" />
               <p className="text-sm text-ash-gray leading-relaxed">
                 Nền tảng thuê nhà thông minh cho thị trường Việt Nam.
               </p>

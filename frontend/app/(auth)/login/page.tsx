@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
@@ -77,7 +77,7 @@ function LoginForm() {
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <Label htmlFor="password" className="text-sm font-semibold text-[#222222]">Mật khẩu</Label>
-            <Link href="/forgot-password" className="text-xs font-medium text-[#222222] underline underline-offset-2 hover:text-[#ff385c] transition-colors">
+            <Link href="/forgot-password" className="text-xs font-medium text-[#222222] underline underline-offset-2 hover:text-[#933a12] transition-colors">
               Quên mật khẩu?
             </Link>
           </div>
@@ -110,7 +110,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full h-12 bg-[#ff385c] hover:bg-[#e00b41] text-white text-base font-medium rounded-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center"
+          className="w-full h-12 bg-[#933a12] hover:bg-[#7a2f0e] text-white text-base font-medium rounded-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center"
         >
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Đăng nhập'}
         </button>
@@ -118,7 +118,7 @@ function LoginForm() {
 
       <p className="text-center text-sm font-medium text-[#6a6a6a]">
         Chưa có tài khoản?{' '}
-        <Link href="/register" className="text-[#222222] font-semibold underline underline-offset-2 hover:text-[#ff385c] transition-colors">
+        <Link href="/register" className="text-[#222222] font-semibold underline underline-offset-2 hover:text-[#933a12] transition-colors">
           Đăng ký ngay
         </Link>
       </p>
@@ -128,7 +128,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="space-y-6 animate-pulse"><div className="h-8 bg-[#f7f7f7] rounded-lg w-48" /><div className="h-14 bg-[#f7f7f7] rounded-xl" /><div className="h-14 bg-[#f7f7f7] rounded-xl" /></div>}>
+    <Suspense fallback={<div className="space-y-6 animate-pulse"><div className="h-8 bg-[#f7f8f0] rounded-lg w-48" /><div className="h-14 bg-[#f7f8f0] rounded-xl" /><div className="h-14 bg-[#f7f8f0] rounded-xl" /></div>}>
       <LoginForm />
     </Suspense>
   );

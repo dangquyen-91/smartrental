@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Loader2, Search } from 'lucide-react';
@@ -18,7 +18,7 @@ const ROLE_COLOR: Record<string, string> = {
   tenant: 'bg-[#eff6ff] text-[#2563eb]',
   landlord: 'bg-[#f0fdf4] text-[#16a34a]',
   provider: 'bg-[#fefce8] text-[#ca8a04]',
-  admin: 'bg-[#fff0f3] text-[#ff385c]',
+  admin: 'bg-[#fff0f3] text-[#933a12]',
 };
 
 const ROLE_OPTIONS: { value: string; label: string }[] = [
@@ -121,7 +121,7 @@ export default function AdminUsersPage() {
       <div className="bg-white rounded-card border border-[#dddddd] overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center h-48">
-            <Loader2 className="w-6 h-6 animate-spin text-[#ff385c]" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#933a12]" />
           </div>
         ) : users.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 gap-2">
@@ -130,7 +130,7 @@ export default function AdminUsersPage() {
         ) : (
           <>
             {/* Column headers */}
-            <div className="hidden md:grid grid-cols-[1fr_120px_120px_100px_120px] gap-4 px-5 py-2.5 border-b border-[#dddddd] bg-[#f7f7f7]">
+            <div className="hidden md:grid grid-cols-[1fr_120px_120px_100px_120px] gap-4 px-5 py-2.5 border-b border-[#dddddd] bg-[#f7f8f0]">
               <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">Tài khoản</p>
               <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">Vai trò</p>
               <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">Trạng thái</p>
@@ -144,7 +144,7 @@ export default function AdminUsersPage() {
                 className={`flex items-center gap-4 px-5 py-4 ${i < users.length - 1 ? 'border-b border-[#dddddd]' : ''} ${!user.isActive ? 'opacity-60' : ''}`}
               >
                 {/* Avatar */}
-                <div className="w-9 h-9 rounded-full bg-[#f7f7f7] flex items-center justify-center shrink-0 overflow-hidden border border-[#dddddd]">
+                <div className="w-9 h-9 rounded-full bg-[#f7f8f0] flex items-center justify-center shrink-0 overflow-hidden border border-[#dddddd]">
                   {user.avatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={user.avatar} alt="" className="w-full h-full object-cover" />
@@ -185,7 +185,7 @@ export default function AdminUsersPage() {
                 {/* Status badge */}
                 <span
                   className={`hidden md:inline-flex text-xs font-medium px-2 py-0.5 rounded-[4px] ${
-                    user.isActive ? 'bg-[#f0fdf4] text-[#16a34a]' : 'bg-[#f7f7f7] text-[#929292]'
+                    user.isActive ? 'bg-[#f0fdf4] text-[#16a34a]' : 'bg-[#f7f8f0] text-[#929292]'
                   }`}
                 >
                   {user.isActive ? 'Hoạt động' : 'Vô hiệu hoá'}
@@ -215,7 +215,7 @@ export default function AdminUsersPage() {
 
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
-              <div className="flex items-center justify-between px-5 py-3 border-t border-[#dddddd] bg-[#f7f7f7]">
+              <div className="flex items-center justify-between px-5 py-3 border-t border-[#dddddd] bg-[#f7f8f0]">
                 <p className="text-xs text-[#6a6a6a]">
                   {(page - 1) * 20 + 1}–{Math.min(page * 20, pagination.total)} / {pagination.total}
                 </p>

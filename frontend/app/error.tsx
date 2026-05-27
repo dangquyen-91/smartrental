@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect } from 'react';
 import Link from 'next/link';
@@ -15,7 +15,7 @@ export default function ErrorPage({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-[#f7f7f7] flex items-center justify-center px-6">
+    <div className="min-h-screen bg-[#f7f8f0] flex items-center justify-center px-6">
       <div className="max-w-md w-full text-center">
         <div className="w-16 h-16 bg-[#fff0f3] rounded-full flex items-center justify-center mx-auto mb-6">
           <span className="text-2xl">⚠️</span>
@@ -30,7 +30,7 @@ export default function ErrorPage({
         <div className="flex items-center justify-center gap-3 mt-8">
           <button
             onClick={unstable_retry}
-            className="px-5 py-2.5 text-sm font-medium text-white bg-[#ff385c] hover:bg-[#e00b41] rounded-[8px] transition-all active:scale-95"
+            className="px-5 py-2.5 text-sm font-medium text-white bg-[#933a12] hover:bg-[#7a2f0e] rounded-[8px] transition-all active:scale-95"
           >
             Thử lại
           </button>

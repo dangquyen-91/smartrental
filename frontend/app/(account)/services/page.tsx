@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo, useEffect, useRef, Suspense, type FormEvent } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -126,7 +126,7 @@ function ServiceOrderCard({
   return (
     <article className="flex flex-col sm:flex-row gap-4 border border-[#dddddd] rounded-[14px] p-4 sm:p-5 bg-white hover:shadow-[rgba(0,0,0,0.06)_0_2px_12px] transition-shadow">
       {/* Icon tile */}
-      <div className="size-20 rounded-[10px] bg-[#f7f7f7] flex items-center justify-center shrink-0">
+      <div className="size-20 rounded-[10px] bg-[#f7f8f0] flex items-center justify-center shrink-0">
         <span className="text-3xl leading-none">{meta.emoji}</span>
       </div>
 
@@ -197,7 +197,7 @@ function ServiceOrderCard({
               <button
                 onClick={() => onPay(order.id)}
                 disabled={isPayingThis}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-60 rounded-lg transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#933a12] hover:bg-[#7a2f0e] disabled:opacity-60 rounded-lg transition-all active:scale-95"
               >
                 {isPayingThis ? <Loader2 className="size-3.5 animate-spin" /> : <CreditCard className="size-3.5" />}
                 Thanh toán
@@ -263,7 +263,7 @@ function CreateOrderModal({
           <h2 className="text-[17px] font-semibold text-[#222222]">Yêu cầu dịch vụ</h2>
           <button
             onClick={onClose}
-            className="size-8 flex items-center justify-center rounded-full bg-[#f7f7f7] hover:bg-[#dddddd] transition-colors"
+            className="size-8 flex items-center justify-center rounded-full bg-[#f7f8f0] hover:bg-[#dddddd] transition-colors"
           >
             <X className="size-4 text-[#222222]" />
           </button>
@@ -286,7 +286,7 @@ function CreateOrderModal({
                     className={cn(
                       'flex flex-col items-center gap-1.5 p-3 rounded-[10px] border text-center transition-all',
                       type === entry.type
-                        ? 'border-[#222222] bg-[#f7f7f7] shadow-[0_0_0_2px_#222222]'
+                        ? 'border-[#222222] bg-[#f7f8f0] shadow-[0_0_0_2px_#222222]'
                         : 'border-[#dddddd] hover:border-[#222222]',
                     )}
                   >
@@ -305,7 +305,7 @@ function CreateOrderModal({
               Căn phòng <span className="text-[#c13515]">*</span>
             </label>
             {isLoadingBookings ? (
-              <div className="h-11 bg-[#f7f7f7] rounded-[8px] animate-pulse" />
+              <div className="h-11 bg-[#f7f8f0] rounded-[8px] animate-pulse" />
             ) : activeBookings.length === 0 ? (
               <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-[8px] px-3 py-2.5">
                 Bạn chưa có phòng đang thuê. Cần có booking đang hoạt động để đặt dịch vụ.
@@ -362,7 +362,7 @@ function CreateOrderModal({
 
           {/* Price summary */}
           {selectedCatalog && (
-            <div className="flex items-center justify-between px-4 py-3 bg-[#f7f7f7] rounded-[10px]">
+            <div className="flex items-center justify-between px-4 py-3 bg-[#f7f8f0] rounded-[10px]">
               <span className="text-sm text-[#6a6a6a]">Tạm tính</span>
               <span className="text-[15px] font-semibold text-[#222222]">
                 {formatVnd(selectedCatalog.price)}
@@ -376,14 +376,14 @@ function CreateOrderModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-[8px] hover:bg-[#f7f7f7] transition-colors"
+              className="flex-1 py-3 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-[8px] hover:bg-[#f7f8f0] transition-colors"
             >
               Huỷ bỏ
             </button>
             <button
               type="submit"
               disabled={!type || !propertyId || !scheduledAt || isPending || activeBookings.length === 0}
-              className="flex-1 py-3 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 disabled:cursor-not-allowed rounded-[8px] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+              className="flex-1 py-3 text-sm font-semibold text-white bg-[#933a12] hover:bg-[#7a2f0e] disabled:opacity-50 disabled:cursor-not-allowed rounded-[8px] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
             >
               {isPending && <Loader2 className="size-4 animate-spin" />}
               {isPending ? 'Đang tạo...' : 'Xác nhận'}
@@ -404,7 +404,7 @@ function CancelModal({ onConfirm, onClose, isPending }: { onConfirm: () => void;
       <div className="relative bg-white rounded-[20px] p-6 w-full max-w-sm shadow-[rgba(0,0,0,0.02)_0_0_0_1px,rgba(0,0,0,0.04)_0_2px_6px_0,rgba(0,0,0,0.1)_0_8px_32px_0]">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-[#f7f7f7] hover:bg-[#dddddd] transition-colors"
+          className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-[#f7f8f0] hover:bg-[#dddddd] transition-colors"
         >
           <X className="size-4 text-[#222222]" />
         </button>
@@ -416,7 +416,7 @@ function CancelModal({ onConfirm, onClose, isPending }: { onConfirm: () => void;
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+            className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f8f0] transition-colors"
           >
             Giữ lại
           </button>
@@ -445,7 +445,7 @@ function EmptyState({ tabId, onRequest }: { tabId: TabId; onRequest: () => void 
   const { message, sub } = EMPTY_CONFIG[tabId];
   return (
     <div className="flex flex-col items-center py-20 text-center">
-      <div className="size-16 bg-[#f7f7f7] rounded-full flex items-center justify-center mb-4">
+      <div className="size-16 bg-[#f7f8f0] rounded-full flex items-center justify-center mb-4">
         <Wrench className="size-8 text-[#dddddd]" />
       </div>
       <h2 className="text-lg font-semibold text-[#222222] mb-2">{message}</h2>
@@ -453,7 +453,7 @@ function EmptyState({ tabId, onRequest }: { tabId: TabId; onRequest: () => void 
       {tabId === 'processing' && (
         <button
           onClick={onRequest}
-          className="px-6 py-3 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] rounded-[8px] transition-all active:scale-95"
+          className="px-6 py-3 text-sm font-semibold text-white bg-[#933a12] hover:bg-[#7a2f0e] rounded-[8px] transition-all active:scale-95"
         >
           Yêu cầu dịch vụ
         </button>
@@ -543,7 +543,7 @@ export default function ServicesPage() {
         <h1 className="text-2xl font-bold text-[#222222]">Dịch vụ của tôi</h1>
         <button
           onClick={() => openModal()}
-          className="px-5 py-2.5 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] rounded-[8px] transition-all active:scale-95"
+          className="px-5 py-2.5 text-sm font-semibold text-white bg-[#933a12] hover:bg-[#7a2f0e] rounded-[8px] transition-all active:scale-95"
         >
           + Yêu cầu dịch vụ
         </button>
@@ -555,7 +555,7 @@ export default function ServicesPage() {
         {isCatalogLoading ? (
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="animate-pulse h-[90px] border border-[#dddddd] rounded-[12px] bg-[#f7f7f7]" />
+              <div key={i} className="animate-pulse h-[90px] border border-[#dddddd] rounded-[12px] bg-[#f7f8f0]" />
             ))}
           </div>
         ) : (

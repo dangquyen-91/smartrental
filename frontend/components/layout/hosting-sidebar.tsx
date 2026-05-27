@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -24,12 +24,12 @@ export default function HostingSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-56 shrink-0 border-r border-[#dddddd] bg-white flex flex-col h-full">
+    <aside className="w-56 shrink-0 border-r border-[#dddddd] bg-[#f7f8f0] flex flex-col h-full">
       {/* Back to explore */}
       <div className="h-16 flex items-center px-4 border-b border-[#dddddd] shrink-0">
         <Link
           href="/"
-          className="flex items-center gap-2 text-sm font-semibold text-[#222222] hover:text-[#ff385c] transition-colors group"
+          className="flex items-center gap-2 text-sm font-semibold text-[#222222] hover:text-[#933a12] transition-colors group"
         >
           <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
           Khám phá
@@ -53,11 +53,11 @@ export default function HostingSidebar() {
                   className={cn(
                     'flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-[#f7f7f7] text-[#222222] font-semibold'
-                      : 'text-[#6a6a6a] hover:bg-[#f7f7f7] hover:text-[#222222]',
+                      ? 'bg-[#933a12]/10 text-[#222222] font-semibold'
+                      : 'text-[#6a6a6a] hover:bg-[#933a12]/5 hover:text-[#222222]',
                   )}
                 >
-                  <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-[#ff385c]' : 'text-[#929292]')} />
+                  <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-[#933a12]' : 'text-[#929292]')} />
                   {label}
                 </Link>
               </li>

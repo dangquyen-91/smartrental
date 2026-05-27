@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
@@ -48,11 +48,11 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-[#dddddd] flex items-center px-4 gap-4 flex-shrink-0">
+    <header className="h-16 bg-[#f7f8f0] border-b border-[#dddddd] flex items-center px-4 gap-4 flex-shrink-0">
       {/* Mobile menu button */}
       <button
         onClick={onMenuClick}
-        className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-[#f7f7f7] transition-colors lg:hidden"
+        className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-[#933a12]/5 transition-colors lg:hidden"
         aria-label="Mở menu"
       >
         <Menu className="w-5 h-5 text-[#222222]" />
@@ -63,7 +63,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
       {/* Right actions */}
       <div className="flex items-center gap-2">
         {/* Notification bell — placeholder */}
-        <button className="relative flex items-center justify-center w-9 h-9 rounded-lg hover:bg-[#f7f7f7] transition-colors">
+        <button className="relative flex items-center justify-center w-9 h-9 rounded-lg hover:bg-[#933a12]/5 transition-colors">
           <Bell className="w-5 h-5 text-[#6a6a6a]" />
         </button>
 
@@ -72,9 +72,9 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen((v) => !v)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-[20px] border border-[#dddddd] hover:bg-[#f7f7f7] transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-[20px] border border-[#dddddd] hover:bg-[#933a12]/5 transition-colors"
             >
-              <div className="w-7 h-7 rounded-full bg-[#ff385c] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+              <div className="w-7 h-7 rounded-full bg-[#933a12] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
                 {user.name.charAt(0).toUpperCase()}
               </div>
               <span className="text-sm font-medium text-[#222222] hidden sm:block max-w-[120px] truncate">
@@ -94,7 +94,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                 <div className="px-4 py-3 border-b border-[#dddddd]">
                   <p className="text-sm font-semibold text-[#222222] truncate">{user.name}</p>
                   <p className="text-xs text-[#6a6a6a] truncate">{user.email}</p>
-                  <span className="inline-block mt-1 text-xs font-medium text-[#ff385c] bg-[#ff385c]/10 px-2 py-0.5 rounded-full">
+                  <span className="inline-block mt-1 text-xs font-medium text-[#933a12] bg-[#933a12]/10 px-2 py-0.5 rounded-full">
                     {ROLE_LABELS[user.role] ?? user.role}
                   </span>
                 </div>
@@ -103,7 +103,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                   <Link
                     href="/profile"
                     onClick={() => setDropdownOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-[#222222] hover:bg-[#f7f7f7] transition-colors"
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-[#222222] hover:bg-[#933a12]/5 transition-colors"
                   >
                     <User className="w-4 h-4 text-[#6a6a6a]" />
                     Hồ sơ cá nhân
@@ -111,7 +111,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                   <Link
                     href="/profile/settings"
                     onClick={() => setDropdownOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-[#222222] hover:bg-[#f7f7f7] transition-colors"
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-[#222222] hover:bg-[#933a12]/5 transition-colors"
                   >
                     <Settings className="w-4 h-4 text-[#6a6a6a]" />
                     Cài đặt
@@ -121,7 +121,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                 <div className="border-t border-[#dddddd] py-1">
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 w-full px-4 py-2 text-sm text-[#e00b41] hover:bg-[#fff0f3] transition-colors"
+                    className="flex items-center gap-3 w-full px-4 py-2 text-sm text-[#7a2f0e] hover:bg-[#fff0f3] transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
                     Đăng xuất

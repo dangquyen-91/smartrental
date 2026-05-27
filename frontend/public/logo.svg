@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 225" width="200" height="225" fill="none">
+  <!-- Left roof slope with vertical hook -->
+  <polyline
+    points="13,97 86,50 86,30"
+    stroke="#933a12"
+    stroke-width="13"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  />
+  <!-- Right roof slope -->
+  <line x1="114" y1="50" x2="187" y2="97" stroke="#933a12" stroke-width="13" stroke-linecap="round" fill="none"/>
+
+  <!-- Window: 2x2 grid of rounded squares -->
+  <rect x="88"  y="55" width="9" height="9" rx="1.8" fill="#933a12"/>
+  <rect x="100" y="55" width="9" height="9" rx="1.8" fill="#933a12"/>
+  <rect x="88"  y="67" width="9" height="9" rx="1.8" fill="#933a12"/>
+  <rect x="100" y="67" width="9" height="9" rx="1.8" fill="#933a12"/>
+
+  <!-- SMART -->
+  <text
+    x="100" y="147"
+    font-family="Arial Black, Arial, sans-serif"
+    font-weight="900"
+    font-size="50"
+    text-anchor="middle"
+    fill="#933a12"
+  >SMART</text>
+
+  <!-- RENTAL -->
+  <text
+    x="100" y="205"
+    font-family="Arial Black, Arial, sans-serif"
+    font-weight="900"
+    font-size="50"
+    text-anchor="middle"
+    fill="#933a12"
+  >RENTAL</text>
+</svg>

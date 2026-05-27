@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
@@ -53,7 +53,7 @@ function ContractCard({
 
   return (
     <article className="flex flex-col sm:flex-row gap-4 border border-[#dddddd] rounded-card p-4 sm:p-5 bg-white hover:shadow-[rgba(0,0,0,0.06)_0_2px_12px] transition-shadow">
-      <div className="size-25 sm:size-30 rounded-[10px] overflow-hidden shrink-0 bg-[#f7f7f7]">
+      <div className="size-25 sm:size-30 rounded-[10px] overflow-hidden shrink-0 bg-[#f7f8f0]">
         {imgUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={imgUrl} alt={property?.title ?? ''} className="size-full object-cover" loading="lazy" />
@@ -107,7 +107,7 @@ function ContractCard({
                 setIsDownloading(false);
               }}
               disabled={isDownloading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#dddddd] hover:bg-[#f7f7f7] disabled:opacity-60 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#dddddd] hover:bg-[#f7f8f0] disabled:opacity-60 rounded-lg transition-colors"
             >
               {isDownloading ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
               Tải PDF
@@ -117,7 +117,7 @@ function ContractCard({
             <button
               onClick={() => onSign(contract)}
               disabled={isSigningThis}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-60 rounded-lg transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#933a12] hover:bg-[#7a2f0e] disabled:opacity-60 rounded-lg transition-all active:scale-95"
             >
               {isSigningThis ? <Loader2 className="size-3.5 animate-spin" /> : <PenLine className="size-3.5" />}
               Ký hợp đồng
@@ -141,13 +141,13 @@ function EmptyState({ tabId }: { tabId: TabId }) {
   const { message, sub } = EMPTY_CONFIG[tabId];
   return (
     <div className="flex flex-col items-center py-20 text-center">
-      <div className="size-16 bg-[#f7f7f7] rounded-full flex items-center justify-center mb-4">
+      <div className="size-16 bg-[#f7f8f0] rounded-full flex items-center justify-center mb-4">
         <FileText className="size-8 text-[#dddddd]" />
       </div>
       <h2 className="text-lg font-semibold text-[#222222] mb-2">{message}</h2>
       <p className="text-sm text-[#6a6a6a] mb-6 max-w-xs leading-relaxed">{sub}</p>
       {tabId === 'pending' && (
-        <Link href="/trips" className="px-6 py-3 text-sm font-semibold text-[#222222] border border-[#dddddd] hover:bg-[#f7f7f7] rounded-lg transition-colors">
+        <Link href="/trips" className="px-6 py-3 text-sm font-semibold text-[#222222] border border-[#dddddd] hover:bg-[#f7f8f0] rounded-lg transition-colors">
           Xem đơn thuê
         </Link>
       )}

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import {
@@ -46,14 +46,14 @@ function StepIndicator({ current }: { current: number }) {
               <div className={cn(
                 'size-7 rounded-full flex items-center justify-center text-xs font-bold transition-all',
                 done ? 'bg-[#222222] text-white'
-                  : active ? 'bg-[#ff385c] text-white shadow-[0_0_0_3px_rgba(255,56,92,0.18)]'
+                  : active ? 'bg-[#933a12] text-white shadow-[0_0_0_3px_rgba(255,56,92,0.18)]'
                   : 'bg-[#ebebeb] text-[#b0b0b0]',
               )}>
                 {done ? <CheckCircle2 className="size-4" /> : idx}
               </div>
               <span className={cn(
                 'text-[10px] font-medium whitespace-nowrap',
-                active ? 'text-[#ff385c]' : done ? 'text-[#222222]' : 'text-[#b0b0b0]',
+                active ? 'text-[#933a12]' : done ? 'text-[#222222]' : 'text-[#b0b0b0]',
               )}>
                 {step.label}
               </span>
@@ -82,7 +82,7 @@ function StepReview({ contract }: { contract: Contract }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-3 p-3 bg-[#f7f7f7] rounded-xl">
+      <div className="flex gap-3 p-3 bg-[#f7f8f0] rounded-xl">
         <div className="size-14 rounded-lg overflow-hidden shrink-0 bg-[#ebebeb]">
           {imgUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -131,7 +131,7 @@ function StepReview({ contract }: { contract: Contract }) {
           <p className="text-[11px] font-semibold text-[#6a6a6a] uppercase tracking-wide mb-1.5">
             Điều khoản hợp đồng
           </p>
-          <div className="bg-[#f7f7f7] rounded-xl p-3 max-h-36 overflow-y-auto">
+          <div className="bg-[#f7f8f0] rounded-xl p-3 max-h-36 overflow-y-auto">
             <p className="text-xs text-[#6a6a6a] leading-relaxed whitespace-pre-wrap">{contract.terms}</p>
           </div>
         </div>
@@ -149,7 +149,7 @@ function InfoRow({
   highlight?: boolean;
 }) {
   return (
-    <div className={cn('p-2.5 rounded-xl', highlight ? 'bg-amber-50' : 'bg-[#f7f7f7]')}>
+    <div className={cn('p-2.5 rounded-xl', highlight ? 'bg-amber-50' : 'bg-[#f7f8f0]')}>
       <div className={cn('flex items-center gap-1 mb-0.5', highlight ? 'text-amber-600' : 'text-[#929292]')}>
         {icon}
         <span className="text-[10px] font-medium">{label}</span>
@@ -180,7 +180,7 @@ function StepAgree({ agreed, onChange }: { agreed: boolean; onChange: (v: boolea
         onClick={() => onChange(!agreed)}
         className={cn(
           'w-full flex items-start gap-3 p-4 rounded-xl border-2 transition-all text-left',
-          agreed ? 'border-[#222222] bg-[#f7f7f7]' : 'border-[#dddddd] bg-white hover:border-[#b0b0b0]',
+          agreed ? 'border-[#222222] bg-[#f7f8f0]' : 'border-[#dddddd] bg-white hover:border-[#b0b0b0]',
         )}
       >
         <div className={cn(
@@ -231,7 +231,7 @@ function StepIdentityGoogle({
       <button
         onClick={onTrigger}
         disabled={busy}
-        className="w-full h-12 flex items-center justify-center gap-3 text-sm font-semibold text-[#222222] bg-white border-2 border-[#dddddd] rounded-xl hover:border-[#222222] hover:bg-[#f7f7f7] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        className="w-full h-12 flex items-center justify-center gap-3 text-sm font-semibold text-[#222222] bg-white border-2 border-[#dddddd] rounded-xl hover:border-[#222222] hover:bg-[#f7f8f0] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
       >
         {busy ? (
           <>
@@ -301,7 +301,7 @@ function StepIdentityPassword({
             placeholder="Nhập mật khẩu của bạn"
             disabled={disabled}
             className={cn(
-              'w-full h-11 px-3 pr-10 text-sm text-[#222222] placeholder:text-[#929292] bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#222222]/10 transition-colors disabled:bg-[#f7f7f7] disabled:cursor-not-allowed',
+              'w-full h-11 px-3 pr-10 text-sm text-[#222222] placeholder:text-[#929292] bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#222222]/10 transition-colors disabled:bg-[#f7f8f0] disabled:cursor-not-allowed',
               pwError ? 'border-red-400 focus:border-red-400' : 'border-[#dddddd] focus:border-[#222222]',
             )}
           />
@@ -432,7 +432,7 @@ export function SignModal({
           {!busy && (
             <button
               onClick={onClose}
-              className="size-8 flex items-center justify-center rounded-full bg-[#f7f7f7] hover:bg-[#dddddd] transition-colors"
+              className="size-8 flex items-center justify-center rounded-full bg-[#f7f8f0] hover:bg-[#dddddd] transition-colors"
             >
               <X className="size-4 text-[#222222]" />
             </button>
@@ -471,7 +471,7 @@ export function SignModal({
             <button
               onClick={() => setStep((s) => s - 1)}
               disabled={busy}
-              className="flex items-center gap-1 px-4 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-xl hover:bg-[#f7f7f7] disabled:opacity-40 transition-colors"
+              className="flex items-center gap-1 px-4 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-xl hover:bg-[#f7f8f0] disabled:opacity-40 transition-colors"
             >
               <ChevronLeft className="size-4" />
               Quay lại
@@ -479,7 +479,7 @@ export function SignModal({
           ) : (
             <button
               onClick={onClose}
-              className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-xl hover:bg-[#f7f7f7] transition-colors"
+              className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-xl hover:bg-[#f7f8f0] transition-colors"
             >
               Huỷ
             </button>
@@ -492,7 +492,7 @@ export function SignModal({
               disabled={!canAdvanceLocal || busy}
               className={cn(
                 'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
-                isStep3Local ? 'bg-[#ff385c] hover:bg-[#e00b41]' : 'bg-[#222222] hover:bg-[#111111]',
+                isStep3Local ? 'bg-[#933a12] hover:bg-[#7a2f0e]' : 'bg-[#222222] hover:bg-[#111111]',
               )}
             >
               {busy ? (

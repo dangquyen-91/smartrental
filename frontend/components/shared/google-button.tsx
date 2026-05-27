@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useGoogleLogin } from '@react-oauth/google';
 import { Loader2 } from 'lucide-react';
@@ -66,7 +66,7 @@ export default function GoogleButton({ onError, redirectTo = '/', onSuccess }: G
       type="button"
       onClick={() => googleLogin()}
       disabled={loading}
-      className="w-full h-12 flex items-center justify-center gap-3 text-sm font-medium text-[#222222] bg-white border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+      className="w-full h-12 flex items-center justify-center gap-3 text-sm font-medium text-[#222222] bg-white border border-[#dddddd] rounded-lg hover:bg-[#f7f8f0] transition-colors disabled:opacity-50 disabled:pointer-events-none"
     >
       {loading ? <Loader2 className="w-5 h-5 animate-spin text-[#929292]" /> : <GoogleIcon />}
       Tiếp tục với Google

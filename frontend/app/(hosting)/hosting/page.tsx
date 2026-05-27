@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useMemo } from 'react';
 import Link from 'next/link';
@@ -111,7 +111,7 @@ export default function HostingPage() {
   const STATS = [
     {
       label: 'Tin đăng', value: isLoading ? null : activeListings,
-      sub: 'đang hoạt động', icon: Building2, color: 'text-[#ff385c]', bg: 'bg-[#fff0f3]',
+      sub: 'đang hoạt động', icon: Building2, color: 'text-[#933a12]', bg: 'bg-[#fff0f3]',
     },
     {
       label: 'Yêu cầu mới', value: isLoading ? null : pendingBookings.length,
@@ -149,7 +149,7 @@ export default function HostingPage() {
         </div>
         <Link
           href="/hosting/listings/new"
-          className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] rounded-[8px] transition-all active:scale-95 flex-shrink-0"
+          className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-[#933a12] hover:bg-[#7a2f0e] rounded-[8px] transition-all active:scale-95 flex-shrink-0"
         >
           <Plus className="w-4 h-4" />
           Đăng tin
@@ -179,7 +179,7 @@ export default function HostingPage() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-bold text-[#222222]">Yêu cầu thuê mới</h2>
             {pendingBookings.length > 3 && (
-              <Link href="/hosting/reservations" className="text-xs font-semibold text-[#ff385c] hover:underline flex items-center gap-1">
+              <Link href="/hosting/reservations" className="text-xs font-semibold text-[#933a12] hover:underline flex items-center gap-1">
                 Xem tất cả <ArrowRight className="w-3 h-3" />
               </Link>
             )}
@@ -216,7 +216,7 @@ export default function HostingPage() {
               {pendingBookings.length > 3 && (
                 <Link
                   href="/hosting/reservations"
-                  className="flex items-center justify-center gap-2 py-3 text-sm font-semibold text-[#ff385c] bg-white border border-[#dddddd] rounded-[14px] hover:border-[#ff385c] transition-colors"
+                  className="flex items-center justify-center gap-2 py-3 text-sm font-semibold text-[#933a12] bg-white border border-[#dddddd] rounded-[14px] hover:border-[#933a12] transition-colors"
                 >
                   Xem {pendingBookings.length - 3} yêu cầu còn lại <ArrowRight className="w-4 h-4" />
                 </Link>
@@ -231,7 +231,7 @@ export default function HostingPage() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-bold text-[#222222]">Tin đăng của bạn</h2>
           {properties.length > 0 && (
-            <Link href="/hosting/listings" className="text-xs font-semibold text-[#ff385c] hover:underline flex items-center gap-1">
+            <Link href="/hosting/listings" className="text-xs font-semibold text-[#933a12] hover:underline flex items-center gap-1">
               Quản lý <ArrowRight className="w-3 h-3" />
             </Link>
           )}
@@ -259,7 +259,7 @@ export default function HostingPage() {
             </p>
             <Link
               href="/hosting/listings/new"
-              className="inline-block px-5 py-2.5 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] rounded-[8px] transition-all active:scale-95"
+              className="inline-block px-5 py-2.5 text-sm font-semibold text-white bg-[#933a12] hover:bg-[#7a2f0e] rounded-[8px] transition-all active:scale-95"
             >
               Đăng tin ngay
             </Link>
@@ -290,16 +290,16 @@ export default function HostingPage() {
           <Link
             key={href}
             href={href}
-            className="flex items-center gap-4 bg-white rounded-[14px] border border-[#dddddd] p-5 hover:border-[#ff385c] hover:shadow-[0_2px_12px_rgba(255,56,92,0.08)] transition-all group"
+            className="flex items-center gap-4 bg-white rounded-[14px] border border-[#dddddd] p-5 hover:border-[#933a12] hover:shadow-[0_2px_12px_rgba(255,56,92,0.08)] transition-all group"
           >
-            <div className="w-10 h-10 rounded-[10px] bg-[#f7f7f7] flex items-center justify-center flex-shrink-0">
-              <Icon className="w-5 h-5 text-[#6a6a6a] group-hover:text-[#ff385c] transition-colors" />
+            <div className="w-10 h-10 rounded-[10px] bg-[#f7f8f0] flex items-center justify-center flex-shrink-0">
+              <Icon className="w-5 h-5 text-[#6a6a6a] group-hover:text-[#933a12] transition-colors" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-[#222222]">{label}</p>
               <p className="text-xs text-[#6a6a6a] mt-0.5">{desc}</p>
             </div>
-            <ArrowRight className="w-4 h-4 text-[#929292] group-hover:text-[#ff385c] transition-colors flex-shrink-0" />
+            <ArrowRight className="w-4 h-4 text-[#929292] group-hover:text-[#933a12] transition-colors flex-shrink-0" />
           </Link>
         ))}
       </div>
@@ -398,7 +398,7 @@ function PendingBookingRow({
           <button
             onClick={onConfirm}
             disabled={busy}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#933a12] hover:bg-[#7a2f0e] rounded-lg transition-colors disabled:opacity-50"
           >
             {confirming ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
             Xác nhận

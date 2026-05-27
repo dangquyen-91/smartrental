@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import type { UseFormRegister, FieldErrors } from 'react-hook-form';
@@ -70,7 +70,7 @@ const inputClass =
   'h-12 border-[#dddddd] focus-visible:border-[#222222] focus-visible:ring-2 focus-visible:ring-[#222222]/20 text-[#222222] placeholder:text-[#929292]';
 
 const submitBtn =
-  'w-full h-12 bg-[#ff385c] hover:bg-[#e00b41] text-white text-base font-medium rounded-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center';
+  'w-full h-12 bg-[#933a12] hover:bg-[#7a2f0e] text-white text-base font-medium rounded-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center';
 
 // ── Step indicator (chỉ cho landlord — 2 bước sau form ban đầu) ──────────────
 
@@ -82,7 +82,7 @@ function StepDots({ current }: { current: 0 | 1 }) {
           key={i}
           className={cn(
             'h-2 rounded-full transition-all',
-            i < current ? 'w-2 bg-[#ff385c]' : i === current ? 'w-5 bg-[#ff385c]' : 'w-2 bg-[#dddddd]',
+            i < current ? 'w-2 bg-[#933a12]' : i === current ? 'w-5 bg-[#933a12]' : 'w-2 bg-[#dddddd]',
           )}
         />
       ))}
@@ -202,7 +202,7 @@ export default function RegisterPage() {
       {/* ── STEP 1: FORM ─────────────────────────────────────────────── */}
       {step === 'form' && (
         <>
-          <div className="flex items-center bg-[#f7f7f7] rounded-[10px] p-1 gap-1">
+          <div className="flex items-center bg-[#f7f8f0] rounded-[10px] p-1 gap-1">
             {(['tenant', 'landlord'] as Role[]).map((r) => (
               <button
                 key={r}
@@ -271,7 +271,7 @@ export default function RegisterPage() {
 
           <p className="text-center text-sm font-medium text-[#6a6a6a]">
             Đã có tài khoản?{' '}
-            <Link href="/login" className="text-[#222222] font-semibold underline underline-offset-2 hover:text-[#ff385c] transition-colors">
+            <Link href="/login" className="text-[#222222] font-semibold underline underline-offset-2 hover:text-[#933a12] transition-colors">
               Đăng nhập
             </Link>
           </p>
@@ -281,7 +281,7 @@ export default function RegisterPage() {
       {/* ── STEP phone (landlord Google): Nhập SĐT ───────────────────── */}
       {step === 'phone' && (
         <form onSubmit={phoneForm.handleSubmit(handlePhoneSubmit)} className="space-y-5">
-          <div className="bg-[#f7f7f7] rounded-xl p-4 text-sm text-[#6a6a6a] leading-relaxed">
+          <div className="bg-[#f7f8f0] rounded-xl p-4 text-sm text-[#6a6a6a] leading-relaxed">
             Chủ nhà cần xác thực số điện thoại để đảm bảo an toàn cho người thuê. Mã OTP sẽ được gửi đến số này.
           </div>
 
@@ -313,7 +313,7 @@ export default function RegisterPage() {
       {/* ── STEP otp (landlord): Xác thực OTP ───────────────────────── */}
       {step === 'otp' && (
         <form onSubmit={otpForm.handleSubmit(handleOtpSubmit)} className="space-y-5">
-          <div className="bg-[#f7f7f7] rounded-xl p-4 text-sm text-[#6a6a6a] leading-relaxed">
+          <div className="bg-[#f7f8f0] rounded-xl p-4 text-sm text-[#6a6a6a] leading-relaxed">
             Mã OTP gồm 6 chữ số đã được gửi đến số điện thoại bạn đăng ký. Mã có hiệu lực trong{' '}
             <span className="font-semibold text-[#222222]">5 phút</span>.
           </div>
@@ -344,7 +344,7 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={handleResendOtp}
-              className="text-[#ff385c] font-semibold hover:underline"
+              className="text-[#933a12] font-semibold hover:underline"
             >
               Gửi lại
             </button>

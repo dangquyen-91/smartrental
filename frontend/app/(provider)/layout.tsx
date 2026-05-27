@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -26,16 +26,16 @@ export default function ProviderLayout({ children }: { children: React.ReactNode
   if (!isAuthenticated || !isProvider) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#ff385c] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#933a12] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-white">
+    <div className="h-screen flex flex-col overflow-hidden bg-[#f7f8f0]">
       <AppNavbar />
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-56 flex-shrink-0 border-r border-[#dddddd] bg-white flex flex-col">
+        <aside className="w-56 flex-shrink-0 border-r border-[#dddddd] bg-[#f7f8f0] flex flex-col">
           <div className="px-4 py-4 border-b border-[#dddddd]">
             <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">Nhà cung cấp</p>
           </div>
@@ -50,11 +50,11 @@ export default function ProviderLayout({ children }: { children: React.ReactNode
                       className={cn(
                         'flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-sm font-medium transition-colors',
                         isActive
-                          ? 'bg-[#f7f7f7] text-[#222222] font-semibold'
-                          : 'text-[#6a6a6a] hover:bg-[#f7f7f7] hover:text-[#222222]',
+                          ? 'bg-[#933a12]/10 text-[#222222] font-semibold'
+                          : 'text-[#6a6a6a] hover:bg-[#933a12]/5 hover:text-[#222222]',
                       )}
                     >
-                      <Icon className={cn('w-4 h-4 flex-shrink-0', isActive ? 'text-[#ff385c]' : 'text-[#929292]')} />
+                      <Icon className={cn('w-4 h-4 flex-shrink-0', isActive ? 'text-[#933a12]' : 'text-[#929292]')} />
                       {label}
                     </Link>
                   </li>
@@ -63,7 +63,7 @@ export default function ProviderLayout({ children }: { children: React.ReactNode
             </ul>
           </nav>
         </aside>
-        <main className="flex-1 overflow-y-auto bg-[#f7f7f7] p-8">
+        <main className="flex-1 overflow-y-auto bg-[#f7f8f0] p-8">
           <div className="max-w-4xl mx-auto">{children}</div>
         </main>
       </div>

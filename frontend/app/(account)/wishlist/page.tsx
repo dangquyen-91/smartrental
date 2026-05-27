@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -53,7 +53,7 @@ export default function WishlistPage() {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="size-16 bg-[#f7f7f7] rounded-full flex items-center justify-center mb-5">
+          <div className="size-16 bg-[#f7f8f0] rounded-full flex items-center justify-center mb-5">
             <Heart className="size-7 text-[#929292]" />
           </div>
           <h2 className="text-lg font-bold text-[#222222] mb-2">

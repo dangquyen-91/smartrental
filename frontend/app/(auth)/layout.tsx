@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -6,11 +6,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       {/* Left panel — Ink Black, photography-inspired dark surface */}
       <div className="hidden lg:flex flex-col bg-[#222222] p-12 relative overflow-hidden">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 z-10">
-          <span className="font-bold text-xl tracking-tight">
-            <span className="text-white">Smart</span>
-            <span className="text-[#ff385c]">Rental</span>
-          </span>
+        <Link href="/" className="flex items-center z-10">
+          <img src="/logo-white.svg" alt="SmartRental" className="h-12 w-auto" />
         </Link>
 
         {/* Main content — anchored to bottom */}
@@ -33,7 +30,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               'Hợp đồng điện tử tiện lợi',
             ].map((item) => (
               <div key={item} className="flex items-center gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#ff385c] shrink-0" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[#933a12] shrink-0" />
                 <p className="text-sm font-medium text-[#c1c1c1]">{item}</p>
               </div>
             ))}
@@ -49,11 +46,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-sm space-y-6">
           {/* Mobile-only logo */}
-          <Link href="/" className="flex items-center gap-2 lg:hidden">
-            <span className="font-bold text-xl tracking-tight">
-              <span className="text-[#222222]">Smart</span>
-              <span className="text-[#ff385c]">Rental</span>
-            </span>
+          <Link href="/" className="flex items-center lg:hidden">
+            <img src="/logo.svg" alt="SmartRental" className="h-10 w-auto" />
           </Link>
 
           {children}

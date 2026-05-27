@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -81,9 +81,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Logo */}
       <div className="h-16 flex items-center px-4 border-b border-white/10 flex-shrink-0">
         {!collapsed && (
-          <Link href="/" className="font-bold text-lg tracking-tight">
-            <span className="text-white">Smart</span>
-            <span className="text-[#ff385c]">Rental</span>
+          <Link href="/" className="flex items-center">
+            <img src="/logo-white.svg" alt="SmartRental" className="h-9 w-auto" />
           </Link>
         )}
         <button
@@ -116,7 +115,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   className={cn(
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-[#ff385c] text-white'
+                      ? 'bg-[#933a12] text-white'
                       : 'text-[#c1c1c1] hover:bg-white/10 hover:text-white',
                     collapsed && 'justify-center px-2',
                   )}
@@ -135,13 +134,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <div className={cn('px-4 py-4 border-t border-white/10', collapsed && 'px-2')}>
           {collapsed ? (
             <div className="flex justify-center">
-              <div className="w-8 h-8 rounded-full bg-[#ff385c] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[#933a12] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                 {user.name.charAt(0).toUpperCase()}
               </div>
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#ff385c] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[#933a12] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                 {user.name.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0">

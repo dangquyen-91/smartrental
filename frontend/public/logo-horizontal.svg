@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 60" width="300" height="60" fill="none">
+  <!-- House icon -->
+  <polyline
+    points="4,46 23,25 23,14"
+    stroke="#933a12"
+    stroke-width="6.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  />
+  <line x1="33" y1="25" x2="52" y2="46" stroke="#933a12" stroke-width="6.5" stroke-linecap="round" fill="none"/>
+
+  <!-- Window 2x2 -->
+  <rect x="24" y="29" width="5" height="5" rx="1" fill="#933a12"/>
+  <rect x="30.5" y="29" width="5" height="5" rx="1" fill="#933a12"/>
+  <rect x="24" y="35.5" width="5" height="5" rx="1" fill="#933a12"/>
+  <rect x="30.5" y="35.5" width="5" height="5" rx="1" fill="#933a12"/>
+
+  <!-- SmartRental text (tspan for two colors, auto-positioning) -->
+  <text
+    x="64" y="44"
+    font-family="Arial Black, Arial, sans-serif"
+    font-weight="900"
+    font-size="32"
+  ><tspan fill="#222222">Smart</tspan><tspan fill="#933a12"> Rental</tspan></text>
+</svg>

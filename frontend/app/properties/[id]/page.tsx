@@ -121,7 +121,7 @@ function ShareModal({
     {
       label: 'Twitter / X',
       icon: <TwitterXIcon />,
-      bg: 'bg-[#f7f7f7] hover:bg-[#ebebeb]',
+      bg: 'bg-[#f7f8f0] hover:bg-[#ede8df]',
       href: `https://twitter.com/intent/tweet?url=${enc}&text=${encTitle}`,
     },
     {
@@ -150,7 +150,7 @@ function ShareModal({
           <h3 className="text-base font-semibold text-[#222222]">Chia sẻ tin đăng này</h3>
           <button
             onClick={onClose}
-            className="size-8 flex items-center justify-center rounded-full bg-[#f7f7f7] hover:bg-[#ebebeb] transition-colors"
+            className="size-8 flex items-center justify-center rounded-full bg-[#f7f8f0] hover:bg-[#ede8df] transition-colors"
           >
             <X className="size-4 text-[#222222]" />
           </button>
@@ -158,9 +158,9 @@ function ShareModal({
 
         {/* Thumbnail preview */}
         <div className="px-6 py-4 border-b border-[#dddddd]">
-          <div className="flex items-center gap-3 p-3 bg-[#f7f7f7] rounded-[10px]">
-            <div className="size-10 rounded-lg bg-[#ff385c]/10 flex items-center justify-center shrink-0">
-              <MessageCircle className="size-5 text-[#ff385c]" />
+          <div className="flex items-center gap-3 p-3 bg-[#f7f8f0] rounded-[10px]">
+            <div className="size-10 rounded-lg bg-[#933a12]/10 flex items-center justify-center shrink-0">
+              <MessageCircle className="size-5 text-[#933a12]" />
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-[#222222] truncate">{title}</p>
@@ -205,7 +205,7 @@ function ShareModal({
           <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider mb-2">
             Hoặc sao chép liên kết
           </p>
-          <div className="flex items-center gap-2 p-3 bg-[#f7f7f7] rounded-[10px] border border-[#dddddd]">
+          <div className="flex items-center gap-2 p-3 bg-[#f7f8f0] rounded-[10px] border border-[#dddddd]">
             <Link2 className="size-4 text-[#929292] shrink-0" />
             <span className="flex-1 text-xs text-[#6a6a6a] truncate">{url}</span>
             <button
@@ -822,7 +822,7 @@ export default function PropertyDetailPage({
     .join(', ');
 
   return (
-    <div className="min-h-screen bg-white pb-24 lg:pb-0">
+    <div className="min-h-screen bg-[#f7f8f0] pb-24 lg:pb-0">
       <AppNavbar />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-12">

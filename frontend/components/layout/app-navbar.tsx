@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
@@ -58,14 +58,11 @@ export default function AppNavbar({ center }: AppNavbarProps) {
     : null;
 
   return (
-    <header className="bg-white border-b border-[#dddddd] sticky top-0 z-10">
+    <header className="bg-[#f7f8f0] border-b border-[#dddddd] sticky top-0 z-10">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center gap-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <span className="font-bold text-xl tracking-tight">
-            <span className="text-[#222222]">Smart</span>
-            <span className="text-[#ff385c]">Rental</span>
-          </span>
+        <Link href="/" className="flex items-center shrink-0">
+          <img src="/logo-horizontal.svg" alt="SmartRental" className="h-10 w-auto" />
         </Link>
 
         {/* Center slot */}
@@ -77,7 +74,7 @@ export default function AppNavbar({ center }: AppNavbarProps) {
           {isAuthenticated && hostHref && (
             <Link
               href={hostHref}
-              className="hidden md:block px-4 py-2 text-sm font-semibold text-[#222222] hover:bg-[#f7f7f7] rounded-[20px] transition-colors"
+              className="hidden md:block px-4 py-2 text-sm font-semibold text-[#222222] hover:bg-[#933a12]/5 rounded-[20px] transition-colors"
             >
               {hostLabel}
             </Link>
@@ -136,7 +133,7 @@ export default function AppNavbar({ center }: AppNavbarProps) {
                   <div className="border-t border-[#dddddd] py-1.5">
                     <button
                       onClick={handleLogout}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-[#222222] hover:bg-[#f7f7f7] transition-colors"
+                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-[#222222] hover:bg-[#933a12]/5 transition-colors"
                     >
                       <LogOut className="w-4 h-4 text-[#6a6a6a]" />
                       Đăng xuất
@@ -149,7 +146,7 @@ export default function AppNavbar({ center }: AppNavbarProps) {
             <div className="flex items-center gap-2 ml-2">
               <Link
                 href="/login"
-                className="px-4 py-2 text-sm font-semibold text-[#222222] hover:bg-[#f7f7f7] rounded-[20px] transition-colors"
+                className="px-4 py-2 text-sm font-semibold text-[#222222] hover:bg-[#933a12]/5 rounded-[20px] transition-colors"
               >
                 Đăng nhập
               </Link>
@@ -184,7 +181,7 @@ function MenuLink({
     <Link
       href={href}
       onClick={onClick}
-      className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#222222] hover:bg-[#f7f7f7] transition-colors"
+      className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#222222] hover:bg-[#933a12]/5 transition-colors"
     >
       <Icon className="w-4 h-4 text-[#6a6a6a]" />
       <span className={cn(bold && 'font-semibold')}>{label}</span>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo } from 'react';
 import {
@@ -63,7 +63,7 @@ function ContractCard({
 
   return (
     <article className="flex flex-col sm:flex-row gap-4 border border-[#dddddd] rounded-card p-4 sm:p-5 bg-white hover:shadow-[rgba(0,0,0,0.06)_0_2px_12px] transition-shadow">
-      <div className="size-25 sm:size-30 rounded-[10px] overflow-hidden shrink-0 bg-[#f7f7f7]">
+      <div className="size-25 sm:size-30 rounded-[10px] overflow-hidden shrink-0 bg-[#f7f8f0]">
         {imgUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={imgUrl} alt={property?.title ?? ''} className="size-full object-cover" loading="lazy" />
@@ -117,7 +117,7 @@ function ContractCard({
                 setIsDownloading(false);
               }}
               disabled={isDownloading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#dddddd] hover:bg-[#f7f7f7] disabled:opacity-60 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#dddddd] hover:bg-[#f7f8f0] disabled:opacity-60 rounded-lg transition-colors"
             >
               {isDownloading ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
               Tải PDF
@@ -127,7 +127,7 @@ function ContractCard({
             <button
               onClick={() => onSign(contract)}
               disabled={isSigningThis}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-60 rounded-lg transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#933a12] hover:bg-[#7a2f0e] disabled:opacity-60 rounded-lg transition-all active:scale-95"
             >
               {isSigningThis ? <Loader2 className="size-3.5 animate-spin" /> : <PenLine className="size-3.5" />}
               Ký hợp đồng
@@ -194,11 +194,11 @@ function GenerateModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative bg-white rounded-panel p-6 w-full max-w-lg shadow-[rgba(0,0,0,0.02)_0_0_0_1px,rgba(0,0,0,0.04)_0_2px_6px_0,rgba(0,0,0,0.1)_0_8px_32px_0] max-h-[90vh] overflow-y-auto">
-        <button onClick={onClose} className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-[#f7f7f7] hover:bg-[#dddddd] transition-colors">
+        <button onClick={onClose} className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-[#f7f8f0] hover:bg-[#dddddd] transition-colors">
           <X className="size-4 text-[#222222]" />
         </button>
 
-        <div className="size-12 bg-[#f7f7f7] rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="size-12 bg-[#f7f8f0] rounded-full flex items-center justify-center mx-auto mb-4">
           <FileText className="size-6 text-[#222222]" />
         </div>
         <h3 className="text-[17px] font-semibold text-[#222222] text-center mb-1">Tạo hợp đồng mới</h3>
@@ -212,7 +212,7 @@ function GenerateModal({
             Đặt phòng <span className="text-[#c13515]">*</span>
           </label>
           {loadingBookings ? (
-            <div className="h-11 bg-[#f7f7f7] animate-pulse rounded-lg" />
+            <div className="h-11 bg-[#f7f8f0] animate-pulse rounded-lg" />
           ) : eligibleBookings.length === 0 ? (
             <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <AlertCircle className="size-4 text-amber-600 shrink-0" />
@@ -242,7 +242,7 @@ function GenerateModal({
 
         {/* Booking summary */}
         {selectedBooking && (
-          <div className="mb-4 p-3 bg-[#f7f7f7] rounded-[10px] text-sm text-[#6a6a6a] space-y-1">
+          <div className="mb-4 p-3 bg-[#f7f8f0] rounded-[10px] text-sm text-[#6a6a6a] space-y-1">
             {(() => {
               const prop = asProperty(selectedBooking.property);
               const t = asUser(selectedBooking.tenant);
@@ -323,13 +323,13 @@ function GenerateModal({
         </div>
 
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors">
+          <button onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f8f0] transition-colors">
             Huỷ
           </button>
           <button
             onClick={handleSubmit}
             disabled={!selectedBookingId || isPending}
-            className="flex-1 py-2.5 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+            className="flex-1 py-2.5 text-sm font-semibold text-white bg-[#933a12] hover:bg-[#7a2f0e] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
           >
             {isPending ? (
               <span className="flex items-center justify-center gap-1.5">
@@ -356,7 +356,7 @@ function EmptyState({ tabId, onGenerate }: { tabId: TabId; onGenerate: () => voi
   const { message, sub } = EMPTY_CONFIG[tabId];
   return (
     <div className="flex flex-col items-center py-20 text-center">
-      <div className="size-16 bg-[#f7f7f7] rounded-full flex items-center justify-center mb-4">
+      <div className="size-16 bg-[#f7f8f0] rounded-full flex items-center justify-center mb-4">
         <FileText className="size-8 text-[#dddddd]" />
       </div>
       <h2 className="text-lg font-semibold text-[#222222] mb-2">{message}</h2>
@@ -364,7 +364,7 @@ function EmptyState({ tabId, onGenerate }: { tabId: TabId; onGenerate: () => voi
       {tabId === 'pending' && (
         <button
           onClick={onGenerate}
-          className="flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] rounded-lg transition-all active:scale-95"
+          className="flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-[#933a12] hover:bg-[#7a2f0e] rounded-lg transition-all active:scale-95"
         >
           <Plus className="size-4" />
           Tạo hợp đồng
@@ -418,7 +418,7 @@ export default function HostingContractsPage() {
         <h1 className="text-2xl font-bold text-[#222222]">Hợp đồng</h1>
         <button
           onClick={() => setShowGenerateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] rounded-lg transition-all active:scale-95 shrink-0"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#933a12] hover:bg-[#7a2f0e] rounded-lg transition-all active:scale-95 shrink-0"
         >
           <Plus className="size-4" />
           Tạo hợp đồng

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { Wrench, Clock, CheckCircle2, ArrowRight } from 'lucide-react';
@@ -46,16 +46,16 @@ export default function ProviderPage() {
 
       <Link
         href="/provider/services"
-        className="flex items-center gap-4 bg-white rounded-[14px] border border-[#dddddd] p-5 hover:border-[#ff385c] transition-all group"
+        className="flex items-center gap-4 bg-white rounded-[14px] border border-[#dddddd] p-5 hover:border-[#933a12] transition-all group"
       >
-        <div className="w-10 h-10 rounded-[10px] bg-[#f7f7f7] flex items-center justify-center flex-shrink-0">
-          <Wrench className="w-5 h-5 text-[#929292] group-hover:text-[#ff385c] transition-colors" />
+        <div className="w-10 h-10 rounded-[10px] bg-[#f7f8f0] flex items-center justify-center flex-shrink-0">
+          <Wrench className="w-5 h-5 text-[#929292] group-hover:text-[#933a12] transition-colors" />
         </div>
         <div className="flex-1">
           <p className="text-sm font-semibold text-[#222222]">Xem dịch vụ được giao</p>
           <p className="text-xs text-[#6a6a6a] mt-0.5">Cập nhật tiến độ và hoàn thành dịch vụ</p>
         </div>
-        <ArrowRight className="w-4 h-4 text-[#929292] group-hover:text-[#ff385c] transition-colors" />
+        <ArrowRight className="w-4 h-4 text-[#929292] group-hover:text-[#933a12] transition-colors" />
       </Link>
     </div>
   );

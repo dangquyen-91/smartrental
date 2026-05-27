@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Loader2, Search, UserCheck, X, Check } from 'lucide-react';
@@ -29,7 +29,7 @@ const STATUS_COLOR: Record<string, string> = {
   pending: 'bg-[#fefce8] text-[#ca8a04]',
   confirmed: 'bg-[#eff6ff] text-[#2563eb]',
   in_progress: 'bg-[#f0fdf4] text-[#16a34a]',
-  done: 'bg-[#f7f7f7] text-[#6a6a6a]',
+  done: 'bg-[#f7f8f0] text-[#6a6a6a]',
   cancelled: 'bg-[#fff1f2] text-[#e11d48]',
 };
 
@@ -161,7 +161,7 @@ export default function AdminServicesPage() {
       <div className="bg-white rounded-card border border-[#dddddd] overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center h-48">
-            <Loader2 className="w-6 h-6 animate-spin text-[#ff385c]" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#933a12]" />
           </div>
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48">
@@ -170,7 +170,7 @@ export default function AdminServicesPage() {
         ) : (
           <>
             {/* Column headers */}
-            <div className="hidden lg:grid grid-cols-[1fr_1fr_110px_110px_90px_200px] gap-4 px-5 py-2.5 border-b border-[#dddddd] bg-[#f7f7f7]">
+            <div className="hidden lg:grid grid-cols-[1fr_1fr_110px_110px_90px_200px] gap-4 px-5 py-2.5 border-b border-[#dddddd] bg-[#f7f8f0]">
               <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">Đơn hàng</p>
               <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">Khách thuê · Tài sản</p>
               <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">Trạng thái</p>
@@ -215,7 +215,7 @@ export default function AdminServicesPage() {
                   <span
                     className={cn(
                       'inline-flex items-center w-fit text-xs font-medium px-2 py-0.5 rounded-[4px]',
-                      STATUS_COLOR[order.status] ?? 'bg-[#f7f7f7] text-[#6a6a6a]',
+                      STATUS_COLOR[order.status] ?? 'bg-[#f7f8f0] text-[#6a6a6a]',
                     )}
                   >
                     {STATUS_LABEL[order.status] ?? order.status}
@@ -259,7 +259,7 @@ export default function AdminServicesPage() {
                         <button
                           onClick={cancelAssign}
                           title="Huỷ"
-                          className="w-7 h-7 rounded-full bg-[#f7f7f7] text-[#929292] flex items-center justify-center hover:bg-[#f0f0f0] transition-colors shrink-0"
+                          className="w-7 h-7 rounded-full bg-[#f7f8f0] text-[#929292] flex items-center justify-center hover:bg-[#f0f0f0] transition-colors shrink-0"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -286,8 +286,8 @@ export default function AdminServicesPage() {
                         className={cn(
                           'flex items-center gap-1.5 h-7 px-2.5 rounded-[6px] text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
                           isConfirmedUnassigned
-                            ? 'bg-[#ff385c] text-white hover:bg-[#e0314f]'
-                            : 'bg-[#f7f7f7] text-[#6a6a6a] hover:bg-[#eeeeee]',
+                            ? 'bg-[#933a12] text-white hover:bg-[#e0314f]'
+                            : 'bg-[#f7f8f0] text-[#6a6a6a] hover:bg-[#eeeeee]',
                         )}
                       >
                         <UserCheck className="w-3.5 h-3.5" />
@@ -301,7 +301,7 @@ export default function AdminServicesPage() {
 
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
-              <div className="flex items-center justify-between px-5 py-3 border-t border-[#dddddd] bg-[#f7f7f7]">
+              <div className="flex items-center justify-between px-5 py-3 border-t border-[#dddddd] bg-[#f7f8f0]">
                 <p className="text-xs text-[#6a6a6a]">
                   {(page - 1) * 20 + 1}–{Math.min(page * 20, pagination.total)} / {pagination.total}
                 </p>

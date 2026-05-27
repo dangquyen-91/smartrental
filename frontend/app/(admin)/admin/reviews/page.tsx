@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import Image from 'next/image';
@@ -117,7 +117,7 @@ function DeleteConfirmModal({
         </p>
 
         {/* Preview */}
-        <div className="bg-[#f7f7f7] rounded-[10px] p-3 mb-5 space-y-1.5">
+        <div className="bg-[#f7f8f0] rounded-[10px] p-3 mb-5 space-y-1.5">
           <StarRow rating={review.rating} />
           {review.comment && (
             <p className="text-sm text-[#444444] line-clamp-2">{review.comment}</p>
@@ -128,7 +128,7 @@ function DeleteConfirmModal({
           <button
             onClick={onCancel}
             disabled={isPending}
-            className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-[10px] hover:bg-[#f7f7f7] transition-colors disabled:opacity-50"
+            className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-[10px] hover:bg-[#f7f8f0] transition-colors disabled:opacity-50"
           >
             Giữ lại
           </button>
@@ -259,7 +259,7 @@ export default function AdminReviewsPage() {
       {/* Table */}
       <div className="bg-white rounded-[12px] border border-[#dddddd] overflow-hidden">
         {/* Column header */}
-        <div className="grid grid-cols-[1fr_auto] px-5 py-3 bg-[#f7f7f7] border-b border-[#ebebeb]">
+        <div className="grid grid-cols-[1fr_auto] px-5 py-3 bg-[#f7f8f0] border-b border-[#ebebeb]">
           <span className="text-xs font-semibold text-[#6a6a6a] uppercase tracking-wider">
             Đánh giá
           </span>
@@ -279,7 +279,7 @@ export default function AdminReviewsPage() {
           </>
         ) : reviews.length === 0 ? (
           <div className="flex flex-col items-center py-16 text-center">
-            <div className="w-12 h-12 rounded-full bg-[#f7f7f7] flex items-center justify-center mb-3">
+            <div className="w-12 h-12 rounded-full bg-[#f7f8f0] flex items-center justify-center mb-3">
               <Star className="w-6 h-6 text-[#dddddd]" />
             </div>
             <p className="text-sm font-semibold text-[#222222] mb-1">Không có đánh giá nào</p>
@@ -307,14 +307,14 @@ export default function AdminReviewsPage() {
             <button
               onClick={() => setPage((p) => p - 1)}
               disabled={page <= 1 || isFetching}
-              className="px-3 py-1.5 text-sm font-medium text-[#222222] border border-[#dddddd] rounded-[8px] hover:bg-[#f7f7f7] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 text-sm font-medium text-[#222222] border border-[#dddddd] rounded-[8px] hover:bg-[#f7f8f0] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               ← Trước
             </button>
             <button
               onClick={() => setPage((p) => p + 1)}
               disabled={page >= pagination.totalPages || isFetching}
-              className="px-3 py-1.5 text-sm font-medium text-[#222222] border border-[#dddddd] rounded-[8px] hover:bg-[#f7f7f7] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 text-sm font-medium text-[#222222] border border-[#dddddd] rounded-[8px] hover:bg-[#f7f8f0] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Tiếp →
             </button>

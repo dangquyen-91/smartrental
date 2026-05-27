@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo } from 'react';
 import { Wrench, CalendarDays, MapPin, User, Phone, Check, X, Loader2 } from 'lucide-react';
@@ -95,7 +95,7 @@ export default function HostingServicesPage() {
             {tabCounts[tab.id] > 0 && (
               <span className={cn(
                 'ml-1.5 text-xs px-1.5 py-0.5 rounded-full font-semibold',
-                activeTab === tab.id ? 'bg-[#222222] text-white' : 'bg-[#f7f7f7] text-[#6a6a6a]',
+                activeTab === tab.id ? 'bg-[#222222] text-white' : 'bg-[#f7f8f0] text-[#6a6a6a]',
               )}>
                 {tabCounts[tab.id]}
               </span>
@@ -124,7 +124,7 @@ export default function HostingServicesPage() {
             return (
               <div key={order.id} className="bg-white rounded-card border border-[#dddddd] p-5">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#f7f7f7] flex items-center justify-center text-2xl shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-[#f7f8f0] flex items-center justify-center text-2xl shrink-0">
                     {meta.emoji}
                   </div>
 
@@ -152,7 +152,7 @@ export default function HostingServicesPage() {
                             <span>{order.tenant.name}</span>
                           </div>
                           {order.tenant.phone && (
-                            <a href={`tel:${order.tenant.phone}`} className="flex items-center gap-1.5 text-xs text-[#ff385c] hover:underline">
+                            <a href={`tel:${order.tenant.phone}`} className="flex items-center gap-1.5 text-xs text-[#933a12] hover:underline">
                               <Phone className="w-3.5 h-3.5 shrink-0" />
                               {order.tenant.phone}
                             </a>
@@ -233,7 +233,7 @@ export default function HostingServicesPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => setModal(null)}
-                className="flex-1 py-2.5 text-sm font-semibold rounded-xl border border-[#dddddd] text-[#6a6a6a] hover:bg-[#f7f7f7] transition-colors"
+                className="flex-1 py-2.5 text-sm font-semibold rounded-xl border border-[#dddddd] text-[#6a6a6a] hover:bg-[#f7f8f0] transition-colors"
               >
                 Huỷ bỏ
               </button>

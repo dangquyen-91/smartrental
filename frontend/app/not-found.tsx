@@ -1,8 +1,8 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 
 export default function NotFoundPage() {
   return (
-    <div className="min-h-screen bg-[#f7f7f7] flex items-center justify-center px-6">
+    <div className="min-h-screen bg-[#f7f8f0] flex items-center justify-center px-6">
       <div className="max-w-md w-full text-center">
         <p className="text-[6rem] font-bold text-[#dddddd] leading-none">404</p>
         <h1 className="text-2xl font-bold text-[#222222] mt-4">Không tìm thấy trang</h1>
@@ -12,7 +12,7 @@ export default function NotFoundPage() {
         <div className="flex items-center justify-center gap-3 mt-8">
           <Link
             href="/"
-            className="px-5 py-2.5 text-sm font-medium text-white bg-[#ff385c] hover:bg-[#e00b41] rounded-[8px] transition-all active:scale-95"
+            className="px-5 py-2.5 text-sm font-medium text-white bg-[#933a12] hover:bg-[#7a2f0e] rounded-[8px] transition-all active:scale-95"
           >
             Về trang chủ
           </Link>

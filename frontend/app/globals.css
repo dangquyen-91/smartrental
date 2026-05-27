@@ -68,10 +68,10 @@
 
 :root {
   /* SmartRental brand palette */
-  --rausch: #ff385c;
-  --deep-rausch: #e00b41;
+  --rausch: #933a12;
+  --deep-rausch: #7a2f0e;
   --ink-black: #222222;
-  --soft-cloud: #f7f7f7;
+  --soft-cloud: #f7f8f0;
   --hairline-gray: #dddddd;
   --ash-gray: #6a6a6a;
   --mute-gray: #929292;
@@ -81,38 +81,38 @@
   --info-blue: #428bff;
 
   /* Semantic tokens mapped to SmartRental palette */
-  --background: #ffffff;
+  --background: #f7f8f0;
   --foreground: #222222;
   --card: #ffffff;
   --card-foreground: #222222;
   --popover: #ffffff;
   --popover-foreground: #222222;
-  --primary: #ff385c;
+  --primary: #933a12;
   --primary-foreground: #ffffff;
-  --secondary: #f7f7f7;
+  --secondary: #f7f8f0;
   --secondary-foreground: #222222;
-  --muted: #f7f7f7;
+  --muted: #f7f8f0;
   --muted-foreground: #6a6a6a;
-  --accent: #f7f7f7;
+  --accent: #f7f8f0;
   --accent-foreground: #222222;
   --destructive: #c13515;
   --border: #dddddd;
   --input: #dddddd;
-  --ring: #222222;
+  --ring: #933a12;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.5rem;
-  --sidebar: #f7f7f7;
+  --sidebar: #f7f8f0;
   --sidebar-foreground: #222222;
-  --sidebar-primary: #ff385c;
+  --sidebar-primary: #933a12;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f7f7f7;
+  --sidebar-accent: #f7f8f0;
   --sidebar-accent-foreground: #222222;
   --sidebar-border: #dddddd;
-  --sidebar-ring: #222222;
+  --sidebar-ring: #933a12;
 }
 
 .dark {
@@ -122,7 +122,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: #ff385c;
+  --primary: #933a12;
   --primary-foreground: #ffffff;
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -141,7 +141,7 @@
   --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: #ff385c;
+  --sidebar-primary: #933a12;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);

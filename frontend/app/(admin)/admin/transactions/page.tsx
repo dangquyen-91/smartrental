@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -91,7 +91,7 @@ function BookingPayoutRow({ booking }: { booking: Booking }) {
     <div className="px-5 py-4 border-b border-[#dddddd] last:border-0 space-y-3">
       <div className="flex items-start gap-4">
         <div className="w-9 h-9 rounded-full bg-[#fff0f3] flex items-center justify-center shrink-0 mt-0.5">
-          <Banknote className="w-4 h-4 text-[#ff385c]" />
+          <Banknote className="w-4 h-4 text-[#933a12]" />
         </div>
 
         <div className="flex-1 min-w-0 space-y-1">
@@ -106,12 +106,12 @@ function BookingPayoutRow({ booking }: { booking: Booking }) {
         </div>
 
         <div className="text-right shrink-0 space-y-0.5">
-          <p className="text-base font-bold text-[#ff385c]">{fmt(landlordPayout)}</p>
+          <p className="text-base font-bold text-[#933a12]">{fmt(landlordPayout)}</p>
           <p className="text-xs text-[#929292]">Platform: {fmt(platformFee)}</p>
           <button
             onClick={() => markPayout.mutate(booking.id)}
             disabled={markPayout.isPending}
-            className="mt-2 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#ff385c] text-white hover:bg-[#e00b41] transition-colors disabled:opacity-50"
+            className="mt-2 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#933a12] text-white hover:bg-[#7a2f0e] transition-colors disabled:opacity-50"
           >
             {markPayout.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
             Đã chuyển
@@ -255,7 +255,7 @@ export default function AdminTransactionsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-[#f7f7f7] p-1 rounded-[10px] w-fit">
+      <div className="flex gap-1 bg-[#f7f8f0] p-1 rounded-[10px] w-fit">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -271,7 +271,7 @@ export default function AdminTransactionsPage() {
             {(t.count ?? 0) > 0 && (
               <span className={cn(
                 'text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center',
-                tab === t.id ? 'bg-[#ff385c] text-white' : 'bg-[#dddddd] text-[#6a6a6a]',
+                tab === t.id ? 'bg-[#933a12] text-white' : 'bg-[#dddddd] text-[#6a6a6a]',
               )}>
                 {t.count}
               </span>
@@ -285,18 +285,18 @@ export default function AdminTransactionsPage() {
         <div className="space-y-4">
           {payoutsQuery.isLoading ? (
             <div className="flex items-center justify-center h-48">
-              <Loader2 className="w-6 h-6 animate-spin text-[#ff385c]" />
+              <Loader2 className="w-6 h-6 animate-spin text-[#933a12]" />
             </div>
           ) : (
             <>
               {/* Booking payouts */}
               {(payoutsData?.bookings.items.length ?? 0) > 0 && (
                 <div className="bg-white rounded-card border border-[#dddddd] overflow-hidden">
-                  <div className="px-5 py-3 border-b border-[#dddddd] bg-[#f7f7f7] flex items-center justify-between">
+                  <div className="px-5 py-3 border-b border-[#dddddd] bg-[#f7f8f0] flex items-center justify-between">
                     <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">
                       Payout chủ trọ — Booking
                     </p>
-                    <span className="text-xs font-bold text-[#ff385c]">
+                    <span className="text-xs font-bold text-[#933a12]">
                       {payoutsData?.bookings.total} chờ xử lý
                     </span>
                   </div>
@@ -309,7 +309,7 @@ export default function AdminTransactionsPage() {
               {/* Service payouts */}
               {(payoutsData?.services.items.length ?? 0) > 0 && (
                 <div className="bg-white rounded-card border border-[#dddddd] overflow-hidden">
-                  <div className="px-5 py-3 border-b border-[#dddddd] bg-[#f7f7f7] flex items-center justify-between">
+                  <div className="px-5 py-3 border-b border-[#dddddd] bg-[#f7f8f0] flex items-center justify-between">
                     <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">
                       Payout provider — Dịch vụ
                     </p>
@@ -341,13 +341,13 @@ export default function AdminTransactionsPage() {
         <div className="space-y-4">
           {refundsQuery.isLoading ? (
             <div className="flex items-center justify-center h-48">
-              <Loader2 className="w-6 h-6 animate-spin text-[#ff385c]" />
+              <Loader2 className="w-6 h-6 animate-spin text-[#933a12]" />
             </div>
           ) : (
             <>
               {(refundsData?.data.length ?? 0) > 0 ? (
                 <div className="bg-white rounded-card border border-[#dddddd] overflow-hidden">
-                  <div className="px-5 py-3 border-b border-[#dddddd] bg-[#f7f7f7] flex items-center justify-between">
+                  <div className="px-5 py-3 border-b border-[#dddddd] bg-[#f7f8f0] flex items-center justify-between">
                     <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">
                       Hoàn tiền người thuê — Booking đã huỷ
                     </p>
@@ -361,7 +361,7 @@ export default function AdminTransactionsPage() {
 
                   {/* Pagination */}
                   {refundsData?.pagination && refundsData.pagination.totalPages > 1 && (
-                    <div className="flex items-center justify-between px-5 py-3 border-t border-[#dddddd] bg-[#f7f7f7]">
+                    <div className="flex items-center justify-between px-5 py-3 border-t border-[#dddddd] bg-[#f7f8f0]">
                       <p className="text-xs text-[#6a6a6a]">
                         {(page - 1) * 20 + 1}–{Math.min(page * 20, refundsData.pagination.total)} /{' '}
                         {refundsData.pagination.total}

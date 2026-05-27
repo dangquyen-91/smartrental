@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -17,7 +17,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   if (!hasHydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#ff385c] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#933a12] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -25,7 +25,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-[#f7f8f0] flex flex-col">
       <AppNavbar />
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10">
         {children}

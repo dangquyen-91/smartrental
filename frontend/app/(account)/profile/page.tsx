@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -99,7 +99,7 @@ function SectionCard({
       className="bg-white border border-[#dddddd] rounded-card overflow-hidden"
     >
       <div className="flex items-start gap-3 px-6 py-5 border-b border-[#dddddd]">
-        <div className="size-9 rounded-full bg-[#f7f7f7] flex items-center justify-center shrink-0 mt-0.5">
+        <div className="size-9 rounded-full bg-[#f7f8f0] flex items-center justify-center shrink-0 mt-0.5">
           <Icon className="size-4 text-[#6a6a6a]" />
         </div>
         <div>
@@ -163,7 +163,7 @@ function PrimaryBtn({
       {...props}
       disabled={loading || props.disabled}
       className={cn(
-        'flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 rounded-lg transition-all active:scale-[0.98]',
+        'flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#933a12] hover:bg-[#7a2f0e] disabled:opacity-50 rounded-lg transition-all active:scale-[0.98]',
         className,
       )}
     >
@@ -182,7 +182,7 @@ function GhostBtn({
     <button
       {...props}
       className={cn(
-        'px-4 py-2 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors',
+        'px-4 py-2 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f8f0] transition-colors',
         className,
       )}
     >
@@ -202,7 +202,7 @@ function AvatarCard({
 }) {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const role = ROLE_META[user.role] ?? { label: user.role, style: 'bg-[#f7f7f7] text-[#6a6a6a]' };
+  const role = ROLE_META[user.role] ?? { label: user.role, style: 'bg-[#f7f8f0] text-[#6a6a6a]' };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -359,9 +359,9 @@ function QuickLinksCard() {
         <Link
           key={href}
           href={href}
-          className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#f7f7f7] transition-colors border-b border-[#f7f7f7] last:border-0 group"
+          className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#f7f8f0] transition-colors border-b border-[#f7f7f7] last:border-0 group"
         >
-          <div className="size-8 rounded-lg bg-[#f7f7f7] group-hover:bg-white flex items-center justify-center shrink-0 transition-colors border border-transparent group-hover:border-[#dddddd]">
+          <div className="size-8 rounded-lg bg-[#f7f8f0] group-hover:bg-white flex items-center justify-center shrink-0 transition-colors border border-transparent group-hover:border-[#dddddd]">
             <Icon className="size-4 text-[#6a6a6a]" />
           </div>
           <div className="flex-1 min-w-0">
@@ -459,7 +459,7 @@ function SecuritySection({
             {step === 'view' && (
               <button
                 onClick={() => setStep('phone')}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors shrink-0"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f8f0] transition-colors shrink-0"
               >
                 <Pencil className="size-3.5" />
                 {user.phone ? 'Thay đổi' : 'Thêm SĐT'}
@@ -470,7 +470,7 @@ function SecuritySection({
           {step === 'phone' && (
             <form
               onSubmit={phoneForm.handleSubmit(submitPhone)}
-              className="bg-[#f7f7f7] rounded-[10px] p-4 space-y-3"
+              className="bg-[#f7f8f0] rounded-[10px] p-4 space-y-3"
             >
               <p className="text-xs text-[#6a6a6a]">
                 {isLandlord
@@ -501,7 +501,7 @@ function SecuritySection({
           {step === 'otp' && (
             <form
               onSubmit={otpForm.handleSubmit(submitOtp)}
-              className="bg-[#f7f7f7] rounded-[10px] p-4 space-y-3"
+              className="bg-[#f7f8f0] rounded-[10px] p-4 space-y-3"
             >
               <p className="text-xs text-[#6a6a6a]">
                 Nhập mã OTP 6 chữ số đã gửi đến{' '}
@@ -537,7 +537,7 @@ function SecuritySection({
                       toast.error('Không thể gửi lại OTP.');
                     }
                   }}
-                  className="text-xs font-semibold text-[#ff385c] hover:underline"
+                  className="text-xs font-semibold text-[#933a12] hover:underline"
                 >
                   Gửi lại
                 </button>
@@ -668,7 +668,7 @@ function BankSection({
           </div>
           <button
             onClick={() => setEditing(true)}
-            className="mt-5 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+            className="mt-5 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f8f0] transition-colors"
           >
             <Pencil className="size-3.5" />
             Cập nhật thông tin
@@ -676,7 +676,7 @@ function BankSection({
         </div>
       ) : (
         <div className="flex flex-col items-center py-8 text-center">
-          <div className="size-14 bg-[#f7f7f7] rounded-full flex items-center justify-center mb-4">
+          <div className="size-14 bg-[#f7f8f0] rounded-full flex items-center justify-center mb-4">
             <CreditCard className="size-6 text-[#929292]" />
           </div>
           <p className="text-sm font-semibold text-[#222222] mb-1">
@@ -811,7 +811,7 @@ function NationalIdSection({
               });
               setEditing(true);
             }}
-            className="mt-5 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+            className="mt-5 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f8f0] transition-colors"
           >
             <Pencil className="size-3.5" />
             Cập nhật thông tin
@@ -819,7 +819,7 @@ function NationalIdSection({
         </div>
       ) : (
         <div className="flex flex-col items-center py-8 text-center">
-          <div className="size-14 bg-[#f7f7f7] rounded-full flex items-center justify-center mb-4">
+          <div className="size-14 bg-[#f7f8f0] rounded-full flex items-center justify-center mb-4">
             <Fingerprint className="size-6 text-[#929292]" />
           </div>
           <p className="text-sm font-semibold text-[#222222] mb-1">
@@ -858,7 +858,7 @@ export default function ProfilePage() {
   if (isLoading && !storedUser) {
     return (
       <div className="flex items-center justify-center py-32">
-        <div className="size-8 border-2 border-[#ff385c] border-t-transparent rounded-full animate-spin" />
+        <div className="size-8 border-2 border-[#933a12] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
