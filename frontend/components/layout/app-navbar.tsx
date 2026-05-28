@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useAuthStore } from '@/stores/auth.store';
 import { logoutApi } from '@/lib/api/auth.api';
 import { cn } from '@/lib/utils';
+import { LogoHorizontal } from '@/components/shared/logo';
 
 interface AppNavbarProps {
   /** Slot giữa navbar — dùng cho search bar ở trang chủ */
@@ -62,7 +63,7 @@ export default function AppNavbar({ center }: AppNavbarProps) {
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center shrink-0">
-          <img src="/logo-horizontal.svg" alt="SmartRental" className="h-10 w-auto" />
+          <LogoHorizontal className="h-10 w-auto" />
         </Link>
 
         {/* Center slot */}

@@ -8,6 +8,7 @@ import { PropertyCard } from '@/components/shared/property-card';
 import { PropertyCardSkeleton } from '@/components/ui/skeleton';
 import { useProperties } from '@/hooks/use-properties';
 import { useAuth } from '@/hooks/use-auth';
+import { LogoVertical } from '@/components/shared/logo';
 import { cn } from '@/lib/utils';
 import type { Property } from '@/types';
 import type { PropertyFilters } from '@/lib/api/properties.api';
@@ -452,7 +453,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
             <div>
-              <img src="/logo.svg" alt="SmartRental" className="h-14 w-auto mb-3" />
+              <LogoVertical className="h-14 w-auto mb-3" />
               <p className="text-sm text-ash-gray leading-relaxed">
                 Nền tảng thuê nhà thông minh cho thị trường Việt Nam.
               </p>

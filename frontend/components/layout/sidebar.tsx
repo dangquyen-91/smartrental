@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
+import { LogoWhite } from '@/components/shared/logo';
 
 interface NavItem {
   label: string;
@@ -82,7 +83,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className="h-16 flex items-center px-4 border-b border-white/10 flex-shrink-0">
         {!collapsed && (
           <Link href="/" className="flex items-center">
-            <img src="/logo-white.svg" alt="SmartRental" className="h-9 w-auto" />
+            <LogoWhite className="h-9 w-auto" />
           </Link>
         )}
         <button
