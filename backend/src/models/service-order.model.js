@@ -5,7 +5,7 @@ const SERVICE_STATUSES = ['pending', 'confirmed', 'in_progress', 'done', 'cancel
 
 const serviceOrderSchema = new mongoose.Schema(
   {
-    tenant: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    tenant: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     property: { type: mongoose.Schema.Types.ObjectId, ref: 'Property', required: true },
     type: { type: String, enum: SERVICE_TYPES, required: true },
     status: { type: String, enum: SERVICE_STATUSES, default: 'pending' },

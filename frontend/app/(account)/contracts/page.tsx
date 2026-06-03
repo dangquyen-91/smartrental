@@ -1,16 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Link from 'next/link';
 import {
   FileText,
   Home,
   Download,
-  PenLine,
   Loader2,
-  MapPin,
-  CalendarDays,
-  User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMyContracts, useSignContract } from '@/hooks/use-contracts';
@@ -25,9 +20,8 @@ import {
   downloadContractPdf,
 } from '@/lib/contract-utils';
 import { ContractCardSkeleton } from '@/components/ui/skeleton';
-import { SignatureBadge } from '@/components/shared/signature-badge';
 import { SignModal } from '@/components/shared/sign-modal';
-import type { Contract, Property, User as UserType } from '@/types';
+import type { Contract } from '@/types';
 
 // ─── contract card ────────────────────────────────────────────────────────────
 
@@ -44,61 +38,98 @@ function ContractCard({
   const property = asProperty(contract.property);
   const landlord = asUser(contract.landlord);
   const imgUrl = property ? getPrimaryImage(property) : null;
-  const address = property
-    ? [property.address?.district, property.address?.city].filter(Boolean).join(', ')
-    : '';
 
   const statusCfg = STATUS_CONFIG[contract.status];
   const canSign = contract.status === 'awaiting_signatures' && !contract.signedByTenant.signed;
 
   return (
-    <article className="flex flex-col sm:flex-row gap-4 border border-[#dddddd] rounded-card p-4 sm:p-5 bg-white hover:shadow-[rgba(0,0,0,0.06)_0_2px_12px] transition-shadow">
-      <div className="size-25 sm:size-30 rounded-[10px] overflow-hidden shrink-0 bg-[#f7f7f7]">
+    <div className="flex items-start self-stretch bg-white py-[21px] px-5 gap-4 rounded-[14px] border border-solid border-[#DDDDDD]">
+      {/* Property image */}
+      <div className="shrink-0 rounded-[10px] overflow-hidden bg-[#F7F7F7]">
         {imgUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imgUrl} alt={property?.title ?? ''} className="size-full object-cover" loading="lazy" />
+          <img src={imgUrl} alt={property?.title ?? ''} className="w-[120px] h-[120px] object-cover" loading="lazy" />
         ) : (
-          <div className="size-full flex items-center justify-center">
-            <Home className="size-8 text-[#dddddd]" />
+          <div className="w-[120px] h-[120px] flex items-center justify-center">
+            <Home className="size-8 text-[#929292]" />
           </div>
         )}
       </div>
 
-      <div className="flex-1 min-w-0 flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="text-[15px] font-semibold text-[#222222] leading-snug line-clamp-2">
+      {/* Content */}
+      <div className="flex-1">
+        {/* Title row + status */}
+        <div className="flex justify-between items-center self-stretch mb-2">
+          <span className="text-[#222222] text-[15px] font-bold line-clamp-2">
             {property?.title ?? 'Hợp đồng thuê phòng'}
-          </h3>
-          <span className={cn('shrink-0 text-[11px] font-semibold px-2.5 py-0.5 rounded-full', statusCfg.className)}>
-            {statusCfg.label}
           </span>
+          <div className={cn('shrink-0 text-[11px] font-semibold px-2.5 py-0.5 rounded-full', statusCfg.className)}>
+            {statusCfg.label}
+          </div>
         </div>
 
-        {address && (
-          <p className="flex items-center gap-1 text-sm text-[#6a6a6a]">
-            <MapPin className="size-3.5 shrink-0" />
-            {address}
-          </p>
+        {/* Address */}
+        {property && (
+          <div className="flex items-center self-stretch mb-[7px] gap-1">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7f6bc1cc-13f8-4bb4-889f-ba66de342a6b"
+              className="w-3.5 h-3.5 object-fill"
+              alt=""
+            />
+            <span className="text-[#6A6A6A] text-sm">
+              {[property.address?.district, property.address?.city].filter(Boolean).join(', ')}
+            </span>
+          </div>
         )}
 
+        {/* Landlord */}
         {landlord && (
-          <p className="flex items-center gap-1.5 text-sm text-[#6a6a6a]">
-            <User className="size-3.5 shrink-0" />
-            Chủ nhà: <span className="text-[#222222] font-medium ml-0.5">{landlord.name}</span>
-          </p>
+          <div className="flex items-center self-stretch mb-[7px] gap-1.5">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/5daf3aac-0839-4237-b7ae-8800698c0a40"
+              className="w-3.5 h-3.5 object-fill"
+              alt=""
+            />
+            <span className="text-[#6A6A6A] text-sm mr-2">Chủ nhà:</span>
+            <span className="text-[#222222] text-sm">{landlord.name}</span>
+          </div>
         )}
 
-        <p className="flex items-center gap-1.5 text-sm text-[#6a6a6a]">
-          <CalendarDays className="size-3.5 shrink-0" />
-          Tạo ngày {formatDate(contract.createdAt)}
-        </p>
-
-        <div className="flex flex-wrap gap-2 mt-0.5">
-          <SignatureBadge label="Bạn" signed={contract.signedByTenant.signed} signedAt={contract.signedByTenant.signedAt} />
-          <SignatureBadge label="Chủ nhà" signed={contract.signedByLandlord.signed} signedAt={contract.signedByLandlord.signedAt} />
+        {/* Date */}
+        <div className="flex items-center self-stretch mb-[7px] gap-1.5">
+          <img
+            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/daefa182-046c-4686-8dfd-f2f38cf31ba0"
+            className="w-3.5 h-3.5 object-fill"
+            alt=""
+          />
+          <span className="text-[#6A6A6A] text-sm">Tạo ngày {formatDate(contract.createdAt)}</span>
         </div>
 
-        <div className="flex items-center justify-end gap-2 mt-auto pt-3 border-t border-[#dddddd]">
+        {/* Signature badges */}
+        <div className="flex gap-[9px] mb-[9px]">
+          <button className="flex shrink-0 items-center bg-[#F7F7F7] text-left py-[5px] px-[11px] gap-[5px] rounded-lg border border-solid border-[#DDDDDD]">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d85e7988-abae-422f-8280-7ac0748fbf12"
+              className="w-3.5 h-3.5 object-fill"
+              alt=""
+            />
+            <span className="text-[#6A6A6A] text-xs">
+              Bạn · {contract.signedByTenant.signed ? 'Đã ký' : 'Chưa ký'}
+            </span>
+          </button>
+          <button className="flex shrink-0 items-center bg-[#F7F7F7] text-left py-[5px] px-[11px] gap-[5px] rounded-lg border border-solid border-[#DDDDDD]">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9d3e07d5-15b7-4725-9c61-e7fbf37a73cb"
+              className="w-3.5 h-3.5 object-fill"
+              alt=""
+            />
+            <span className="text-[#6A6A6A] text-xs">
+              Chủ nhà · {contract.signedByLandlord.signed ? 'Đã ký' : 'Chưa ký'}
+            </span>
+          </button>
+        </div>
+
+        {/* Footer: download + sign */}
+        <div className="flex justify-end items-start self-stretch pt-[13px] gap-[9px] border-t border-solid border-t-[#DDDDDD]">
           {contract.pdfUrl && (
             <button
               onClick={async () => {
@@ -107,32 +138,48 @@ function ContractCard({
                 setIsDownloading(false);
               }}
               disabled={isDownloading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#dddddd] hover:bg-[#f7f7f7] disabled:opacity-60 rounded-lg transition-colors"
+              className="flex shrink-0 items-center bg-transparent text-left py-[7px] px-[13px] gap-1.5 rounded-lg border border-solid border-[#2683EB]"
             >
-              {isDownloading ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
-              Tải PDF
+              {isDownloading ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <img
+                  src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/afb97ec9-29f4-4b60-b73f-c882ee134f2c"
+                  className="w-3.5 h-3.5 object-fill"
+                  alt=""
+                />
+              )}
+              <span className="text-[#222222] text-xs font-bold">Tải PDF</span>
             </button>
           )}
           {canSign && (
             <button
               onClick={() => onSign(contract)}
               disabled={isSigningThis}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-60 rounded-lg transition-all active:scale-95"
+              className="flex shrink-0 items-center bg-[#2683EB] text-left py-1.5 px-3 gap-1.5 rounded-lg border-0"
             >
-              {isSigningThis ? <Loader2 className="size-3.5 animate-spin" /> : <PenLine className="size-3.5" />}
-              Ký hợp đồng
+              {isSigningThis ? (
+                <Loader2 className="size-3.5 animate-spin text-white" />
+              ) : (
+                <img
+                  src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7dfe4f36-bc25-408c-a882-7c0889c04cec"
+                  className="w-3.5 h-3.5 object-fill"
+                  alt=""
+                />
+              )}
+              <span className="text-white text-xs font-bold">Ký hợp đồng</span>
             </button>
           )}
         </div>
       </div>
-    </article>
+    </div>
   );
 }
 
 // ─── empty state ──────────────────────────────────────────────────────────────
 
 const EMPTY_CONFIG: Record<TabId, { message: string; sub: string }> = {
-  pending:   { message: 'Không có hợp đồng chờ ký',    sub: 'Hợp đồng sẽ xuất hiện ở đây sau khi chủ nhà tạo từ đặt phòng đã thanh toán.' },
+  pending:   { message: 'Không có hợp đồng chờ ký',    sub: 'Hợp đồng sẽ xuất hiện ở đây sau khi chủ nhà tạo.' },
   signed:    { message: 'Chưa có hợp đồng hoàn thành', sub: 'Hợp đồng hoàn tất khi cả hai bên đã ký sẽ lưu ở đây.' },
   cancelled: { message: 'Không có hợp đồng bị huỷ',    sub: 'Các hợp đồng đã huỷ sẽ được lưu ở đây.' },
 };
@@ -140,17 +187,12 @@ const EMPTY_CONFIG: Record<TabId, { message: string; sub: string }> = {
 function EmptyState({ tabId }: { tabId: TabId }) {
   const { message, sub } = EMPTY_CONFIG[tabId];
   return (
-    <div className="flex flex-col items-center py-20 text-center">
-      <div className="size-16 bg-[#f7f7f7] rounded-full flex items-center justify-center mb-4">
-        <FileText className="size-8 text-[#dddddd]" />
+    <div className="flex flex-col items-center py-16 self-stretch">
+      <div className="size-16 bg-[#F7F7F7] rounded-full flex items-center justify-center mb-4">
+        <FileText className="size-8 text-[#929292]" />
       </div>
-      <h2 className="text-lg font-semibold text-[#222222] mb-2">{message}</h2>
-      <p className="text-sm text-[#6a6a6a] mb-6 max-w-xs leading-relaxed">{sub}</p>
-      {tabId === 'pending' && (
-        <Link href="/trips" className="px-6 py-3 text-sm font-semibold text-[#222222] border border-[#dddddd] hover:bg-[#f7f7f7] rounded-lg transition-colors">
-          Xem đơn thuê
-        </Link>
-      )}
+      <h3 className="text-base font-semibold text-[#222222] mb-1">{message}</h3>
+      <p className="text-sm text-[#6A6A6A] mb-6">{sub}</p>
     </div>
   );
 }
@@ -187,43 +229,52 @@ export default function ContractsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-[#222222]">Hợp đồng của tôi</h1>
+    <div className="flex flex-col self-stretch gap-6">
+      {/* Title row */}
+      <div className="flex justify-between items-center self-stretch">
+        <span className="text-[#222222] text-[25px] font-bold">Hợp đồng</span>
+      </div>
 
-      <div className="flex gap-1 border-b border-[#dddddd] overflow-x-auto">
+      {/* Tabs */}
+      <div className="flex items-center self-stretch gap-1 border-b border-solid border-b-[#DDDDDD]">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'pb-3 px-2 text-sm font-semibold transition-colors whitespace-nowrap flex items-center gap-1.5 shrink-0',
-              activeTab === tab.id
-                ? 'text-[#222222] border-b-2 border-[#222222] -mb-px'
-                : 'text-[#6a6a6a] hover:text-[#222222]',
+              'flex shrink-0 items-center pb-3 px-2 gap-2 transition-colors',
+              activeTab === tab.id ? 'pb-[11px] border-b-2 border-[#222222] -mb-px' : '',
             )}
           >
-            {tab.label}
-            {!isLoading && tabCounts[tab.id] > 0 && (
+            {tabCounts[tab.id] > 0 && activeTab !== tab.id ? (
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="text-[#222222] text-[15px] font-bold">{tab.label}</span>
+                <div className="flex flex-col shrink-0 items-start bg-[#222222] py-0.5 px-1.5 rounded-[26843550px]">
+                  <span className="text-white text-[11px] font-bold">{tabCounts[tab.id]}</span>
+                </div>
+              </div>
+            ) : (
               <span className={cn(
-                'text-[11px] font-semibold px-1.5 py-0.5 rounded-full',
-                activeTab === tab.id ? 'bg-[#222222] text-white' : 'bg-[#ebebeb] text-[#6a6a6a]',
+                'text-[15px] font-bold',
+                activeTab === tab.id ? 'text-[#222222]' : 'text-[#6A6A6A]',
               )}>
-                {tabCounts[tab.id]}
+                {tab.label}
               </span>
             )}
           </button>
         ))}
       </div>
 
+      {/* Contract list */}
       {isLoading ? (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4 self-stretch">
           <ContractCardSkeleton />
           <ContractCardSkeleton />
         </div>
       ) : filtered.length === 0 ? (
         <EmptyState tabId={activeTab} />
       ) : (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4 self-stretch">
           {filtered.map((contract) => (
             <ContractCard
               key={contract.id}
@@ -235,6 +286,7 @@ export default function ContractsPage() {
         </div>
       )}
 
+      {/* Sign modal */}
       {signingContract && (
         <SignModal
           contract={signingContract}

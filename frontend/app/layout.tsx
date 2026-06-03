@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Berkshire_Swash } from "next/font/google";
 import { Toaster } from "sonner";
 import Providers from "@/components/providers";
 import "./globals.css";
@@ -8,6 +8,12 @@ const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin", "vietnamese"],
   weight: ["400", "500", "600", "700"],
+});
+
+const berkshireSwash = Berkshire_Swash({
+  variable: "--font-berkshire",
+  weight: "400",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -21,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={`${inter.variable} h-full antialiased`}>
+    <html lang="vi" className={`${inter.variable} ${berkshireSwash.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <Providers>{children}</Providers>
         <Toaster richColors position="top-right" />

@@ -248,7 +248,7 @@ function ReservationCard({
               href={property ? `/properties/${property.id}` : '#'}
               className="min-w-0"
             >
-              <h3 className="text-[15px] font-semibold text-ink-black leading-snug line-clamp-2 hover:text-rausch transition-colors">
+              <h3 className="text-[15px] font-semibold text-ink-black leading-snug line-clamp-2 hover:text-[#2683EB] transition-colors">
                 {property?.title ?? 'Bất động sản'}
               </h3>
             </Link>
@@ -344,7 +344,7 @@ function ReservationCard({
               <button
                 onClick={() => onConfirm(booking.id)}
                 disabled={isConfirming}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-rausch hover:bg-deep-rausch disabled:opacity-60 rounded-lg transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#2683EB] hover:bg-blue-600 disabled:opacity-60 rounded-lg transition-all active:scale-95"
               >
                 {isConfirming ? (
                   <Loader2 className="size-3.5 animate-spin" />
@@ -405,7 +405,7 @@ function ReservationCard({
             <>
               <Link
                 href="/hosting/contracts"
-                className="flex items-center gap-0.5 text-xs font-semibold text-ink-black hover:text-rausch transition-colors"
+                className="flex items-center gap-0.5 text-xs font-semibold text-ink-black hover:text-[#2683EB] transition-colors"
               >
                 Hợp đồng
                 <ChevronRight className="size-3.5" />

@@ -1,76 +1,187 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { LogOut, User, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import AppNavbar from '@/components/layout/app-navbar';
 import { LayoutDashboard, Users, Building2, CreditCard, Wrench, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const NAV = [
-  { label: 'Tổng quan',  href: '/admin',              icon: LayoutDashboard, exact: true },
-  { label: 'Người dùng', href: '/admin/users',        icon: Users },
-  { label: 'Tin đăng',   href: '/admin/properties',   icon: Building2 },
-  { label: 'Dịch vụ',    href: '/admin/services',     icon: Wrench },
-  { label: 'Giao dịch',  href: '/admin/transactions', icon: CreditCard },
-  { label: 'Đánh giá',   href: '/admin/reviews',      icon: Star },
+const NAV_ITEMS = [
+  { label: 'Tổng quan',   href: '/admin',              icon: LayoutDashboard, exact: true },
+  { label: 'Người dùng',  href: '/admin/users',        icon: Users },
+  { label: 'Tin đăng',    href: '/admin/properties',   icon: Building2 },
+  { label: 'Dịch vụ',     href: '/admin/services',     icon: Wrench },
+  { label: 'Giao dịch',   href: '/admin/transactions', icon: CreditCard },
+  { label: 'Đánh giá',    href: '/admin/reviews',      icon: Star },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, user, hasHydrated, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     if (!isAuthenticated) { router.replace('/login'); return; }
     if (!isAdmin) router.replace('/');
-  }, [isAuthenticated, isAdmin, router]);
+  }, [hasHydrated, isAuthenticated, isAdmin, router]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   if (!isAuthenticated || !isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="w-8 h-8 border-2 border-[#ff385c] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-white">
-      <AppNavbar />
-      <div className="flex flex-1 overflow-hidden">
-        {/* Admin sidebar */}
-        <aside className="w-56 flex-shrink-0 border-r border-[#dddddd] bg-white flex flex-col">
-          <div className="px-4 py-4 border-b border-[#dddddd]">
-            <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">Quản trị hệ thống</p>
+    <div className="flex flex-col bg-white">
+      {/* ── Header with background banner ── */}
+      <div
+        className="bg-cover bg-center py-[22px] px-20"
+        style={{
+          backgroundImage: 'url(https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d0cf2b1a-a96d-4ad5-a5e6-13ba2cd73546)',
+        }}
+      >
+        <div className="flex justify-between items-center self-stretch">
+          {/* Logo */}
+          <Link href="/">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/eedac9f9-e8fc-4f08-9da9-576116b1b6d0"
+              alt="SmartRental"
+              className="w-[182px] h-[26px] object-fill cursor-pointer"
+            />
+          </Link>
+
+          {/* Right controls */}
+          <div className="flex shrink-0 items-center">
+            {/* Admin label */}
+            <div className="flex flex-col shrink-0 items-start py-2 px-4 mr-1 rounded-[20px]">
+              <span className="text-[#222222] text-sm font-bold">Trang quản trị</span>
+            </div>
+
+            {/* Avatar / User dropdown */}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                className="flex shrink-0 items-center py-1 mx-2 rounded-[20px] border border-solid border-[#DDDDDD] bg-white px-2 hover:bg-[#f7f7f7] transition-colors"
+              >
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#222222] text-white text-sm font-bold shrink-0">
+                  {user?.name?.charAt(0)?.toUpperCase() ?? 'A'}
+                </div>
+                <ChevronDown className={cn('w-3.5 h-3.5 text-[#6A6A6A] ml-1 transition-transform', menuOpen && 'rotate-180')} />
+              </button>
+
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-[#DDDDDD] rounded-xl shadow-lg py-2 z-50">
+                  <div className="px-4 py-2 border-b border-[#DDDDDD]">
+                    <p className="text-sm font-semibold text-[#222222] truncate">{user?.name}</p>
+                    <p className="text-xs text-[#6A6A6A] truncate">{user?.email}</p>
+                  </div>
+                  <button
+                    onClick={() => { setMenuOpen(false); logout(); router.push('/'); }}
+                    className="flex items-center w-full px-4 py-2.5 text-sm text-[#c13515] hover:bg-red-50 transition-colors gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Đăng xuất
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-          <nav className="flex-1 py-3">
-            <ul className="space-y-0.5 px-2">
-              {NAV.map(({ label, href, icon: Icon, exact }) => {
-                const isActive = exact ? pathname === href : pathname.startsWith(href);
-                return (
-                  <li key={href}>
+        </div>
+      </div>
+
+      {/* ── Body: sidebar + content + footer ── */}
+      <div className="flex flex-col items-start self-stretch flex-1">
+        {/* Wrapper: sidebar left + content right + footer bottom */}
+        <div className="flex flex-col items-start self-stretch flex-1 w-full">
+          <div className="flex items-start self-stretch flex-1">
+            {/* Sidebar */}
+            <aside className="w-[223px] shrink-0 flex flex-col items-start py-4 pl-4 border-r border-[#DDDDDD] border-b border-[#DDDDDD] bg-white">
+              <span className="text-[#929292] text-xs font-bold mb-3">QUẢN TRỊ HỆ THỐNG</span>
+
+              <div className="flex flex-col items-start gap-0.5">
+                {NAV_ITEMS.map(({ label, href, icon: Icon, exact }) => {
+                  const isActive = exact ? pathname === href : pathname.startsWith(href);
+                  return (
                     <Link
+                      key={href}
                       href={href}
                       className={cn(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-sm font-medium transition-colors',
+                        'flex items-center rounded-lg py-2.5 px-3 transition-colors w-full',
                         isActive
-                          ? 'bg-[#f7f7f7] text-[#222222] font-semibold'
-                          : 'text-[#6a6a6a] hover:bg-[#f7f7f7] hover:text-[#222222]',
+                          ? 'bg-[#F7F7F7] text-[#222222] font-bold text-sm'
+                          : 'text-[#6A6A6A] text-sm hover:bg-[#F7F7F7] hover:text-[#222222]',
                       )}
                     >
-                      <Icon className={cn('w-4 h-4 flex-shrink-0', isActive ? 'text-[#ff385c]' : 'text-[#929292]')} />
+                      <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
                       {label}
                     </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        </aside>
-        <main className="flex-1 overflow-y-auto bg-[#f7f7f7] p-8">
-          <div className="max-w-5xl mx-auto">{children}</div>
-        </main>
+                  );
+                })}
+              </div>
+            </aside>
+
+            {/* Main content */}
+            <main className="flex-1 bg-[#F7F7F7] pt-[31px] pb-[156px] px-24">
+              {children}
+            </main>
+          </div>
+
+          {/* Footer */}
+          <footer className="flex flex-col self-stretch bg-[#FFF546] py-[39px] px-20 gap-8 border-t border-[#DDDDDD] w-full">
+            <div className="flex items-center self-stretch gap-8">
+              <div className="flex flex-1 flex-col items-start pb-[90px] gap-3">
+                <img
+                  src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/663e7294-f80c-47d2-9a49-b8bc489d4354"
+                  alt="SmartRental"
+                  className="w-[182px] h-[25px] object-fill"
+                />
+                <span className="text-black text-sm">Nền tảng thuê nhà thông minh cho thị trường Việt Nam.</span>
+              </div>
+
+              <div className="flex flex-1 flex-col gap-[11px]">
+                <span className="text-black text-sm font-bold">Hỗ trợ</span>
+                <div className="flex flex-col gap-2">
+                  <span className="text-[#6A6A6A] text-sm">Trung tâm trợ giúp</span>
+                  <span className="text-[#6A6A6A] text-sm">Liên hệ</span>
+                  <span className="text-[#6A6A6A] text-sm">Chính sách bảo mật</span>
+                  <span className="text-[#6A6A6A] text-sm">Điều khoản sử dụng</span>
+                </div>
+              </div>
+
+              <div className="flex flex-1 flex-col gap-[11px]">
+                <span className="text-black text-sm font-bold">Dành cho chủ nhà</span>
+                <div className="flex flex-col gap-2">
+                  <span className="text-[#6A6A6A] text-sm">Đăng tin cho thuê</span>
+                  <span className="text-[#6A6A6A] text-sm">Quản lý đặt phòng</span>
+                  <span className="text-[#6A6A6A] text-sm">Hợp đồng điện tử</span>
+                  <span className="text-[#6A6A6A] text-sm">Gói dịch vụ</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-start self-stretch pt-[25px] border-t border-[#6C6C6C]">
+              <span className="text-[#6C6C6C] text-xs">© 2026 Smart Rental. Nền tảng thuê nhà thông minh.</span>
+            </div>
+          </footer>
+        </div>
       </div>
     </div>
   );

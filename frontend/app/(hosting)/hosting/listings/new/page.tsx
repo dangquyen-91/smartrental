@@ -73,7 +73,7 @@ function BankAccountModal({ userId, onSuccess }: { userId: string; onSuccess: ()
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
           <div className="space-y-1.5">
             <label className="block text-sm font-semibold text-ink-black">
-              Tên ngân hàng <span className="text-rausch">*</span>
+              Tên ngân hàng <span className="text-[#2683EB]">*</span>
             </label>
             <input
               {...register('bankName')}
@@ -85,7 +85,7 @@ function BankAccountModal({ userId, onSuccess }: { userId: string; onSuccess: ()
 
           <div className="space-y-1.5">
             <label className="block text-sm font-semibold text-ink-black">
-              Số tài khoản <span className="text-rausch">*</span>
+              Số tài khoản <span className="text-[#2683EB]">*</span>
             </label>
             <input
               {...register('accountNumber')}
@@ -98,7 +98,7 @@ function BankAccountModal({ userId, onSuccess }: { userId: string; onSuccess: ()
 
           <div className="space-y-1.5">
             <label className="block text-sm font-semibold text-ink-black">
-              Tên chủ tài khoản <span className="text-rausch">*</span>
+              Tên chủ tài khoản <span className="text-[#2683EB]">*</span>
             </label>
             <input
               {...register('accountName')}
@@ -124,7 +124,7 @@ function BankAccountModal({ userId, onSuccess }: { userId: string; onSuccess: ()
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 py-2.5 text-sm font-semibold text-white bg-rausch hover:bg-deep-rausch rounded-lg transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 text-sm font-semibold text-white bg-[#2683EB] hover:bg-blue-600 rounded-lg transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : 'Lưu & tiếp tục'}
             </button>
@@ -220,7 +220,7 @@ function InputField({
     <div>
       <label className="block text-sm font-semibold text-ink-black mb-1.5">
         {label}
-        {required && <span className="text-rausch ml-0.5">*</span>}
+        {required && <span className="text-[#2683EB] ml-0.5">*</span>}
       </label>
       {children}
       {hint && !error && <p className="mt-1 text-xs text-ash-gray">{hint}</p>}
@@ -319,7 +319,7 @@ function ImageUploader({
         className={cn(
           'relative border-2 border-dashed rounded-card p-8 flex flex-col items-center justify-center cursor-pointer transition-all',
           dragOver
-            ? 'border-rausch bg-rausch/5'
+            ? 'border-[#2683EB] bg-[#2683EB]/5'
             : 'border-hairline-gray hover:border-ash-gray bg-soft-cloud hover:bg-white',
           successCount >= MAX_FILES && 'pointer-events-none opacity-40',
         )}
@@ -353,7 +353,7 @@ function ImageUploader({
               key={img.localId}
               className={cn(
                 'relative aspect-4/3 rounded-[10px] overflow-hidden border-2 transition-all',
-                img.isPrimary && !img.error ? 'border-rausch' : 'border-transparent',
+                img.isPrimary && !img.error ? 'border-[#2683EB]' : 'border-transparent',
               )}
             >
               <img src={img.url} alt="" className="w-full h-full object-cover" />
@@ -392,7 +392,7 @@ function ImageUploader({
                   )}
 
                   {img.isPrimary && !img.error && (
-                    <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 bg-rausch text-white text-[10px] font-semibold rounded-full">
+                    <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 bg-[#2683EB] text-white text-[10px] font-semibold rounded-full">
                       <Star className="size-2.5 fill-white" />
                       Ảnh chính
                     </div>
@@ -708,7 +708,7 @@ export default function NewListingPage() {
           <button
             type="submit"
             disabled={isPending || images.some((i) => i.uploading)}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-rausch hover:bg-deep-rausch disabled:opacity-50 rounded-lg transition-all active:scale-95"
+            className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-[#2683EB] hover:bg-blue-600 disabled:opacity-50 rounded-lg transition-all active:scale-95"
           >
             {isPending ? <><Loader2 className="size-4 animate-spin" />Đang đăng...</> : 'Đăng tin'}
           </button>

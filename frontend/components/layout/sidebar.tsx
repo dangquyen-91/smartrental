@@ -135,13 +135,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <div className={cn('px-4 py-4 border-t border-white/10', collapsed && 'px-2')}>
           {collapsed ? (
             <div className="flex justify-center">
-              <div className="w-8 h-8 rounded-full bg-[#ff385c] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-[#2683EB] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                 {user.name.charAt(0).toUpperCase()}
               </div>
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#ff385c] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-[#2683EB] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                 {user.name.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0">

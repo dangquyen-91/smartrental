@@ -71,20 +71,27 @@ const updateCatalogEntry = async (type, { name, price, unit, isActive }) => {
 
 // ─── Create Service Order (tenant) ───────────────────────────────────────────
 
-const createServiceOrder = async ({ property: propertyId, type, scheduledAt, note }, tenantId) => {
+const createServiceOrder = async ({ property: propertyId, type, scheduledAt, note }, userId, userRole = 'tenant') => {
   const property = await Property.findOne({ _id: propertyId, isActive: true });
   if (!property) throw new AppError('Property not found', 404);
 
-  // Tenant phải có booking active tại property này
-  // TODO: re-enable in production
-  // const activeBooking = await Booking.findOne({
-  //   property: propertyId,
-  //   tenant:   tenantId,
-  //   status:   'active',
-  // });
-  // if (!activeBooking) {
-  //   throw new AppError('You must have an active booking at this property to order services', 403);
-  // }
+  if (userRole === 'tenant') {
+    // Tenant phải có booking active tại property này
+    // TODO: re-enable in production
+    // const activeBooking = await Booking.findOne({
+    //   property: propertyId,
+    //   tenant:   userId,
+    //   status:   'active',
+    // });
+    // if (!activeBooking) {
+    //   throw new AppError('You must have an active booking at this property to order services', 403);
+    // }
+  } else if (userRole === 'landlord') {
+    // Landlord chỉ được đặt dịch vụ cho property của mình
+    if (property.owner?.toString() !== userId) {
+      throw new AppError('You can only order services for your own properties', 403);
+    }
+  }
 
   const catalogEntry = await ServiceCatalog.findOne({ type, isActive: true });
   if (!catalogEntry) throw new AppError('Service type not available', 400);
@@ -95,7 +102,7 @@ const createServiceOrder = async ({ property: propertyId, type, scheduledAt, not
   }
 
   return ServiceOrder.create({
-    tenant: tenantId,
+    tenant: userRole === 'tenant' ? userId : null,
     property: propertyId,
     type,
     scheduledAt: scheduled,

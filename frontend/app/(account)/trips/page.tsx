@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -9,160 +10,82 @@ import {
   CalendarDays,
   MapPin,
   Clock,
-  CreditCard,
   X,
   ChevronRight,
   Home,
   CalendarCheck,
   Loader2,
-  Timer,
   Star,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMyBookings, useCancelBooking } from '@/hooks/use-bookings';
 import { useCreateBookingPayment } from '@/hooks/use-payment';
 import { ReviewFormModal } from '@/components/shared/review-form-modal';
+import { useAuth } from '@/hooks/use-auth';
 import type { Booking, Property } from '@/types';
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<
-  Booking['status'],
-  { label: string; className: string }
-> = {
-  pending: {
-    label: 'Chờ xác nhận',
-    className: 'bg-amber-50 text-amber-700 border border-amber-200',
-  },
-  confirmed: {
-    label: 'Đã xác nhận',
-    className: 'bg-blue-50 text-blue-700 border border-blue-200',
-  },
-  active: {
-    label: 'Đang thuê',
-    className: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-  },
-  completed: {
-    label: 'Hoàn thành',
-    className: 'bg-stone-100 text-stone-500 border border-stone-200',
-  },
-  cancelled: {
-    label: 'Đã huỷ',
-    className: 'bg-red-50 text-[#c13515] border border-red-100',
-  },
-  rejected: {
-    label: 'Bị từ chối',
-    className: 'bg-red-50 text-[#c13515] border border-red-100',
-  },
+const STATUS_CONFIG: Record<Booking['status'], { label: string; className: string }> = {
+  pending:   { label: 'Chờ xác nhận', className: 'bg-amber-50 text-amber-700 border border-amber-200' },
+  confirmed: { label: 'Đã xác nhận',  className: 'bg-blue-50 text-blue-700 border border-blue-200' },
+  active:    { label: 'Đang thuê',     className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+  completed:  { label: 'Hoàn thành',    className: 'bg-stone-100 text-stone-500 border border-stone-200' },
+  cancelled: { label: 'Đã huỷ',        className: 'bg-red-50 text-[#c13515] border border-red-100' },
+  rejected:  { label: 'Bị từ chối',    className: 'bg-red-50 text-[#c13515] border border-red-100' },
 };
 
-const PAYMENT_CONFIG: Record<
-  Booking['paymentStatus'],
-  { label: string; className: string }
-> = {
-  unpaid: { label: 'Chưa thanh toán', className: 'text-amber-600' },
-  paid: { label: 'Đã thanh toán', className: 'text-emerald-600' },
-  refunded: { label: 'Đã hoàn tiền', className: 'text-blue-600' },
+const PAYMENT_CONFIG: Record<Booking['paymentStatus'], { label: string; className: string }> = {
+  unpaid:    { label: 'Chưa thanh toán', className: 'text-amber-600' },
+  paid:      { label: 'Đã thanh toán',  className: 'text-emerald-600' },
+  refunded:  { label: 'Đã hoàn tiền',    className: 'text-blue-600' },
 };
 
 type TabId = 'upcoming' | 'active' | 'completed' | 'cancelled';
 
 const TABS: { id: TabId; label: string; statuses: Booking['status'][] }[] = [
-  { id: 'upcoming', label: 'Sắp tới', statuses: ['pending', 'confirmed'] },
-  { id: 'active', label: 'Đang thuê', statuses: ['active'] },
-  { id: 'completed', label: 'Đã hoàn thành', statuses: ['completed'] },
-  { id: 'cancelled', label: 'Đã huỷ', statuses: ['cancelled', 'rejected'] },
+  { id: 'upcoming',   label: 'Sắp tới',         statuses: ['pending', 'confirmed'] },
+  { id: 'active',     label: 'Đang thuê',        statuses: ['active'] },
+  { id: 'completed',  label: 'Đã hoàn thành',    statuses: ['completed'] },
+  { id: 'cancelled', label: 'Đã huỷ',            statuses: ['cancelled', 'rejected'] },
 ];
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 function formatVnd(n: number) {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(n);
+  return new Intl.NumberFormat('vi-VN').format(n) + '₫';
 }
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
+    day: '2-digit', month: '2-digit', year: 'numeric',
   });
 }
 
 function getPrimaryImage(property: Property): string | null {
   if (!property.images?.length) return null;
-  return (
-    property.images.find((i) => i.isPrimary)?.url ??
-    property.images[0]?.url ??
-    null
-  );
+  return property.images.find((i) => i.isPrimary)?.url ?? property.images[0]?.url ?? null;
 }
-
-// ─── payment deadline countdown ───────────────────────────────────────────────
 
 function getTimeLeft(deadline: string): string | null {
   const diff = new Date(deadline).getTime() - Date.now();
   if (diff <= 0) return null;
   const hours = Math.floor(diff / (1000 * 60 * 60));
-  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const mins  = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
   return hours > 0 ? `${hours} giờ ${mins} phút` : `${mins} phút`;
-}
-
-function PaymentDeadlineCountdown({
-  deadline,
-  onExpired,
-}: {
-  deadline: string;
-  onExpired?: () => void;
-}) {
-  const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(deadline));
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const left = getTimeLeft(deadline);
-      setTimeLeft(left);
-      if (!left) onExpired?.();
-    }, 30_000);
-    return () => clearInterval(interval);
-  }, [deadline, onExpired]);
-
-  if (!timeLeft) {
-    return (
-      <span className="flex items-center gap-1 text-xs font-medium text-[#c13515]">
-        <Timer className="size-3.5 shrink-0" />
-        Đã hết hạn thanh toán
-      </span>
-    );
-  }
-
-  return (
-    <span className="flex items-center gap-1 text-xs font-medium text-amber-600">
-      <Timer className="size-3.5 shrink-0" />
-      Còn {timeLeft} để thanh toán
-    </span>
-  );
 }
 
 // ─── skeleton ─────────────────────────────────────────────────────────────────
 
 function BookingCardSkeleton() {
   return (
-    <div className="animate-pulse flex gap-4 border border-hairline-gray rounded-[14px] p-4 sm:p-5 bg-white">
-      <div className="size-[100px] sm:size-[120px] rounded-[10px] bg-[#ebebeb] shrink-0" />
-      <div className="flex-1 space-y-2.5">
-        <div className="flex justify-between items-start gap-2">
-          <div className="h-4 bg-[#ebebeb] rounded w-2/3" />
-          <div className="h-5 w-20 bg-[#ebebeb] rounded-full shrink-0" />
-        </div>
-        <div className="h-3.5 bg-[#ebebeb] rounded w-1/2" />
-        <div className="h-3.5 bg-[#ebebeb] rounded w-3/4" />
-        <div className="flex justify-between items-center pt-2 mt-auto border-t border-[#ebebeb]">
-          <div className="h-4 bg-[#ebebeb] rounded w-1/3" />
-          <div className="h-8 bg-[#ebebeb] rounded-lg w-24" />
-        </div>
+    <div className="animate-pulse flex gap-4 border border-[#DDDDDD] rounded-[14px] p-5 bg-white">
+      <div className="size-[120px] rounded-[10px] bg-[#ebebeb] shrink-0" />
+      <div className="flex-1 space-y-3 pt-2">
+        <div className="h-5 bg-[#ebebeb] rounded w-3/4" />
+        <div className="h-4 bg-[#ebebeb] rounded w-1/2" />
+        <div className="h-4 bg-[#ebebeb] rounded w-2/3" />
+        <div className="h-8 bg-[#ebebeb] rounded w-1/3 mt-4" />
       </div>
     </div>
   );
@@ -187,132 +110,109 @@ function BookingCard({
     typeof booking.property === 'object' ? booking.property : null;
   const imgUrl = property ? getPrimaryImage(property) : null;
   const address = property
-    ? [property.address?.district, property.address?.city]
-        .filter(Boolean)
-        .join(', ')
+    ? [property.address?.ward, property.address?.district, property.address?.city]
+        .filter(Boolean).join(', ')
     : '';
 
-  const statusCfg = STATUS_CONFIG[booking.status];
+  const statusCfg  = STATUS_CONFIG[booking.status];
   const paymentCfg = PAYMENT_CONFIG[booking.paymentStatus];
 
-  const canCancel =
-    booking.status === 'pending' || booking.status === 'confirmed';
-  const canPay =
-    booking.status === 'active' && booking.paymentStatus === 'unpaid';
-  const awaitingCheckin =
-    booking.status === 'confirmed';
-  const showContract    = ['active', 'completed'].includes(booking.status);
-  const canReview       = booking.status === 'completed';
+  const canPay    = (booking.status === 'confirmed' || booking.status === 'pending') && booking.paymentStatus === 'unpaid';
+  const canCancel = booking.status === 'pending' || booking.status === 'confirmed';
+  const canReview = booking.status === 'completed';
+  const showContract = ['active', 'completed'].includes(booking.status);
+  const isAwaiting   = booking.status === 'confirmed';
+
+  const countdown = canPay && booking.paymentDeadline
+    ? getTimeLeft(booking.paymentDeadline)
+    : null;
 
   return (
-    <article className="flex flex-col sm:flex-row gap-4 border border-hairline-gray rounded-[14px] p-4 sm:p-5 bg-white hover:shadow-[rgba(0,0,0,0.06)_0_2px_12px] transition-shadow">
-      {/* Property image */}
-      <Link
-        href={property ? `/properties/${property.id}` : '#'}
-        className="block size-[100px] sm:size-[120px] rounded-[10px] overflow-hidden shrink-0 bg-soft-cloud"
-      >
+    <div className="flex items-start bg-white py-[21px] px-5 gap-4 rounded-[14px] border border-solid border-[#DDDDDD]">
+      <div className="flex flex-col shrink-0 items-center bg-[#F7F7F7] rounded-[10px] overflow-hidden">
         {imgUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={imgUrl}
-            alt={property?.title ?? ''}
-            className="size-full object-cover hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-          />
+          <Image src={imgUrl} alt={property?.title ?? ''} width={120} height={120}
+            className="w-[120px] h-[120px] object-cover" />
         ) : (
-          <div className="size-full flex items-center justify-center">
-            <Home className="size-8 text-hairline-gray" />
+          <div className="w-[120px] h-[120px] flex items-center justify-center">
+            <Home className="size-8 text-[#929292]" />
           </div>
         )}
-      </Link>
+      </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0 flex flex-col gap-2">
-        {/* Title + status */}
-        <div className="flex items-start justify-between gap-3">
-          <Link
-            href={property ? `/properties/${property.id}` : '#'}
-            className="min-w-0"
-          >
-            <h3 className="text-[15px] font-semibold text-ink-black leading-snug line-clamp-2 hover:text-rausch transition-colors">
-              {property?.title ?? 'Bất động sản'}
-            </h3>
-          </Link>
-          <span
-            className={cn(
-              'shrink-0 text-[11px] font-semibold px-2.5 py-0.5 rounded-full',
-              statusCfg.className,
-            )}
-          >
+      <div className="flex flex-col flex-1 items-center min-w-0">
+        <div className="flex items-center w-full mb-2 gap-2">
+          <span className="text-[#222222] text-[15px] font-bold flex-1 truncate">
+            {property?.title ?? 'Bất động sản'}
+          </span>
+          <span className={cn(
+            'shrink-0 text-[11px] font-semibold px-2.5 py-0.5 rounded-full',
+            statusCfg.className,
+          )}>
             {statusCfg.label}
           </span>
         </div>
 
-        {/* Location */}
         {address && (
-          <p className="flex items-center gap-1 text-sm text-ash-gray">
-            <MapPin className="size-3.5 shrink-0" />
-            {address}
-          </p>
+          <div className="flex items-center mb-1.5 w-full">
+            <MapPin className="size-3.5 mr-1 text-[#929292] shrink-0" />
+            <span className="text-[#6A6A6A] text-sm truncate">{address}</span>
+          </div>
         )}
 
-        {/* Dates + duration */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span className="flex items-center gap-1.5 text-sm text-charcoal">
-            <CalendarDays className="size-3.5 text-ash-gray shrink-0" />
-            {formatDate(booking.startDate)} – {formatDate(booking.endDate)}
-          </span>
-          <span className="flex items-center gap-1.5 text-sm text-ash-gray">
-            <Clock className="size-3.5 shrink-0" />
-            {booking.duration} tháng
-          </span>
+        <div className="flex items-center mb-[7px] w-full">
+          <div className="flex shrink-0 items-center mr-4 gap-1.5">
+            <CalendarDays className="size-3.5 text-[#929292] shrink-0" />
+            <span className="text-[#3F3F3F] text-sm">
+              {formatDate(booking.startDate)} – {formatDate(booking.endDate)}
+            </span>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Clock className="size-3.5 text-[#929292] shrink-0" />
+            <span className="text-[#6A6A6A] text-sm">{booking.duration} tháng</span>
+          </div>
         </div>
 
-        {/* Payment deadline countdown — shown after check-in, before payment */}
-        {canPay && booking.paymentDeadline && (
-          <PaymentDeadlineCountdown deadline={booking.paymentDeadline} />
+        {countdown && (
+          <div className="flex items-center mb-[7px] w-full">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/cec79b00-4c3c-4f41-a518-a61aeca37613"
+              className="w-3.5 h-3.5 mr-1 object-fill"
+              alt=""
+            />
+            <span className="text-[#E17100] text-xs">Còn {countdown} để thanh toán</span>
+          </div>
         )}
 
-        {/* Awaiting landlord check-in */}
-        {awaitingCheckin && (
-          <span className="flex items-center gap-1.5 text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 w-fit">
+        {isAwaiting && (
+          <span className="flex items-center gap-1.5 text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 w-fit mb-[7px]">
             <CalendarCheck className="size-3.5 shrink-0" />
             Đã xác nhận — chờ chủ nhà check-in
           </span>
         )}
 
-        {/* Footer: price + actions */}
-        <div className="flex items-center justify-between gap-2 mt-auto pt-3 border-t border-hairline-gray">
-          <div className="flex items-baseline gap-1.5 min-w-0">
-            <span className="text-sm font-semibold text-ink-black">
-              {formatVnd(booking.totalPrice)}
-            </span>
-            <span
-              className={cn('text-xs font-medium shrink-0', paymentCfg.className)}
-            >
-              · {paymentCfg.label}
-            </span>
+        <div className="flex items-start pt-3 pb-[1px] border-t border-solid border-t-[#DDDDDD] w-full">
+          <div className="flex shrink-0 items-center mr-auto gap-[7px]">
+            <span className="text-[#222222] text-sm font-bold">{formatVnd(booking.totalPrice)}</span>
+            <span className={cn('text-xs', paymentCfg.className)}>· {paymentCfg.label}</span>
           </div>
-
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex shrink-0 items-center gap-2">
             {canPay && (
               <button
                 onClick={() => onPay(booking.id)}
                 disabled={isPayingThis}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-rausch hover:bg-deep-rausch disabled:opacity-60 rounded-lg transition-all active:scale-95"
+                className="flex shrink-0 items-center bg-[#FF385C] text-left py-1.5 px-3 gap-1.5 rounded-lg border-0 disabled:opacity-60"
               >
-                {isPayingThis ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <CreditCard className="size-3.5" />
-                )}
-                Thanh toán
+                {isPayingThis
+                  ? <Loader2 className="size-3.5 animate-spin text-white" />
+                  : <img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/1faf59bd-5913-4ace-9519-0cc4a813f6de" className="w-3.5 h-3.5 object-fill" alt="" />}
+                <span className="text-white text-xs font-bold">Thanh toán</span>
               </button>
             )}
             {canReview && (
               <button
                 onClick={() => onReview(booking.id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-600 border border-amber-200 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
+                className="flex shrink-0 items-center gap-1.5 py-1.5 px-3 text-xs font-semibold text-amber-600 border border-amber-200 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
               >
                 <Star className="size-3.5 fill-amber-400 text-amber-400" />
                 Đánh giá
@@ -321,71 +221,45 @@ function BookingCard({
             {canCancel && (
               <button
                 onClick={() => onCancel(booking.id)}
-                className="px-3 py-1.5 text-xs font-semibold text-ash-gray border border-hairline-gray hover:border-ink-black hover:text-ink-black rounded-lg transition-colors"
+                className="px-3 py-1.5 text-xs font-semibold text-[#6A6A6A] border border-[#DDDDDD] hover:border-[#222222] hover:text-[#222222] rounded-lg transition-colors"
               >
                 Huỷ
               </button>
             )}
             {showContract && (
-              <Link
-                href="/contracts"
-                className="flex items-center gap-0.5 text-xs font-semibold text-ink-black hover:text-rausch transition-colors"
-              >
-                Hợp đồng
-                <ChevronRight className="size-3.5" />
-              </Link>
+              <div className="flex shrink-0 items-center gap-[5px]">
+                <span className="text-[#222222] text-xs font-bold">Hợp đồng</span>
+                <ChevronRight className="size-3.5 text-[#6A6A6A]" />
+              </div>
             )}
           </div>
         </div>
       </div>
-    </article>
+    </div>
   );
 }
 
 // ─── cancel modal ─────────────────────────────────────────────────────────────
 
-function CancelModal({
-  onConfirm,
-  onClose,
-  isPending,
-}: {
-  onConfirm: () => void;
-  onClose: () => void;
-  isPending: boolean;
-}) {
+function CancelModal({ onConfirm, onClose, isPending }: { onConfirm: () => void; onClose: () => void; isPending: boolean }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-[20px] p-6 w-full max-w-sm shadow-[rgba(0,0,0,0.02)_0_0_0_1px,rgba(0,0,0,0.04)_0_2px_6px_0,rgba(0,0,0,0.1)_0_8px_32px_0]">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-soft-cloud hover:bg-hairline-gray transition-colors"
-        >
-          <X className="size-4 text-ink-black" />
+      <div className="relative bg-white rounded-[20px] p-6 w-full max-w-sm shadow-lg">
+        <button onClick={onClose} className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-[#F6F8FB] hover:bg-[#ebebeb] transition-colors">
+          <X className="size-4 text-[#222222]" />
         </button>
-
         <div className="size-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
           <CalendarDays className="size-6 text-[#c13515]" />
         </div>
-        <h3 className="text-[17px] font-semibold text-ink-black text-center mb-2">
-          Huỷ yêu cầu đặt phòng?
-        </h3>
-        <p className="text-sm text-ash-gray text-center mb-6">
-          Yêu cầu này sẽ bị huỷ và không thể khôi phục.
-        </p>
-
+        <h3 className="text-[17px] font-semibold text-[#222222] text-center mb-2">Huỷ yêu cầu đặt phòng?</h3>
+        <p className="text-sm text-[#6A6A6A] text-center mb-6">Yêu cầu này sẽ bị huỷ và không thể khôi phục.</p>
         <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 text-sm font-semibold text-ink-black border border-hairline-gray rounded-lg hover:bg-soft-cloud transition-colors"
-          >
+          <button onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#DDDDDD] rounded-lg hover:bg-[#F6F8FB] transition-colors">
             Giữ lại
           </button>
-          <button
-            onClick={onConfirm}
-            disabled={isPending}
-            className="flex-1 py-2.5 text-sm font-semibold text-white bg-[#c13515] hover:bg-[#b32505] disabled:opacity-60 rounded-lg transition-colors"
-          >
+          <button onClick={onConfirm} disabled={isPending}
+            className="flex-1 py-2.5 text-sm font-semibold text-white bg-[#c13515] hover:bg-[#b32505] disabled:opacity-60 rounded-lg transition-colors">
             {isPending ? 'Đang huỷ...' : 'Xác nhận huỷ'}
           </button>
         </div>
@@ -396,46 +270,24 @@ function CancelModal({
 
 // ─── empty state ──────────────────────────────────────────────────────────────
 
-const EMPTY_CONFIG: Record<
-  TabId,
-  { message: string; sub: string; showCTA: boolean }
-> = {
-  upcoming: {
-    message: 'Chưa có chuyến đi nào sắp tới',
-    sub: 'Khi bạn đặt phòng thành công, chuyến đi sẽ xuất hiện ở đây.',
-    showCTA: true,
-  },
-  active: {
-    message: 'Chưa có chuyến đi đang thuê',
-    sub: 'Các booking trong thời hạn thuê sẽ hiển thị ở đây.',
-    showCTA: false,
-  },
-  completed: {
-    message: 'Chưa có chuyến đi hoàn thành',
-    sub: 'Lịch sử thuê phòng của bạn sẽ được lưu ở đây.',
-    showCTA: false,
-  },
-  cancelled: {
-    message: 'Không có yêu cầu bị huỷ',
-    sub: 'Các yêu cầu bị huỷ hoặc từ chối sẽ xuất hiện ở đây.',
-    showCTA: false,
-  },
+const EMPTY_CONFIG: Record<TabId, { message: string; sub: string; showCTA: boolean }> = {
+  upcoming:   { message: 'Chưa có chuyến đi nào sắp tới',   sub: 'Khi bạn đặt phòng thành công, chuyến đi sẽ xuất hiện ở đây.',    showCTA: true },
+  active:     { message: 'Chưa có chuyến đi đang thuê',      sub: 'Các booking trong thời hạn thuê sẽ hiển thị ở đây.',                showCTA: false },
+  completed:  { message: 'Chưa có chuyến đi hoàn thành',    sub: 'Lịch sử thuê phòng của bạn sẽ được lưu ở đây.',                  showCTA: false },
+  cancelled:  { message: 'Không có yêu cầu bị huỷ',        sub: 'Các yêu cầu bị huỷ hoặc từ chối sẽ xuất hiện ở đây.',           showCTA: false },
 };
 
 function EmptyState({ tabId }: { tabId: TabId }) {
   const { message, sub, showCTA } = EMPTY_CONFIG[tabId];
   return (
-    <div className="flex flex-col items-center py-20 text-center">
-      <div className="size-16 bg-soft-cloud rounded-full flex items-center justify-center mb-4">
-        <CalendarCheck className="size-8 text-hairline-gray" />
+    <div className="flex flex-col items-center py-16 w-full">
+      <div className="size-16 bg-[#F7F7F7] rounded-full flex items-center justify-center mb-4">
+        <CalendarCheck className="size-8 text-[#929292]" />
       </div>
-      <h2 className="text-lg font-semibold text-ink-black mb-2">{message}</h2>
-      <p className="text-sm text-ash-gray mb-6 max-w-xs leading-relaxed">{sub}</p>
+      <h3 className="text-base font-semibold text-[#222222] mb-1">{message}</h3>
+      <p className="text-sm text-[#6A6A6A] mb-6">{sub}</p>
       {showCTA && (
-        <Link
-          href="/"
-          className="px-6 py-3 text-sm font-semibold text-white bg-rausch hover:bg-deep-rausch rounded-[8px] transition-all active:scale-95"
-        >
+        <Link href="/" className="px-5 py-2.5 bg-[#FF385C] text-white font-semibold rounded-lg text-sm hover:bg-pink-600 transition-colors">
           Tìm phòng ngay
         </Link>
       )}
@@ -473,17 +325,13 @@ function PaymentToast() {
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function TripsPage() {
-  const [activeTab, setActiveTab]     = useState<TabId>('upcoming');
-  const [cancelId, setCancelId]             = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabId>('upcoming');
+  const [cancelId, setCancelId] = useState<string | null>(null);
   const [reviewBookingId, setReviewBookingId] = useState<string | null>(null);
 
   const { data, isLoading } = useMyBookings();
   const { mutate: cancelBooking, isPending: isCancelling } = useCancelBooking();
-  const {
-    mutate: createPayment,
-    isPending: isCreatingPayment,
-    variables: payingBookingId,
-  } = useCreateBookingPayment();
+  const { mutate: createPayment, isPending: isCreatingPayment, variables: payingBookingId } = useCreateBookingPayment();
 
   const allBookings = useMemo<Booking[]>(() => data?.data ?? [], [data?.data]);
 
@@ -493,17 +341,13 @@ export default function TripsPage() {
   }, [allBookings, activeTab]);
 
   const tabCounts = useMemo(
-    () =>
-      Object.fromEntries(
-        TABS.map((tab) => [
-          tab.id,
-          allBookings.filter((b) => tab.statuses.includes(b.status)).length,
-        ]),
-      ) as Record<TabId, number>,
+    () => Object.fromEntries(TABS.map((tab) => [
+      tab.id,
+      allBookings.filter((b) => tab.statuses.includes(b.status)).length,
+    ])) as Record<TabId, number>,
     [allBookings],
   );
 
-  // Property title for the booking being reviewed
   const reviewPropertyTitle = useMemo(() => {
     const booking = allBookings.find((b) => b.id === reviewBookingId);
     if (!booking) return '';
@@ -517,51 +361,59 @@ export default function TripsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col self-stretch gap-6">
       <Suspense><PaymentToast /></Suspense>
-      <h1 className="text-2xl font-bold text-ink-black">Đơn thuê của tôi</h1>
 
-      {/* Tab bar */}
-      <div className="flex gap-1 border-b border-hairline-gray overflow-x-auto">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              'pb-3 px-2 text-sm font-semibold transition-colors whitespace-nowrap flex items-center gap-1.5 shrink-0',
-              activeTab === tab.id
-                ? 'text-ink-black border-b-2 border-ink-black -mb-px'
-                : 'text-ash-gray hover:text-ink-black',
-            )}
-          >
-            {tab.label}
-            {!isLoading && tabCounts[tab.id] > 0 && (
-              <span
-                className={cn(
-                  'text-[11px] font-semibold px-1.5 py-0.5 rounded-full',
-                  activeTab === tab.id
-                    ? 'bg-ink-black text-white'
-                    : 'bg-[#ebebeb] text-ash-gray',
-                )}
-              >
-                {tabCounts[tab.id]}
-              </span>
-            )}
-          </button>
-        ))}
+      {/* Page title */}
+      <div className="flex flex-col items-start self-stretch px-4">
+        <span className="text-[#222222] text-2xl font-bold">Đơn thuê của tôi</span>
       </div>
 
-      {/* Content */}
+      {/* Tabs */}
+      <div className="flex items-center self-stretch mb-[5px] px-4 border-b border-solid border-b-[#DDDDDD]">
+        {TABS.map((tab) => {
+          const count = tabCounts[tab.id];
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                'flex shrink-0 items-center py-[5px] px-2 mr-1 gap-[7px]',
+                isActive ? 'pb-[11px] border-b-2 border-[#222222] -mb-px' : ''
+              )}
+            >
+              <span className={cn('text-sm font-bold', isActive ? 'text-[#222222]' : 'text-[#6A6A6A]')}>
+                {tab.label}
+              </span>
+              {count > 0 && (
+                <div className={cn(
+                  'flex shrink-0 items-center py-[1px] px-1.5 rounded-[26843500px]',
+                  isActive ? 'bg-[#222222]' : 'bg-[#EBEBEB]'
+                )}>
+                  <span className={cn(
+                    'text-[11px] font-bold',
+                    isActive ? 'text-white' : 'text-[#6A6A6A]'
+                  )}>
+                    {count}
+                  </span>
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Booking list */}
       {isLoading ? (
-        <div className="space-y-4">
-          <BookingCardSkeleton />
+        <div className="flex flex-col gap-4 w-full px-4">
           <BookingCardSkeleton />
           <BookingCardSkeleton />
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState tabId={activeTab} />
+        <div className="px-4"><EmptyState tabId={activeTab} /></div>
       ) : (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4 w-full px-4">
           {filtered.map((booking) => (
             <BookingCard
               key={booking.id}
@@ -577,11 +429,7 @@ export default function TripsPage() {
 
       {/* Cancel modal */}
       {cancelId && (
-        <CancelModal
-          onConfirm={handleCancel}
-          onClose={() => setCancelId(null)}
-          isPending={isCancelling}
-        />
+        <CancelModal onConfirm={handleCancel} onClose={() => setCancelId(null)} isPending={isCancelling} />
       )}
 
       {/* Review modal */}

@@ -1,12 +1,18 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Wrench, CalendarDays, MapPin, User, Phone, Check, X, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { useLandlordServiceOrders, useUpdateServiceStatus } from '@/hooks/use-services';
-import { ServiceOrderCardSkeleton } from '@/components/ui/skeleton';
+import {
+  useLandlordServiceOrders,
+  useUpdateServiceStatus,
+  useCreateServicePayment,
+} from '@/hooks/use-services';
 import type { ServiceOrder } from '@/types';
+
+type ServiceStatus = ServiceOrder['status'];
 
 const SERVICE_META: Record<ServiceOrder['type'], { emoji: string; label: string }> = {
   cleaning:     { emoji: '🧹', label: 'Dọn dẹp vệ sinh' },
@@ -17,30 +23,197 @@ const SERVICE_META: Record<ServiceOrder['type'], { emoji: string; label: string 
   registration: { emoji: '📋', label: 'Đăng ký tạm trú' },
 };
 
-const STATUS_CONFIG: Record<ServiceOrder['status'], { label: string; className: string }> = {
-  pending:     { label: 'Chờ xác nhận',   className: 'bg-amber-50 text-amber-700 border border-amber-200' },
-  confirmed:   { label: 'Đã xác nhận',    className: 'bg-blue-50 text-blue-700 border border-blue-200' },
-  in_progress: { label: 'Đang thực hiện', className: 'bg-violet-50 text-violet-700 border border-violet-200' },
-  done:        { label: 'Hoàn thành',     className: 'bg-stone-100 text-stone-500 border border-stone-200' },
-  cancelled:   { label: 'Đã huỷ',         className: 'bg-red-50 text-[#c13515] border border-red-100' },
-};
-
-type TabId = 'pending' | 'active' | 'done';
-
-const TABS: { id: TabId; label: string; statuses: ServiceOrder['status'][] }[] = [
-  { id: 'pending', label: 'Chờ xác nhận', statuses: ['pending'] },
-  { id: 'active',  label: 'Đang xử lý',   statuses: ['confirmed', 'in_progress'] },
-  { id: 'done',    label: 'Kết thúc',     statuses: ['done', 'cancelled'] },
+const SERVICE_CATALOG = [
+  { type: 'cleaning' as const,     price: '2.000 ₫/lần' },
+  { type: 'moving' as const,        price: '300.000 ₫/lần' },
+  { type: 'painting' as const,      price: '1.000.000 ₫/phòng' },
+  { type: 'registration' as const,  price: '100.000 ₫/hồ sơ' },
+  { type: 'repair' as const,        price: '200.000 ₫/lần' },
+  { type: 'wifi' as const,          price: '500.000 ₫/lần' },
 ];
 
-type ConfirmModal = { orderId: string; action: 'confirm' | 'cancel'; label: string } | null;
+const STATUS_CONFIG: Record<ServiceOrder['status'], { label: string; className: string }> = {
+  pending:     { label: 'Chờ xác nhận',  className: 'bg-[#FF5E00] border-[#FF5E00] text-white' },
+  confirmed:   { label: 'Đã xác nhận',  className: 'bg-blue-50 text-blue-700 border-blue-200' },
+  in_progress: { label: 'Đang xử lý',   className: 'bg-violet-50 text-violet-700 border-violet-200' },
+  done:        { label: 'Hoàn thành',    className: 'bg-stone-100 text-stone-500 border-stone-200' },
+  cancelled:   { label: 'Đã huỷ',       className: 'bg-red-50 text-[#c13515] border-red-100' },
+};
+
+const TABS: { id: TabId; label: string; statuses: ServiceStatus[] }[] = [
+  { id: 'active',    label: 'Đang xử lý', statuses: ['pending', 'confirmed', 'in_progress'] as ServiceStatus[] },
+  { id: 'done',      label: 'Hoàn thành', statuses: ['done'] as ServiceStatus[] },
+  { id: 'cancelled', label: 'Đã huỷ',    statuses: ['cancelled'] as ServiceStatus[] },
+];
+
+type TabId = 'active' | 'done' | 'cancelled';
+
+function fmtDateTime(dt: string) {
+  return new Date(dt).toLocaleString('vi-VN', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function fmtPrice(n: number) {
+  return n.toLocaleString('vi-VN') + '₫';
+}
+
+function ServiceOrderCard({
+  order,
+  onCancel,
+  onPay,
+  isActing,
+  isPaying,
+}: {
+  order: ServiceOrder;
+  onCancel: (id: string) => void;
+  onPay: (id: string) => void;
+  isActing: boolean;
+  isPaying: boolean;
+}) {
+  const meta    = SERVICE_META[order.type];
+  const sc      = STATUS_CONFIG[order.status];
+  const prop    = typeof order.property === 'object' ? order.property : null;
+
+  return (
+    <div className="flex items-start self-stretch bg-white py-[21px] px-5 gap-4 rounded-[14px] border border-solid border-[#DDDDDD]">
+      {/* Emoji icon */}
+      <div className="shrink-0 text-[#222222] bg-[#F7F7F7] text-3xl py-6 px-5 rounded-[10px] flex items-center justify-center">
+        {meta.emoji}
+      </div>
+
+      <div className="flex flex-1 flex-col gap-[7px]">
+        {/* Title row + status badge */}
+        <div className="flex justify-between items-start self-stretch">
+          <div className="flex flex-col gap-1">
+            <span className="text-[#222222] text-[15px] font-bold">{meta.label}</span>
+            {prop && (
+              <div className="flex items-center gap-1">
+                <img
+                  src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/86935612-dbeb-427d-a19c-1ff89277d7bc"
+                  className="w-3.5 h-3.5 object-fill"
+                  alt=""
+                />
+                <span className="text-[#6A6A6A] text-sm truncate">{prop.title}</span>
+              </div>
+            )}
+          </div>
+          <div className={cn(
+            'flex shrink-0 items-start py-0.5 px-[11px] rounded-[26843550px] border text-[11px] font-bold',
+            sc.className,
+          )}>
+            {sc.label}
+          </div>
+        </div>
+
+        {/* Date + location */}
+        <div className="flex items-center self-stretch gap-4">
+          <div className="flex shrink-0 items-center gap-1.5">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/f73179bb-5094-4445-9351-88f6802cd03e"
+              className="w-3.5 h-3.5 object-fill"
+              alt=""
+            />
+            <span className="text-[#3F3F3F] text-sm">{fmtDateTime(order.scheduledAt)}</span>
+          </div>
+          {prop && (
+            <div className="flex shrink-0 items-center gap-1">
+              <img
+                src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/802ffdb3-d50b-419b-8376-55de162eb412"
+                className="w-3.5 h-3.5 object-fill"
+                alt=""
+              />
+              <span className="text-[#6A6A6A] text-sm">
+                {[prop.address?.district, prop.address?.city].filter(Boolean).join(', ')}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Footer: price + actions */}
+        <div className="flex justify-between items-start self-stretch pt-[13px] border-t border-solid border-t-[#DDDDDD]">
+          <div className="flex shrink-0 items-center gap-[7px]">
+            <span className="text-[#222222] text-sm font-bold">{fmtPrice(order.price)}</span>
+            <span className="text-[#FF5E00] text-xs">
+              · {order.paymentStatus === 'unpaid' ? 'Chưa thanh toán' : order.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Đã hoàn tiền'}
+            </span>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            {order.paymentStatus === 'unpaid' && order.status !== 'pending' && (
+              <button
+                onClick={() => onPay(order.id)}
+                disabled={isPaying}
+                className="flex shrink-0 items-center bg-[#2683EB] text-left py-1.5 px-3 gap-1.5 rounded-lg border-0 disabled:opacity-60"
+              >
+                <span className="text-white text-xs font-bold">Thanh toán</span>
+              </button>
+            )}
+            {order.status === 'pending' && (
+              <button
+                onClick={() => onCancel(order.id)}
+                className="flex shrink-0 items-start bg-transparent text-left py-1.5 px-[13px] rounded-lg border border-solid border-[#DDDDDD]"
+              >
+                <span className="text-[#6A6A6A] text-xs font-bold">Huỷ</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CancelModal({ onConfirm, onClose, isPending }: { onConfirm: () => void; onClose: () => void; isPending: boolean }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative bg-white rounded-[20px] p-6 w-full max-w-sm shadow-lg">
+        <button onClick={onClose} className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-[#F6F8FB] hover:bg-[#ebebeb] transition-colors">
+          <span className="text-[#222222] text-lg font-bold">×</span>
+        </button>
+        <div className="size-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span className="text-2xl">🧹</span>
+        </div>
+        <h3 className="text-[17px] font-semibold text-[#222222] text-center mb-2">Huỷ yêu cầu dịch vụ?</h3>
+        <p className="text-sm text-[#6A6A6A] text-center mb-6">Yêu cầu này sẽ bị huỷ và không thể khôi phục.</p>
+        <div className="flex gap-3">
+          <button onClick={onClose}
+            className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#DDDDDD] rounded-lg hover:bg-[#F6F8FB] transition-colors">
+            Giữ lại
+          </button>
+          <button onClick={onConfirm} disabled={isPending}
+            className="flex-1 py-2.5 text-sm font-semibold text-white bg-[#c13515] hover:bg-[#b32505] disabled:opacity-60 rounded-lg transition-colors">
+            {isPending ? 'Đang huỷ...' : 'Xác nhận huỷ'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <div className="flex items-start self-stretch bg-white py-[21px] px-5 gap-4 rounded-[14px] border border-solid border-[#DDDDDD] animate-pulse">
+      <div className="shrink-0 w-[90px] h-[90px] bg-[#ebebeb] rounded-[10px]" />
+      <div className="flex-1 space-y-3 pt-2">
+        <div className="h-5 bg-[#ebebeb] rounded w-1/3" />
+        <div className="h-4 bg-[#ebebeb] rounded w-1/2" />
+        <div className="h-4 bg-[#ebebeb] rounded w-2/3" />
+        <div className="h-8 bg-[#ebebeb] rounded w-1/4 mt-4" />
+      </div>
+    </div>
+  );
+}
 
 export default function HostingServicesPage() {
-  const [activeTab, setActiveTab]     = useState<TabId>('pending');
-  const [modal, setModal]             = useState<ConfirmModal>(null);
+  const pathname     = usePathname();
+  const [activeTab, setActiveTab] = useState<TabId>('active');
+  const [cancelId, setCancelId]   = useState<string | null>(null);
 
-  const { data, isLoading }                          = useLandlordServiceOrders();
-  const { mutate: updateStatus, isPending: isUpdating, variables } = useUpdateServiceStatus();
+  const { data, isLoading }             = useLandlordServiceOrders();
+  const { mutate: updateStatus, isPending: isUpdating } = useUpdateServiceStatus();
+  const { mutate: createPayment, isPending: isCreatingPayment } = useCreateServicePayment();
 
   const allOrders = useMemo(() => data?.data ?? [], [data]);
 
@@ -50,207 +223,115 @@ export default function HostingServicesPage() {
   }, [allOrders, activeTab]);
 
   const tabCounts = useMemo(
-    () => Object.fromEntries(TABS.map((t) => [t.id, allOrders.filter((o) => t.statuses.includes(o.status)).length])) as Record<TabId, number>,
+    () => Object.fromEntries(TABS.map((t) => [
+      t.id,
+      allOrders.filter((o) => t.statuses.includes(o.status)).length,
+    ])) as Record<TabId, number>,
     [allOrders],
   );
 
-  const handleConfirm = () => {
-    if (!modal) return;
-    const status: ServiceOrder['status'] = modal.action === 'confirm' ? 'confirmed' : 'cancelled';
-    const successMsg = modal.action === 'confirm'
-      ? 'Đã xác nhận yêu cầu dịch vụ.'
-      : 'Đã từ chối yêu cầu dịch vụ.';
+  const handleCancel = () => {
+    if (!cancelId) return;
     updateStatus(
-      { id: modal.orderId, status },
-      { onSuccess: () => { setModal(null); toast.success(successMsg); } },
+      { id: cancelId, status: 'cancelled' },
+      { onSuccess: () => { setCancelId(null); toast.success('Đã huỷ yêu cầu dịch vụ.'); } },
     );
   };
 
-  const fmt = (dt: string) =>
-    new Date(dt).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-  const fmtPrice = (n: number) => n.toLocaleString('vi-VN') + ' đ';
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-[#222222]">Dịch vụ tại nhà cho thuê</h1>
-        <p className="text-sm text-[#6a6a6a] mt-1">Xem và xác nhận yêu cầu dịch vụ của khách thuê.</p>
+    <div className="flex flex-col self-stretch bg-[#F6F8FB] gap-[25px]">
+      {/* Title row */}
+      <div className="flex justify-between items-center self-stretch">
+        <span className="text-[#222222] text-[25px] font-bold">Dịch vụ của tôi</span>
+        <Link
+          href="/hosting/services/request"
+          className="flex flex-col shrink-0 items-start bg-[#2683EB] text-left py-2.5 px-5 rounded-lg border-0"
+        >
+          <span className="text-white text-sm font-bold">+ Yêu cầu dịch vụ</span>
+        </Link>
+      </div>
+
+      {/* Service type cards */}
+      <div className="flex items-center self-stretch">
+        {SERVICE_CATALOG.map((svc) => (
+          <div
+            key={svc.type}
+            className="flex flex-1 flex-col items-center bg-white text-left py-4 mr-5 gap-[7px] rounded-xl border border-solid border-[#DDDDDD] last:mr-0 hover:border-[#2683EB] transition-colors cursor-pointer"
+            onClick={() => toast.success(`Tính năng đặt ${SERVICE_META[svc.type].label} sắp ra mắt!`)}
+          >
+            <span className="text-[#222222] text-3xl">{SERVICE_META[svc.type].emoji}</span>
+            <span className="text-[#6A6A6A] text-xs font-bold">{SERVICE_META[svc.type].label}</span>
+            <span className="text-[#929292] text-[11px]">{svc.price}</span>
+          </div>
+        ))}
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-[#dddddd]">
+      <div className="flex items-center self-stretch gap-1 border-b border-solid border-b-[#DDDDDD]">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'px-4 py-2.5 text-sm font-medium transition-colors relative',
-              activeTab === tab.id
-                ? 'text-[#222222] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#222222]'
-                : 'text-[#6a6a6a] hover:text-[#222222]',
+              'flex shrink-0 items-center pb-3 px-2 gap-[7px] transition-colors',
+              activeTab === tab.id ? 'pb-[11px] border-b-2 border-[#222222] -mb-px' : '',
             )}
           >
-            {tab.label}
-            {tabCounts[tab.id] > 0 && (
+            {tabCounts[tab.id] > 0 && activeTab !== tab.id ? (
+              <div className="flex shrink-0 items-center gap-[7px]">
+                <span className="text-[15px] font-bold">{tab.label}</span>
+                <div className="flex flex-col shrink-0 items-start bg-[#222222] py-0.5 px-1.5 rounded-[26843550px]">
+                  <span className="text-white text-[11px] font-bold">{tabCounts[tab.id]}</span>
+                </div>
+              </div>
+            ) : (
               <span className={cn(
-                'ml-1.5 text-xs px-1.5 py-0.5 rounded-full font-semibold',
-                activeTab === tab.id ? 'bg-[#222222] text-white' : 'bg-[#f7f7f7] text-[#6a6a6a]',
+                'text-[15px] font-bold',
+                activeTab === tab.id ? 'text-[#222222]' : 'text-[#6A6A6A]',
               )}>
-                {tabCounts[tab.id]}
+                {tab.label}
               </span>
             )}
           </button>
         ))}
       </div>
 
-      {/* List */}
+      {/* Order list */}
       {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => <ServiceOrderCardSkeleton key={i} />)}
+        <div className="flex flex-col gap-4 self-stretch">
+          <SkeletonCard />
+          <SkeletonCard />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="py-16 text-center">
-          <Wrench className="w-10 h-10 text-[#dddddd] mx-auto mb-3" />
-          <p className="text-sm text-[#6a6a6a]">Không có yêu cầu nào.</p>
+        <div className="flex flex-col items-center py-16 self-stretch">
+          <div className="size-16 bg-white rounded-full flex items-center justify-center mb-4">
+            <span className="text-3xl">🔧</span>
+          </div>
+          <h3 className="text-base font-semibold text-[#222222] mb-1">Chưa có yêu cầu nào</h3>
+          <p className="text-sm text-[#6A6A6A]">Nhấn &ldquo;+ Yêu cầu dịch vụ&rdquo; để tạo mới.</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((order) => {
-            const meta = SERVICE_META[order.type];
-            const sc   = STATUS_CONFIG[order.status];
-            const isActing = isUpdating && variables?.id === order.id;
-
-            return (
-              <div key={order.id} className="bg-white rounded-card border border-[#dddddd] p-5">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#f7f7f7] flex items-center justify-center text-2xl shrink-0">
-                    {meta.emoji}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-[#222222]">{meta.label}</p>
-                      <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', sc.className)}>{sc.label}</span>
-                    </div>
-
-                    <div className="mt-2 space-y-1">
-                      {order.property && typeof order.property === 'object' && (
-                        <div className="flex items-center gap-1.5 text-xs text-[#6a6a6a]">
-                          <MapPin className="w-3.5 h-3.5 shrink-0" />
-                          <span className="truncate">{order.property.title}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-1.5 text-xs text-[#6a6a6a]">
-                        <CalendarDays className="w-3.5 h-3.5 shrink-0" />
-                        <span>{fmt(order.scheduledAt)}</span>
-                      </div>
-                      {order.tenant && typeof order.tenant === 'object' && (
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-1.5 text-xs text-[#6a6a6a]">
-                            <User className="w-3.5 h-3.5 shrink-0" />
-                            <span>{order.tenant.name}</span>
-                          </div>
-                          {order.tenant.phone && (
-                            <a href={`tel:${order.tenant.phone}`} className="flex items-center gap-1.5 text-xs text-[#ff385c] hover:underline">
-                              <Phone className="w-3.5 h-3.5 shrink-0" />
-                              {order.tenant.phone}
-                            </a>
-                          )}
-                        </div>
-                      )}
-                      {order.note && (
-                        <p className="text-xs text-[#6a6a6a] italic">&ldquo;{order.note}&rdquo;</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-end gap-2 shrink-0">
-                    <p className="text-sm font-bold text-[#222222]">{fmtPrice(order.price)}</p>
-
-                    {order.status === 'pending' && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setModal({ orderId: order.id, action: 'cancel', label: 'Từ chối' })}
-                          disabled={isActing}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#dddddd] text-[#6a6a6a] hover:border-[#c13515] hover:text-[#c13515] transition-colors disabled:opacity-50"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                          Từ chối
-                        </button>
-                        <button
-                          onClick={() => setModal({ orderId: order.id, action: 'confirm', label: 'Xác nhận' })}
-                          disabled={isActing}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#222222] text-white hover:bg-[#3a3a3a] transition-colors disabled:opacity-50"
-                        >
-                          {isActing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                          Xác nhận
-                        </button>
-                      </div>
-                    )}
-
-                    {order.status === 'confirmed' && (
-                      <button
-                        onClick={() => setModal({ orderId: order.id, action: 'cancel', label: 'Huỷ đơn' })}
-                        disabled={isActing}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#dddddd] text-[#6a6a6a] hover:border-[#c13515] hover:text-[#c13515] transition-colors disabled:opacity-50"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                        Huỷ đơn
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="flex flex-col gap-4 self-stretch">
+          {filtered.map((order) => (
+            <ServiceOrderCard
+              key={order.id}
+              order={order}
+              onCancel={setCancelId}
+              onPay={(id) => createPayment(id)}
+              isActing={isUpdating}
+              isPaying={isCreatingPayment}
+            />
+          ))}
         </div>
       )}
 
-      {/* Confirm modal */}
-      {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-panel p-6 w-full max-w-sm mx-4 shadow-[0_8px_32px_rgba(0,0,0,0.18)]">
-            <div className="flex items-center gap-3 mb-4">
-              <div className={cn(
-                'w-10 h-10 rounded-full flex items-center justify-center',
-                modal.action === 'confirm' ? 'bg-[#f0fdf4]' : 'bg-red-50',
-              )}>
-                {modal.action === 'confirm'
-                  ? <Check className="w-5 h-5 text-[#16a34a]" />
-                  : <X className="w-5 h-5 text-[#c13515]" />
-                }
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-[#222222]">{modal.label} yêu cầu?</p>
-                <p className="text-xs text-[#6a6a6a] mt-0.5">
-                  {modal.action === 'confirm'
-                    ? 'Khách thuê sẽ được thông báo và có thể tiến hành thanh toán.'
-                    : 'Yêu cầu sẽ bị huỷ và khách thuê sẽ được thông báo.'}
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setModal(null)}
-                className="flex-1 py-2.5 text-sm font-semibold rounded-xl border border-[#dddddd] text-[#6a6a6a] hover:bg-[#f7f7f7] transition-colors"
-              >
-                Huỷ bỏ
-              </button>
-              <button
-                onClick={handleConfirm}
-                disabled={isUpdating}
-                className={cn(
-                  'flex-1 py-2.5 text-sm font-semibold rounded-xl text-white transition-colors disabled:opacity-60 flex items-center justify-center gap-2',
-                  modal.action === 'confirm' ? 'bg-[#222222] hover:bg-[#3a3a3a]' : 'bg-[#c13515] hover:bg-[#a12e12]',
-                )}
-              >
-                {isUpdating && <Loader2 className="w-4 h-4 animate-spin" />}
-                {modal.label}
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Cancel modal */}
+      {cancelId && (
+        <CancelModal
+          onConfirm={handleCancel}
+          onClose={() => setCancelId(null)}
+          isPending={isUpdating}
+        />
       )}
     </div>
   );

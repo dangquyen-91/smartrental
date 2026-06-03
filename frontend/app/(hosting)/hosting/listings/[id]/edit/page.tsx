@@ -110,7 +110,7 @@ function InputField({
   return (
     <div>
       <label className="block text-sm font-semibold text-ink-black mb-1.5">
-        {label}{required && <span className="text-rausch ml-0.5">*</span>}
+        {label}{required && <span className="text-[#2683EB] ml-0.5">*</span>}
       </label>
       {children}
       {hint && !error && <p className="mt-1 text-xs text-ash-gray">{hint}</p>}
@@ -214,7 +214,7 @@ function ImageUploader({
         onClick={() => inputRef.current?.click()}
         className={cn(
           'relative border-2 border-dashed rounded-card p-8 flex flex-col items-center justify-center cursor-pointer transition-all',
-          dragOver ? 'border-rausch bg-rausch/5' : 'border-hairline-gray hover:border-ash-gray bg-soft-cloud hover:bg-white',
+          dragOver ? 'border-[#2683EB] bg-[#2683EB]/5' : 'border-hairline-gray hover:border-ash-gray bg-soft-cloud hover:bg-white',
           successCount >= MAX_FILES && 'pointer-events-none opacity-40',
         )}
       >
@@ -246,7 +246,7 @@ function ImageUploader({
               key={img.localId}
               className={cn(
                 'relative aspect-4/3 rounded-[10px] overflow-hidden border-2 transition-all',
-                img.isPrimary && !img.error ? 'border-rausch' : 'border-transparent',
+                img.isPrimary && !img.error ? 'border-[#2683EB]' : 'border-transparent',
               )}
             >
               <img src={img.url} alt="" className="w-full h-full object-cover" />
@@ -281,7 +281,7 @@ function ImageUploader({
                     </button>
                   )}
                   {img.isPrimary && !img.error && (
-                    <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 bg-rausch text-white text-[10px] font-semibold rounded-full">
+                    <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 bg-[#2683EB] text-white text-[10px] font-semibold rounded-full">
                       <Star className="size-2.5 fill-white" />
                       Ảnh chính
                     </div>
@@ -664,7 +664,7 @@ export default function EditListingPage({
           <button
             type="submit"
             disabled={isPending || images.some((i) => i.uploading)}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-rausch hover:bg-deep-rausch disabled:opacity-50 rounded-lg transition-all active:scale-95"
+            className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-[#2683EB] hover:bg-blue-600 disabled:opacity-50 rounded-lg transition-all active:scale-95"
           >
             {isPending
               ? <><Loader2 className="size-4 animate-spin" />Đang lưu...</>

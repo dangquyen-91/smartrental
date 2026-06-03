@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, Bell, User, Settings, LogOut, ChevronDown } from 'lucide-react';
+import { Menu, Bell, User, Settings, LogOut, ChevronDown, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useAuthStore } from '@/stores/auth.store';
 import { logoutApi } from '@/lib/api/auth.api';
@@ -74,7 +74,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
               onClick={() => setDropdownOpen((v) => !v)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-[20px] border border-[#dddddd] hover:bg-[#f7f7f7] transition-colors"
             >
-              <div className="w-7 h-7 rounded-full bg-[#ff385c] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+              <div className="w-9 h-9 rounded-full bg-[#2683EB] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                 {user.name.charAt(0).toUpperCase()}
               </div>
               <span className="text-sm font-medium text-[#222222] hidden sm:block max-w-[120px] truncate">
@@ -94,12 +94,22 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                 <div className="px-4 py-3 border-b border-[#dddddd]">
                   <p className="text-sm font-semibold text-[#222222] truncate">{user.name}</p>
                   <p className="text-xs text-[#6a6a6a] truncate">{user.email}</p>
-                  <span className="inline-block mt-1 text-xs font-medium text-[#ff385c] bg-[#ff385c]/10 px-2 py-0.5 rounded-full">
+                  <span className="inline-block mt-1 text-xs font-medium text-[#2683EB] bg-[#2683EB]/10 px-2 py-0.5 rounded-full">
                     {ROLE_LABELS[user.role] ?? user.role}
                   </span>
                 </div>
 
                 <div className="py-1">
+                  {user.role === 'admin' && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-[#2683EB] hover:bg-[#2683EB]/8 transition-colors font-medium"
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      Dashboard
+                    </Link>
+                  )}
                   <Link
                     href="/profile"
                     onClick={() => setDropdownOpen(false)}

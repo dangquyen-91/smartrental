@@ -7,6 +7,7 @@ const generateContractPdf = async (contractData) => {
 
   const browser = await puppeteer.launch({
     headless: true,
+    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   });
 

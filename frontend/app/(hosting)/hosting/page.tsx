@@ -3,17 +3,13 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import {
-  Building2, ClipboardList, FileText, CreditCard,
-  Plus, ArrowRight, MapPin, Pencil, Check, X, Loader2,
+  MapPin, Pencil, Check, X, Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useMyProperties } from '@/hooks/use-properties';
 import { useLandlordBookings, useConfirmBooking, useRejectBooking } from '@/hooks/use-bookings';
 import { useMyContracts } from '@/hooks/use-contracts';
-import { cn } from '@/lib/utils';
 import type { Booking, Property } from '@/types';
-
-// ─── helpers ──────────────────────────────────────────────────────────────────
 
 function formatVnd(n: number) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1) + 'tr₫';
@@ -26,7 +22,7 @@ function formatVndFull(n: number) {
 }
 
 const STATUS_CONFIG: Record<Property['status'], { label: string; cls: string }> = {
-  available:   { label: 'Còn trống',     cls: 'bg-emerald-50 text-emerald-700' },
+  available:   { label: 'Còn trống',     cls: 'bg-[#FFF546] text-black' },
   rented:      { label: 'Đang cho thuê', cls: 'bg-blue-50 text-blue-700' },
   maintenance: { label: 'Bảo trì',       cls: 'bg-amber-50 text-amber-700' },
 };
@@ -60,19 +56,6 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-// ─── stat skeleton ────────────────────────────────────────────────────────────
-
-function StatSkeleton() {
-  return (
-    <div className="bg-white rounded-[14px] border border-[#dddddd] p-5 animate-pulse">
-      <div className="w-10 h-10 rounded-[10px] bg-[#f0f0f0] mb-3" />
-      <div className="h-7 w-16 bg-[#f0f0f0] rounded mb-1.5" />
-      <div className="h-3 w-20 bg-[#f0f0f0] rounded mb-1" />
-      <div className="h-3 w-14 bg-[#f0f0f0] rounded" />
-    </div>
-  );
-}
-
 // ─── main ─────────────────────────────────────────────────────────────────────
 
 export default function HostingPage() {
@@ -88,8 +71,6 @@ export default function HostingPage() {
   const properties = useMemo(() => propertiesData?.data ?? [], [propertiesData]);
   const bookings   = useMemo(() => bookingsData?.data   ?? [], [bookingsData]);
   const contracts  = useMemo(() => contractsData?.data  ?? [], [contractsData]);
-
-  // ── stats ────────────────────────────────────────────────────────────────────
 
   const activeListings  = properties.filter((p) => p.status === 'available' || p.status === 'rented').length;
   const pendingBookings = bookings.filter((b) => b.status === 'pending');
@@ -108,159 +89,153 @@ export default function HostingPage() {
 
   const isLoading = loadingProps || loadingBookings || loadingContracts;
 
-  const STATS = [
-    {
-      label: 'Tin đăng', value: isLoading ? null : activeListings,
-      sub: 'đang hoạt động', icon: Building2, color: 'text-[#ff385c]', bg: 'bg-[#fff0f3]',
-    },
-    {
-      label: 'Yêu cầu mới', value: isLoading ? null : pendingBookings.length,
-      sub: 'chờ xác nhận', icon: ClipboardList, color: 'text-[#2563eb]', bg: 'bg-[#eff6ff]',
-    },
-    {
-      label: 'Hợp đồng', value: isLoading ? null : activeContracts,
-      sub: 'đang hiệu lực', icon: FileText, color: 'text-[#16a34a]', bg: 'bg-[#f0fdf4]',
-    },
-    {
-      label: 'Doanh thu', value: isLoading ? null : formatVnd(monthRevenue),
-      sub: 'tháng này', icon: CreditCard, color: 'text-[#d97706]', bg: 'bg-[#fffbeb]',
-    },
-  ];
-
-  // ── derived lists ─────────────────────────────────────────────────────────────
-
+  const topPendingBookings = pendingBookings.slice(0, 3);
   const recentListings = useMemo(
-    () => [...properties].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5),
+    () => [...properties].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3),
     [properties],
   );
 
-  const topPendingBookings = pendingBookings.slice(0, 3);
-
-  // ─────────────────────────────────────────────────────────────────────────────
-
   return (
-    <div className="space-y-8">
-
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#222222]">Chào, {user?.name}!</h1>
-          <p className="text-sm text-[#6a6a6a] mt-1">Đây là tổng quan hoạt động cho thuê của bạn.</p>
+    <>
+      {/* Welcome section */}
+      <div className="flex justify-between items-start self-stretch mb-4 w-full">
+        <div className="flex flex-col shrink-0 items-center pb-[23px]">
+          <span className="text-[#222222] text-[25px] font-bold">
+            Xin chào, {user?.name}!
+          </span>
         </div>
         <Link
           href="/hosting/listings/new"
-          className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] rounded-[8px] transition-all active:scale-95 flex-shrink-0"
+          className="flex shrink-0 items-center bg-[#2683EB] text-left py-2.5 px-4 gap-2 rounded-lg border-0"
         >
-          <Plus className="w-4 h-4" />
-          Đăng tin
+          <img
+            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/76cd3957-c0df-44d3-87a2-4e397b09f0d7"
+            className="w-4 h-4 rounded-lg object-fill"
+          />
+          <span className="text-white text-sm font-bold">Đăng tin</span>
         </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {isLoading
-          ? [1,2,3,4].map((i) => <StatSkeleton key={i} />)
-          : STATS.map(({ label, value, sub, icon: Icon, color, bg }) => (
-            <div key={label} className="bg-white rounded-[14px] border border-[#dddddd] p-5">
-              <div className={`w-10 h-10 rounded-[10px] ${bg} flex items-center justify-center mb-3`}>
-                <Icon className={`w-5 h-5 ${color}`} />
-              </div>
-              <p className="text-2xl font-bold text-[#222222]">{value ?? '—'}</p>
-              <p className="text-xs font-medium text-[#6a6a6a] mt-0.5">{label}</p>
-              <p className="text-xs text-[#929292]">{sub}</p>
-            </div>
-          ))
-        }
+      <span className="text-black text-xl mb-6">
+        Dưới đây là tổng quan hoạt động cho thuê của bạn.
+      </span>
+
+      {/* Stats cards */}
+      <div className="grid grid-cols-4 gap-4 mb-8">
+        {/* Tin đăng */}
+        <div className="flex flex-col items-start bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD]">
+          <div className="flex items-center justify-center bg-[#FFF546] w-10 h-10 rounded-[10px] mb-3">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/6604c1e7-2829-4a5a-b8aa-0a38bfaa2f2b"
+              className="w-5 h-5"
+            />
+          </div>
+          <span className="text-[#222222] text-[25px] font-bold">
+            {isLoading ? '—' : activeListings}
+          </span>
+          <span className="text-black text-[15px]">Tin đăng</span>
+          <span className="text-[#929292] text-xs">đang hoạt động</span>
+        </div>
+
+        {/* Yêu cầu mới */}
+        <div className="flex flex-col items-start bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD]">
+          <div className="flex items-center justify-center bg-[#FFF546] w-10 h-10 rounded-[10px] mb-3">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/eb80edd1-27d8-43e8-99b2-24f6d1134620"
+              className="w-5 h-5"
+            />
+          </div>
+          <span className="text-[#222222] text-[25px] font-bold">
+            {isLoading ? '—' : pendingBookings.length}
+          </span>
+          <span className="text-black text-[15px]">Yêu cầu mới</span>
+          <span className="text-[#929292] text-xs">chờ xác nhận</span>
+        </div>
+
+        {/* Hợp đồng */}
+        <div className="flex flex-col items-start bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD]">
+          <div className="flex items-center justify-center bg-[#FFF546] w-10 h-10 rounded-[10px] mb-3">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/35719e8d-aac5-4d3f-9092-b50f3ecbabf2"
+              className="w-5 h-5"
+            />
+          </div>
+          <span className="text-[#222222] text-[25px] font-bold">
+            {isLoading ? '—' : activeContracts}
+          </span>
+          <span className="text-black text-[15px]">Hợp đồng</span>
+          <span className="text-[#929292] text-xs">đang hiệu lực</span>
+        </div>
+
+        {/* Doanh thu */}
+        <div className="flex flex-col items-start bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD]">
+          <div className="flex items-center justify-center bg-[#FFF546] w-10 h-10 rounded-[10px] mb-3">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/a16acdd7-8ee3-4af2-89e1-4df5c8aa0248"
+              className="w-4 h-4"
+            />
+          </div>
+          <span className="text-[#222222] text-[25px] font-bold">
+            {isLoading ? '—' : formatVnd(monthRevenue)}
+          </span>
+          <span className="text-black text-[15px]">Doanh thu</span>
+          <span className="text-[#929292] text-[13px]">tháng này</span>
+        </div>
       </div>
 
-      {/* Pending booking requests */}
-      {(loadingBookings || pendingBookings.length > 0) && (
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold text-[#222222]">Yêu cầu thuê mới</h2>
-            {pendingBookings.length > 3 && (
-              <Link href="/hosting/reservations" className="text-xs font-semibold text-[#ff385c] hover:underline flex items-center gap-1">
-                Xem tất cả <ArrowRight className="w-3 h-3" />
-              </Link>
-            )}
+      {/* Pending bookings section */}
+      {pendingBookings.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-[#222222] mb-4">
+            Yêu cầu thuê mới
+          </h2>
+          <div className="space-y-3">
+            {topPendingBookings.map((b) => (
+              <PendingBookingRow
+                key={b.id}
+                booking={b}
+                onConfirm={() => confirmBooking.mutate(b.id)}
+                onReject={() => rejectBooking.mutate({ id: b.id })}
+                confirming={confirmBooking.isPending && confirmBooking.variables === b.id}
+                rejecting={rejectBooking.isPending && (rejectBooking.variables as { id: string }).id === b.id}
+              />
+            ))}
           </div>
-
-          {loadingBookings ? (
-            <div className="space-y-3">
-              {[1,2].map((i) => (
-                <div key={i} className="bg-white rounded-[14px] border border-[#dddddd] p-4 animate-pulse flex gap-4">
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3.5 w-1/3 bg-[#f0f0f0] rounded" />
-                    <div className="h-3 w-1/2 bg-[#f0f0f0] rounded" />
-                    <div className="h-3 w-1/4 bg-[#f0f0f0] rounded" />
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <div className="w-20 h-8 bg-[#f0f0f0] rounded-lg" />
-                    <div className="w-20 h-8 bg-[#f0f0f0] rounded-lg" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {topPendingBookings.map((b) => (
-                <PendingBookingRow
-                  key={b.id}
-                  booking={b}
-                  onConfirm={() => confirmBooking.mutate(b.id)}
-                  onReject={() => rejectBooking.mutate({ id: b.id })}
-                  confirming={confirmBooking.isPending && confirmBooking.variables === b.id}
-                  rejecting={rejectBooking.isPending && (rejectBooking.variables as { id: string }).id === b.id}
-                />
-              ))}
-              {pendingBookings.length > 3 && (
-                <Link
-                  href="/hosting/reservations"
-                  className="flex items-center justify-center gap-2 py-3 text-sm font-semibold text-[#ff385c] bg-white border border-[#dddddd] rounded-[14px] hover:border-[#ff385c] transition-colors"
-                >
-                  Xem {pendingBookings.length - 3} yêu cầu còn lại <ArrowRight className="w-4 h-4" />
-                </Link>
-              )}
-            </div>
-          )}
-        </section>
+        </div>
       )}
 
       {/* Listings section */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-bold text-[#222222]">Tin đăng của bạn</h2>
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-[#222222]">
+            Tin đăng của bạn
+          </h2>
           {properties.length > 0 && (
-            <Link href="/hosting/listings" className="text-xs font-semibold text-[#ff385c] hover:underline flex items-center gap-1">
-              Quản lý <ArrowRight className="w-3 h-3" />
+            <Link href="/hosting/listings" className="flex items-center gap-1.5">
+              <span className="text-[#2683EB] text-xs font-bold">Quản lý</span>
+              <img
+                src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/dab1d7c7-395b-40e0-be15-7e92fcc9ce3a"
+                className="w-3 h-3 object-fill"
+              />
             </Link>
           )}
         </div>
-
-        {loadingProps ? (
+        {isLoading ? (
           <div className="space-y-3">
-            {[1,2,3].map((i) => (
-              <div key={i} className="bg-white rounded-[14px] border border-[#dddddd] p-4 flex gap-4 animate-pulse">
-                <div className="w-24 h-18 rounded-[10px] bg-[#f0f0f0] shrink-0" />
-                <div className="flex-1 space-y-2 py-1">
-                  <div className="h-3.5 w-2/3 bg-[#f0f0f0] rounded" />
-                  <div className="h-3 w-1/2 bg-[#f0f0f0] rounded" />
-                  <div className="h-3 w-1/4 bg-[#f0f0f0] rounded" />
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white py-4 px-4 rounded-[14px] border border-solid border-[#DDDDDD] animate-pulse flex gap-4">
+                <div className="w-24 h-[72px] bg-[#F0F0F0] rounded-[10px]" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-[#f0f0f0] rounded w-1/2" />
+                  <div className="h-3 bg-[#f0f0f0] rounded w-1/3" />
                 </div>
               </div>
             ))}
           </div>
         ) : recentListings.length === 0 ? (
-          <div className="bg-white rounded-[14px] border border-[#dddddd] p-10 text-center">
-            <Building2 className="w-10 h-10 text-[#dddddd] mx-auto mb-3" />
-            <p className="text-sm font-semibold text-[#222222]">Chưa có tin đăng nào</p>
-            <p className="text-xs text-[#6a6a6a] mt-1 mb-5">
-              Đăng tin để tiếp cận hàng nghìn người thuê trên SmartRental.
-            </p>
-            <Link
-              href="/hosting/listings/new"
-              className="inline-block px-5 py-2.5 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] rounded-[8px] transition-all active:scale-95"
-            >
+          <div className="bg-white py-8 px-4 rounded-[14px] border border-solid border-[#DDDDDD] text-center">
+            <p className="text-[#6A6A6A] text-sm">Chưa có tin đăng nào</p>
+            <Link href="/hosting/listings/new" className="text-[#2683EB] text-sm font-semibold hover:underline mt-2 inline-block">
               Đăng tin ngay
             </Link>
           </div>
@@ -269,41 +244,47 @@ export default function HostingPage() {
             {recentListings.map((p) => (
               <ListingRow key={p.id} property={p} />
             ))}
-            {properties.length > 5 && (
-              <Link
-                href="/hosting/listings"
-                className="flex items-center justify-center gap-2 py-3 text-sm font-semibold text-[#222222] bg-white border border-[#dddddd] rounded-[14px] hover:border-[#222222] transition-colors"
-              >
-                Xem tất cả {properties.length} tin đăng <ArrowRight className="w-4 h-4" />
-              </Link>
-            )}
           </div>
         )}
-      </section>
+      </div>
 
       {/* Quick links */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {[
-          { label: 'Đăng tin mới', desc: 'Thêm phòng trọ, căn hộ vào danh sách', href: '/hosting/listings/new', icon: Plus },
-          { label: 'Xem yêu cầu thuê', desc: 'Xử lý booking requests từ người thuê', href: '/hosting/reservations', icon: ClipboardList },
-        ].map(({ label, desc, href, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className="flex items-center gap-4 bg-white rounded-[14px] border border-[#dddddd] p-5 hover:border-[#ff385c] hover:shadow-[0_2px_12px_rgba(255,56,92,0.08)] transition-all group"
-          >
-            <div className="w-10 h-10 rounded-[10px] bg-[#f7f7f7] flex items-center justify-center flex-shrink-0">
-              <Icon className="w-5 h-5 text-[#6a6a6a] group-hover:text-[#ff385c] transition-colors" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#222222]">{label}</p>
-              <p className="text-xs text-[#6a6a6a] mt-0.5">{desc}</p>
-            </div>
-            <ArrowRight className="w-4 h-4 text-[#929292] group-hover:text-[#ff385c] transition-colors flex-shrink-0" />
-          </Link>
-        ))}
+      <div className="grid grid-cols-2 gap-4">
+        <Link href="/hosting/listings/new" className="flex items-center bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD] hover:border-[#2683EB] transition-colors">
+          <div className="flex items-center justify-center bg-black w-10 h-10 rounded-[10px] mr-4">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/6f2ef548-2935-44f3-bebe-1d685810286d"
+              className="w-5 h-5"
+            />
+          </div>
+          <div className="flex-1">
+            <p className="text-[#222222] text-[15px] font-bold">Đăng tin mới</p>
+            <p className="text-[#6A6A6A] text-[13px]">Thêm phòng trọ, căn hộ vào danh sách</p>
+          </div>
+          <img
+            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/b777aef4-890d-4c59-b792-b10152d003c5"
+            className="w-4 h-4"
+          />
+        </Link>
+
+        <Link href="/hosting/reservations" className="flex items-center bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD] hover:border-[#2683EB] transition-colors">
+          <div className="flex items-center justify-center bg-black w-10 h-10 rounded-[10px] mr-4">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/495abffe-7056-4f67-8362-507572babe5e"
+              className="w-5 h-5"
+            />
+          </div>
+          <div className="flex-1">
+            <p className="text-[#222222] text-[15px] font-bold">Xem yêu cầu thuê</p>
+            <p className="text-[#6A6A6A] text-[13px]">Xử lý yêu cầu thuê phòng từ người thuê</p>
+          </div>
+          <img
+            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/93adfafb-b831-4e03-bd60-fb8d8d020369"
+            className="w-4 h-4"
+          />
+        </Link>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -314,39 +295,54 @@ function ListingRow({ property: p }: { property: Property }) {
   const sc = STATUS_CONFIG[p.status];
 
   return (
-    <div className="bg-white rounded-[14px] border border-[#dddddd] p-4 flex gap-4 hover:border-[#cccccc] transition-colors">
+    <div className="flex items-center self-stretch bg-white py-[17px] px-4 mb-[13px] gap-4 rounded-[14px] border border-solid border-[#DDDDDD]">
       {/* Thumbnail */}
-      <div className="w-24 h-18 rounded-[10px] bg-[#f0f0f0] shrink-0 overflow-hidden">
-        {thumb
-          ? <img src={thumb} alt={p.title} className="w-full h-full object-cover" />
-          : <Building2 className="w-6 h-6 text-[#cccccc] m-auto mt-4" />
-        }
+      <div className="flex flex-col shrink-0 items-center bg-[#F0F0F0] rounded-[10px]">
+        {thumb ? (
+          <img src={thumb} alt={p.title} className="w-24 h-[72px] rounded-[10px] object-fill" />
+        ) : (
+          <div className="w-24 h-[72px]" />
+        )}
       </div>
 
       {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-semibold text-[#222222] truncate">{p.title}</p>
-          <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium shrink-0', sc.cls)}>
-            {sc.label}
+      <div className="flex-1 pb-0.5">
+        <div className="flex justify-between items-center self-stretch mb-[1px]">
+          <span className="text-[#222222] text-sm font-bold">
+            {p.title}
+          </span>
+          <div className="flex flex-col shrink-0 items-start bg-[#FFF546] py-[1px] px-2 rounded-[26843500px]">
+            <span className="text-black text-xs">{sc.label}</span>
+          </div>
+        </div>
+        <div className="flex items-center self-stretch gap-1">
+          <img
+            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/605a3c1c-1b1a-4f94-9d58-9c972afe58cd"
+            className="w-3 h-3 object-fill"
+          />
+          <span className="text-[#6A6A6A] text-xs">
+            {[p.address.district, p.address.city].filter(Boolean).join(', ')}
           </span>
         </div>
-        <p className="text-xs text-[#6a6a6a] mt-0.5 flex items-center gap-1 truncate">
-          <MapPin className="w-3 h-3 shrink-0" />
-          {[p.address.district, p.address.city].filter(Boolean).join(', ')}
-        </p>
-        <div className="flex items-center justify-between mt-2">
-          <div>
-            <span className="text-sm font-bold text-[#222222]">{formatVndFull(p.price)}</span>
-            <span className="text-xs text-[#929292]">/tháng</span>
-            <span className="text-xs text-[#929292] ml-2">{TYPE_LABEL[p.type]}</span>
+        <div className="flex justify-between items-center self-stretch py-[7px]">
+          <div className="flex shrink-0 items-center py-0.5">
+            <span className="text-[#222222] text-sm font-bold mr-[3px]">
+              {formatVndFull(p.price)}
+            </span>
+            <span className="text-[#929292] text-xs mr-[11px]">/tháng</span>
+            <span className="text-[#929292] text-xs mr-[11px]">{TYPE_LABEL[p.type]}</span>
           </div>
           <Link
             href={`/hosting/listings/${p.id}/edit`}
-            className="flex items-center gap-1.5 text-xs font-semibold text-[#6a6a6a] hover:text-[#222222] transition-colors"
+            className="flex shrink-0 items-center gap-1.5"
           >
-            <Pencil className="w-3.5 h-3.5" />
-            Chỉnh sửa
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/a72a3ecd-3607-495d-80cc-8e59dd8e6f78"
+              className="w-3.5 h-3.5 object-fill"
+            />
+            <span className="text-[#6A6A6A] text-xs font-bold hover:text-[#222222] transition-colors">
+              Chỉnh sửa
+            </span>
           </Link>
         </div>
       </div>
@@ -370,40 +366,68 @@ function PendingBookingRow({
   const busy = confirming || rejecting;
 
   return (
-    <div className="bg-white rounded-[14px] border border-[#dddddd] p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-[#222222] truncate">{tenantName(b)}</p>
-          <p className="text-xs text-[#6a6a6a] mt-0.5 truncate">{propertyTitle(b)}</p>
-          {propertyDistrict(b) && (
-            <p className="text-xs text-[#929292] flex items-center gap-1 mt-0.5">
-              <MapPin className="w-3 h-3 shrink-0" />{propertyDistrict(b)}
-            </p>
+    <div className="flex items-start self-stretch bg-white p-4 gap-[1px] rounded-[14px] border border-solid border-[#DDDDDD]">
+      <div className="flex-1">
+        <div className="flex flex-col items-start self-stretch mb-[1px]">
+          <span className="text-[#222222] text-sm font-bold">
+            {tenantName(b)}
+          </span>
+        </div>
+        <div className="flex flex-col items-start self-stretch">
+          <span className="text-[#6A6A6A] text-xs">
+            {propertyTitle(b)}
+          </span>
+        </div>
+        <div className="flex items-center self-stretch mb-[1px] gap-1">
+          <img
+            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/e83ddeae-4471-4cc3-998a-49fb38ee3bb4"
+            className="w-3 h-3 object-fill"
+          />
+          <span className="text-[#929292] text-xs">
+            {propertyDistrict(b)}
+          </span>
+        </div>
+        <div className="flex flex-col items-start self-stretch pt-0.5">
+          <span className="text-[#929292] text-xs">
+            {formatDate(b.startDate)} · {b.duration} tháng · {formatVnd(b.totalPrice)}
+          </span>
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-[9px]">
+        <button
+          onClick={onReject}
+          disabled={busy}
+          className="flex shrink-0 items-center bg-white text-left py-[7px] px-[13px] gap-1.5 rounded-lg border border-solid border-[#FF5E00] hover:bg-orange-50 transition-colors disabled:opacity-50"
+        >
+          {rejecting ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FF5E00]" />
+          ) : (
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/6e5e0b5b-a94d-4cf0-aa87-0ed7d9200465"
+              className="w-3.5 h-3.5 rounded-lg object-fill"
+            />
           )}
-          <p className="text-xs text-[#929292] mt-1">
-            {formatDate(b.startDate)} · {b.duration} tháng ·{' '}
-            <span className="font-semibold text-[#222222]">{formatVnd(b.totalPrice)}</span>
-          </p>
-        </div>
-
-        <div className="flex gap-2 shrink-0">
-          <button
-            onClick={onReject}
-            disabled={busy}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#c13515] bg-red-50 hover:bg-red-100 rounded-lg border border-red-100 transition-colors disabled:opacity-50"
-          >
-            {rejecting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
-            Từ chối
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={busy}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] rounded-lg transition-colors disabled:opacity-50"
-          >
-            {confirming ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-            Xác nhận
-          </button>
-        </div>
+          <span className="text-[#FF5E00] text-[13px] font-bold">
+            {rejecting ? 'Đang xử lý...' : 'Từ chối'}
+          </span>
+        </button>
+        <button
+          onClick={onConfirm}
+          disabled={busy}
+          className="flex shrink-0 items-center bg-[#2683EB] text-left py-[7px] px-3 gap-1.5 rounded-lg border-0 hover:bg-blue-600 transition-colors disabled:opacity-50"
+        >
+          {confirming ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+          ) : (
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/41826c94-9585-444c-ac7c-90717780594b"
+              className="w-3.5 h-3.5 rounded-lg object-fill"
+            />
+          )}
+          <span className="text-white text-[13px] font-bold">
+            {confirming ? 'Đang xử lý...' : 'Xác nhận'}
+          </span>
+        </button>
       </div>
     </div>
   );

@@ -42,8 +42,8 @@ router.patch(
   updateCatalogEntry,
 );
 
-// Tenant: đặt dịch vụ
-router.post('/order', authorizeRoles('tenant'), createServiceOrderValidation, createServiceOrder);
+// Tenant / Landlord: đặt dịch vụ
+router.post('/order', authorizeRoles('tenant', 'landlord'), createServiceOrderValidation, createServiceOrder);
 
 // Tenant: lịch sử đơn của mình (filter theo ?propertyId=)
 router.get('/my-orders', authorizeRoles('tenant'), getOrdersValidation, getMyOrders);

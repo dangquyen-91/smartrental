@@ -21,7 +21,7 @@ const updateCatalogEntry = async (req, res, next) => {
 
 const createServiceOrder = async (req, res, next) => {
   try {
-    const order = await serviceService.createServiceOrder(req.body, req.user.id);
+    const order = await serviceService.createServiceOrder(req.body, req.user.id, req.user.role);
     return R.created(res, { order }, 'Service order placed successfully');
   } catch (err) {
     next(err);

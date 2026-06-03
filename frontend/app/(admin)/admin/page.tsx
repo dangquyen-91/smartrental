@@ -4,29 +4,29 @@ import Link from 'next/link';
 import {
   Users, Building2, CreditCard, ArrowRight,
   TrendingUp, TrendingDown, AlertCircle, Loader2,
-  CheckCircle2, RefreshCw, Package,
 } from 'lucide-react';
 import { useAdminDashboard } from '@/hooks/use-admin';
+import { cn } from '@/lib/utils';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(n);
 
-const STATUS_LABEL: Record<string, string> = {
-  pending: 'Chờ duyệt',
-  confirmed: 'Đã xác nhận',
-  active: 'Đang thuê',
-  completed: 'Hoàn thành',
-  cancelled: 'Đã huỷ',
-  rejected: 'Từ chối',
-};
-
-const STATUS_COLOR: Record<string, string> = {
+const STATUS_COLOR_TEXT: Record<string, string> = {
   pending: 'text-[#ca8a04]',
   confirmed: 'text-[#2563eb]',
   active: 'text-[#16a34a]',
   completed: 'text-[#6a6a6a]',
   cancelled: 'text-[#c13515]',
   rejected: 'text-[#929292]',
+};
+
+const BOOKING_STATUS_LABELS: Record<string, string> = {
+  pending: 'Chờ duyệt',
+  confirmed: 'Đã xác nhận',
+  active: 'Đang thuê',
+  completed: 'Hoàn thành',
+  cancelled: 'Đã huỷ',
+  rejected: 'Từ chối',
 };
 
 export default function AdminPage() {
@@ -47,138 +47,142 @@ export default function AdminPage() {
   const hasPending = pending && (pending.payouts > 0 || pending.refunds > 0 || pending.unassignedServiceOrders > 0);
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-[#222222]">Tổng quan hệ thống</h1>
+    <div>
+      {/* Page title */}
+      <div className="flex flex-col items-start self-stretch mb-[31px]">
+        <span className="text-[#222222] text-2xl font-bold">Tổng quan hệ thống</span>
+      </div>
 
-      {/* KPI Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Link
-          href="/admin/users"
-          className="bg-white rounded-card border border-[#dddddd] p-5 hover:border-[#ff385c] transition-colors group"
-        >
-          <div className="w-10 h-10 rounded-[10px] bg-[#fff0f3] flex items-center justify-center mb-3">
-            <Users className="w-5 h-5 text-[#ff385c]" />
+      {/* KPI Stats row */}
+      <div className="flex items-center self-stretch mb-[33px]">
+        {/* Users card */}
+        <div className="flex flex-1 flex-col items-start bg-white py-5 pr-5 mr-4 rounded-[14px] border border-solid border-[#DDDDDD]">
+          <div className="flex items-center gap-3 px-3 py-2 bg-[#FFF546] rounded-[10px] mb-[11px] ml-5">
+            <Users className="w-5 h-5 text-black" />
           </div>
-          <p className="text-2xl font-bold text-[#222222]">{stats?.users.total ?? '—'}</p>
-          <p className="text-xs font-medium text-[#6a6a6a] mt-0.5">Người dùng</p>
-          <p className="text-xs text-[#929292]">
-            +{stats?.users.newThisMonth ?? 0} tháng này · {stats?.users.active ?? 0} đang hoạt động
-          </p>
-        </Link>
+          <div className="flex flex-col items-start self-stretch ml-5">
+            <span className="text-[#222222] text-2xl font-bold">
+              {stats?.users.total ?? '—'}
+            </span>
+          </div>
+          <div className="self-stretch ml-5">
+            <div className="flex flex-col items-start self-stretch pt-0.5">
+              <span className="text-[#6A6A6A] text-xs">Người dùng</span>
+            </div>
+            <div className="flex flex-col items-start self-stretch">
+              <span className="text-[#929292] text-xs">
+                +{stats?.users.newThisMonth ?? 0} tháng này · {stats?.users.active ?? 0} đang hoạt động
+              </span>
+            </div>
+          </div>
+        </div>
 
-        <Link
-          href="/admin/properties"
-          className="bg-white rounded-card border border-[#dddddd] p-5 hover:border-[#ff385c] transition-colors group"
-        >
-          <div className="w-10 h-10 rounded-[10px] bg-[#eff6ff] flex items-center justify-center mb-3">
-            <Building2 className="w-5 h-5 text-[#2563eb]" />
+        {/* Properties card */}
+        <div className="flex flex-1 flex-col items-start bg-white py-5 pr-[21px] mr-[17px] rounded-[14px] border border-solid border-[#DDDDDD]">
+          <div className="flex items-center gap-3 px-3 py-2 bg-[#FFF546] rounded-[10px] mb-[11px] ml-[21px]">
+            <Building2 className="w-5 h-5 text-black" />
           </div>
-          <p className="text-2xl font-bold text-[#222222]">{stats?.properties.total ?? '—'}</p>
-          <p className="text-xs font-medium text-[#6a6a6a] mt-0.5">Tin đăng</p>
-          <p className="text-xs text-[#929292]">
-            {stats?.properties.byStatus?.available ?? 0} trống ·{' '}
-            {stats?.properties.byStatus?.rented ?? 0} đang thuê
-          </p>
-        </Link>
+          <div className="flex flex-col items-start self-stretch pt-[11px] ml-[21px]">
+            <span className="text-[#222222] text-2xl font-bold">
+              {stats?.properties.total ?? '—'}
+            </span>
+          </div>
+          <div className="self-stretch ml-[21px]">
+            <div className="flex flex-col items-start self-stretch pt-0.5">
+              <span className="text-[#6A6A6A] text-xs">Tin đăng</span>
+            </div>
+            <div className="flex flex-col items-start self-stretch">
+              <span className="text-[#929292] text-xs">
+                {stats?.properties.byStatus?.available ?? 0} trống · {stats?.properties.byStatus?.rented ?? 0} đang thuê
+              </span>
+            </div>
+          </div>
+        </div>
 
-        <Link
-          href="/admin/transactions"
-          className="bg-white rounded-card border border-[#dddddd] p-5 hover:border-[#ff385c] transition-colors group"
-        >
-          <div className="w-10 h-10 rounded-[10px] bg-[#f0fdf4] flex items-center justify-center mb-3">
-            <CreditCard className="w-5 h-5 text-[#16a34a]" />
+        {/* Revenue card */}
+        <div className="flex flex-1 flex-col items-start bg-white py-5 pr-[21px] rounded-[14px] border border-solid border-[#DDDDDD]">
+          <div className="flex items-center gap-3 px-3 py-2 bg-[#FFF546] rounded-[10px] mb-[11px] ml-[21px]">
+            <CreditCard className="w-5 h-5 text-black" />
           </div>
-          <p className="text-2xl font-bold text-[#222222]">
-            {stats ? fmt(stats.revenue.thisMonth) : '—'}
-          </p>
-          <p className="text-xs font-medium text-[#6a6a6a] mt-0.5">Doanh thu tháng này</p>
-          {growth !== null && growth !== undefined ? (
-            <p className={`text-xs flex items-center gap-0.5 mt-0.5 ${isPositive ? 'text-[#16a34a]' : 'text-[#c13515]'}`}>
-              {isPositive
-                ? <TrendingUp className="w-3 h-3" />
-                : <TrendingDown className="w-3 h-3" />}
-              {isPositive ? '+' : ''}{growth}% so với tháng trước
-            </p>
-          ) : (
-            <p className="text-xs text-[#929292]">
-              Tổng: {stats ? fmt(stats.revenue.total) : '—'}
-            </p>
-          )}
-        </Link>
+          <div className="flex flex-col items-start self-stretch pt-[11px] ml-[21px]">
+            <span className="text-[#222222] text-2xl font-bold">
+              {stats ? fmt(stats.revenue.thisMonth) : '—'}
+            </span>
+          </div>
+          <div className="self-stretch ml-[21px]">
+            <div className="flex flex-col items-start self-stretch pt-0.5">
+              <span className="text-[#6A6A6A] text-xs">Doanh thu tháng này</span>
+            </div>
+            <div className="flex flex-col items-start self-stretch">
+              {growth !== null && growth !== undefined ? (
+                <div className="flex items-center gap-0.5">
+                  {isPositive
+                    ? <TrendingUp className={cn('w-3 h-3 text-[#16a34a]')} />
+                    : <TrendingDown className={cn('w-3 h-3 text-[#c13515]')} />}
+                  <span className={cn('text-xs', isPositive ? 'text-[#16a34a]' : 'text-[#c13515]')}>
+                    {isPositive ? '+' : ''}{growth}% so với tháng trước
+                  </span>
+                </div>
+              ) : (
+                <span className="text-[#929292] text-xs">Tổng: {stats ? fmt(stats.revenue.total) : '—'}</span>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Pending Actions */}
       {hasPending && (
-        <div className="bg-white rounded-card border border-[#ff385c] p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertCircle className="w-4 h-4 text-[#ff385c]" />
-            <p className="text-sm font-semibold text-[#222222]">Cần xử lý ngay</p>
+        <div className="flex flex-col self-stretch bg-white p-5 mb-[33px] gap-[15px] rounded-[14px] border border-solid border-[#FF5E00]">
+          <div className="flex items-center self-stretch gap-[7px]">
+            <AlertCircle className="w-4 h-4" />
+            <span className="text-[#222222] text-sm font-bold">Cần xử lý ngay</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="flex items-center self-stretch gap-[13px]">
             {(pending?.payouts ?? 0) > 0 && (
-              <Link
-                href="/admin/transactions?tab=payouts"
-                className="flex items-center gap-3 p-3 rounded-[10px] bg-[#f7f7f7] hover:bg-[#fff0f3] transition-colors"
-              >
-                <span className="w-8 h-8 rounded-full bg-[#ff385c] text-white text-xs font-bold flex items-center justify-center shrink-0">
+              <div className="flex shrink-0 items-center bg-[#F7F7F7] py-3 rounded-[10px]">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#FF5E00] text-white text-xs font-bold mx-3">
                   {pending?.payouts}
-                </span>
-                <div>
-                  <p className="text-xs font-semibold text-[#222222]">Chờ payout</p>
-                  <p className="text-xs text-[#6a6a6a]">Chủ trọ & provider</p>
                 </div>
-              </Link>
-            )}
-            {(pending?.refunds ?? 0) > 0 && (
-              <Link
-                href="/admin/transactions?tab=refunds"
-                className="flex items-center gap-3 p-3 rounded-[10px] bg-[#f7f7f7] hover:bg-[#fff0f3] transition-colors"
-              >
-                <span className="w-8 h-8 rounded-full bg-[#e00b41] text-white text-xs font-bold flex items-center justify-center shrink-0">
-                  {pending?.refunds}
-                </span>
-                <div>
-                  <p className="text-xs font-semibold text-[#222222]">Chờ hoàn tiền</p>
-                  <p className="text-xs text-[#6a6a6a]">Booking đã huỷ</p>
+                <div className="flex flex-col shrink-0 mr-[171px]">
+                  <span className="text-[#222222] text-xs font-bold">Chờ payout</span>
+                  <span className="text-[#6A6A6A] text-xs">Chủ trọ & provider</span>
                 </div>
-              </Link>
+              </div>
             )}
             {(pending?.unassignedServiceOrders ?? 0) > 0 && (
-              <Link
-                href="/admin/transactions"
-                className="flex items-center gap-3 p-3 rounded-[10px] bg-[#f7f7f7] hover:bg-[#fff0f3] transition-colors"
-              >
-                <span className="w-8 h-8 rounded-full bg-[#ca8a04] text-white text-xs font-bold flex items-center justify-center shrink-0">
+              <div className="flex shrink-0 items-center bg-[#F7F7F7] py-3 rounded-[10px]">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#2683EB] text-white text-xs font-bold mx-3">
                   {pending?.unassignedServiceOrders}
-                </span>
-                <div>
-                  <p className="text-xs font-semibold text-[#222222]">Chưa assign</p>
-                  <p className="text-xs text-[#6a6a6a]">Đơn dịch vụ</p>
                 </div>
-              </Link>
+                <div className="flex flex-col shrink-0 mr-[202px]">
+                  <span className="text-[#222222] text-xs font-bold">Chưa assign</span>
+                  <span className="text-[#6A6A6A] text-xs">Đơn dịch vụ</span>
+                </div>
+              </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Booking status snapshot */}
+      {/* Booking snapshot */}
       {stats && stats.bookings.total > 0 && (
-        <div className="bg-white rounded-card border border-[#dddddd] p-5">
-          <p className="text-sm font-semibold text-[#222222] mb-4">
-            Booking — {stats.bookings.total} tổng
-          </p>
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
+        <div className="flex flex-col self-stretch bg-white p-5 mb-8 gap-[15px] rounded-[14px] border border-solid border-[#DDDDDD]">
+          <div className="flex flex-col items-start self-stretch">
+            <span className="text-[#222222] text-sm font-bold">Booking</span>
+          </div>
+          <div className="flex items-center self-stretch gap-1.5">
             {Object.entries(stats.bookings.byStatus)
               .sort(([a], [b]) => {
                 const order = ['active', 'confirmed', 'pending', 'completed', 'cancelled', 'rejected'];
                 return order.indexOf(a) - order.indexOf(b);
               })
               .map(([status, count]) => (
-                <div key={status} className="flex items-center gap-1.5">
-                  <span className={`text-xs font-medium ${STATUS_COLOR[status] ?? 'text-[#6a6a6a]'}`}>
-                    {STATUS_LABEL[status] ?? status}
+                <div key={status} className="flex items-center gap-1.5 mr-4">
+                  <span className={cn('text-xs', status === 'active' ? 'text-green-600' : STATUS_COLOR_TEXT[status] ?? 'text-[#6A6A6A]')}>
+                    {BOOKING_STATUS_LABELS[status] ?? status}
                   </span>
-                  <span className="text-sm font-bold text-[#222222]">{count}</span>
+                  <span className="text-[#222222] text-sm font-bold">{count}</span>
                 </div>
               ))}
           </div>
@@ -186,38 +190,45 @@ export default function AdminPage() {
       )}
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="flex items-center self-stretch">
         {[
           {
             label: 'Quản lý người dùng',
-            desc: 'Kích hoạt / vô hiệu hoá tài khoản',
+            desc: 'Kích hoạt/Vô hiệu hoá tài khoản',
             href: '/admin/users',
             icon: Users,
+            iconBg: 'bg-black',
           },
           {
             label: 'Quản lý tin đăng',
             desc: 'Nổi bật và trạng thái property',
             href: '/admin/properties',
             icon: Building2,
+            iconBg: 'bg-black',
           },
           {
             label: 'Giao dịch & Payout',
             desc: 'Xử lý payout và hoàn tiền',
             href: '/admin/transactions',
             icon: CreditCard,
+            iconBg: 'bg-black',
           },
-        ].map(({ label, desc, href, icon: Icon }) => (
+        ].map(({ label, desc, href, icon: Icon, iconBg }) => (
           <Link
             key={href}
             href={href}
-            className="flex items-center gap-4 bg-white rounded-card border border-[#dddddd] p-5 hover:border-[#ff385c] hover:shadow-[0_2px_12px_rgba(255,56,92,0.08)] transition-all group"
+            className="flex flex-1 items-center bg-white py-[21px] px-5 mr-4 gap-4 rounded-[14px] border border-solid border-[#DDDDDD] hover:border-[#ff385c] hover:shadow-[0_2px_12px_rgba(255,56,92,0.08)] transition-all group"
           >
-            <div className="w-10 h-10 rounded-[10px] bg-[#f7f7f7] flex items-center justify-center shrink-0">
-              <Icon className="w-5 h-5 text-[#929292] group-hover:text-[#ff385c] transition-colors" />
+            <div className={cn('flex items-center justify-center w-10 h-10 rounded-[10px] shrink-0', iconBg)}>
+              <Icon className="w-5 h-5 text-white" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#222222]">{label}</p>
-              <p className="text-xs text-[#6a6a6a] mt-0.5">{desc}</p>
+            <div className="flex flex-1 flex-col gap-[1px]">
+              <div className="flex flex-col items-start self-stretch">
+                <span className="text-[#222222] text-sm font-bold">{label}</span>
+              </div>
+              <div className="flex flex-col items-start self-stretch">
+                <span className="text-[#6A6A6A] text-xs">{desc}</span>
+              </div>
             </div>
             <ArrowRight className="w-4 h-4 text-[#929292] group-hover:text-[#ff385c] transition-colors shrink-0" />
           </Link>

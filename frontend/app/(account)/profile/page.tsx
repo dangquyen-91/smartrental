@@ -7,9 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import {
-  Loader2, Phone, CreditCard, User, CheckCircle2,
-  Pencil, Shield, Building2, ArrowRight, FileText,
-  CalendarDays, Camera, Heart, Fingerprint,
+  Loader2, Phone, CreditCard, CheckCircle2,
+  Pencil, ArrowRight, Fingerprint,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
@@ -24,8 +23,6 @@ import { useMyContracts } from '@/hooks/use-contracts';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { cn } from '@/lib/utils';
 import type { User as UserType } from '@/types';
-
-// ─── schemas ──────────────────────────────────────────────────────────────────
 
 const phoneSchema = z.object({
   phone: z
@@ -61,18 +58,12 @@ type OtpForm = z.infer<typeof otpSchema>;
 type BankForm = z.infer<typeof bankSchema>;
 type NationalIdForm = z.infer<typeof nationalIdSchema>;
 
-// ─── constants ────────────────────────────────────────────────────────────────
-
 const ROLE_META: Record<string, { label: string; style: string }> = {
-  tenant:   { label: 'Người thuê',             style: 'bg-blue-50 text-blue-700 border border-blue-100' },
+  tenant:   { label: 'Người thuê',             style: 'bg-[#EEF5FE] text-[#2683EB] border border-[#2683EB]' },
   landlord: { label: 'Chủ nhà',                style: 'bg-emerald-50 text-emerald-700 border border-emerald-100' },
   admin:    { label: 'Quản trị viên',          style: 'bg-purple-50 text-purple-700 border border-purple-100' },
   provider: { label: 'Nhà cung cấp dịch vụ',  style: 'bg-amber-50 text-amber-700 border border-amber-100' },
 };
-
-const INPUT = 'h-12 border-[#dddddd] focus-visible:border-[#222222] focus-visible:ring-2 focus-visible:ring-[#222222]/20 text-[#222222] placeholder:text-[#929292]';
-
-// ─── primitives ───────────────────────────────────────────────────────────────
 
 function FieldError({ msg }: { msg?: string }) {
   return msg ? (
@@ -80,120 +71,253 @@ function FieldError({ msg }: { msg?: string }) {
   ) : null;
 }
 
-function SectionCard({
-  icon: Icon,
-  title,
-  subtitle,
-  children,
-  id,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-  id?: string;
-}) {
-  return (
-    <section
-      id={id}
-      className="bg-white border border-[#dddddd] rounded-card overflow-hidden"
-    >
-      <div className="flex items-start gap-3 px-6 py-5 border-b border-[#dddddd]">
-        <div className="size-9 rounded-full bg-[#f7f7f7] flex items-center justify-center shrink-0 mt-0.5">
-          <Icon className="size-4 text-[#6a6a6a]" />
-        </div>
-        <div>
-          <h2 className="text-base font-semibold text-[#222222]">{title}</h2>
-          {subtitle && (
-            <p className="text-xs text-[#929292] mt-0.5">{subtitle}</p>
-          )}
-        </div>
-      </div>
-      <div className="px-6 py-5">{children}</div>
-    </section>
-  );
-}
+type PhoneStep = 'view' | 'phone' | 'otp';
 
-function InfoRow({
-  label,
-  value,
-  muted,
-  badge,
-}: {
-  label: string;
-  value: string;
-  muted?: boolean;
-  badge?: React.ReactNode;
-}) {
+export default function ProfilePage() {
+  const storedUser = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
+  const { user: authUser, isAuthenticated } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['me'],
+    queryFn: getMeApi,
+    initialData: storedUser ?? undefined,
+  });
+
+  const { data: bookingsData } = useMyBookings();
+  const { data: contractsData } = useMyContracts();
+
+  const bookings = bookingsData?.data ?? [];
+  const contracts = contractsData?.data ?? [];
+  const activeBookings = bookings.filter((b) => b.status === 'active').length;
+  const signedContracts = contracts.filter((c) => c.status === 'signed').length;
+
+  const handleUpdate = (updated: UserType) => {
+    setUser(updated);
+    qc.setQueryData(['me'], updated);
+  };
+
+  if (isLoading && !storedUser) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32">
+        <Loader2 className="w-8 h-8 animate-spin text-[#ff385c]" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  const role = ROLE_META[user.role] ?? { label: user.role, style: 'bg-[#f7f7f7] text-[#6a6a6a]' };
+
   return (
-    <div className="flex items-center justify-between py-3.5 border-b border-[#f7f7f7] last:border-0 gap-4">
-      <span className="text-sm font-medium text-[#6a6a6a] shrink-0">{label}</span>
-      <div className="flex items-center gap-2 min-w-0">
-        {badge}
-        <span
-          className={cn(
-            'text-sm font-semibold text-right truncate',
-            muted ? 'text-[#929292]' : 'text-[#222222]',
-          )}
-        >
-          {value}
+    <div className="flex flex-col self-stretch gap-6">
+      {/* Page title */}
+      <div className="flex flex-col self-stretch gap-[3px]">
+        <span className="text-[#222222] text-2xl font-bold">
+          Hồ sơ cá nhân
+        </span>
+        <span className="text-[#6A6A6A] text-[15px]">
+          Quản lý thông tin và bảo mật tài khoản
         </span>
       </div>
+
+      {/* Main content */}
+      <div className="flex items-start self-stretch gap-[23px]">
+        {/* Left sidebar */}
+            <div className="flex flex-col shrink-0 items-center gap-[17px]">
+              {/* Avatar card */}
+              <div className="w-full bg-white py-6 px-5 rounded-[14px] border border-solid border-[#DDDDDD]">
+                <AvatarSection user={user} onUpdate={handleUpdate} />
+              </div>
+
+              {/* Stats card */}
+              <div className="flex items-center bg-white py-[21px] px-5 gap-[17px] rounded-[14px] border border-solid border-[#DDDDDD]">
+                <div className="flex flex-col shrink-0 items-start">
+                  <div className="flex flex-col items-center pb-1 mb-1 mr-[83px]">
+                    <div className="flex flex-col items-start bg-[#FFF546] text-left py-[7px] px-2 rounded-lg border-0">
+                      <img
+                        src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7b4faa10-e969-45fe-afb1-d235798913c0"
+                        className="w-4 h-4 rounded-lg object-fill"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-start pr-[41px] mb-[3px]">
+                    <span className="text-black text-xs">Tổng đơn thuê</span>
+                  </div>
+                  <div className="flex flex-col items-start pr-[110px] mb-[3px]">
+                    <span className="text-[#222222] text-xl font-bold">{bookings.length}</span>
+                  </div>
+                  <div className="flex flex-col items-start pr-[58px]">
+                    <span className="text-[#929292] text-xs">{activeBookings} đang thuê</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col shrink-0 items-start">
+                  <div className="flex flex-col items-center pb-1 mb-1 mr-[83px]">
+                    <div className="flex flex-col items-start bg-[#FFF546] text-left py-[7px] px-2 rounded-lg border-0">
+                      <img
+                        src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9165324c-1e9d-4a03-a769-cfa167302603"
+                        className="w-4 h-4 rounded-lg object-fill"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-start pr-[66px] mb-[3px]">
+                    <span className="text-black text-xs">Hợp đồng</span>
+                  </div>
+                  <div className="flex flex-col items-start pr-[111px] mb-[3px]">
+                    <span className="text-[#222222] text-xl font-bold">{contracts.length}</span>
+                  </div>
+                  <div className="flex flex-col items-start pr-[79px]">
+                    <span className="text-[#929292] text-xs">{signedContracts} đã ký</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick links */}
+              <div className="flex flex-col items-start bg-white p-[1px] rounded-[14px] border border-solid border-[#DDDDDD]">
+                <div className="flex flex-col items-start self-stretch py-[13px] pl-5 pr-[161px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
+                  <span className="text-[#929292] text-xs font-bold">TRUY CẬP NHANH</span>
+                </div>
+
+                <Link href="/wishlist" className="flex items-center py-3.5 px-5 mb-[1px] gap-3 border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7] w-full">
+                  <div className="flex flex-col shrink-0 items-start bg-[#FFF546] text-left py-[7px] px-2 rounded-lg border border-solid border-[#00000000]">
+                    <img
+                      src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/33d240a6-bef1-4199-a291-34c99ed76960"
+                      className="w-4 h-4 rounded-lg object-fill"
+                    />
+                  </div>
+                  <div className="flex flex-col shrink-0 items-center">
+                    <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-start pr-[121px]">
+                        <span className="text-[#222222] text-sm font-bold">Yêu thích</span>
+                      </div>
+                      <div className="flex flex-col items-start pr-[120px]">
+                        <span className="text-[#929292] text-xs">BĐS đã lưu</span>
+                      </div>
+                    </div>
+                  </div>
+                  <img
+                    src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/0ed6a620-cfa4-41ff-ad20-80d7d9ca9706"
+                    className="w-4 h-4 object-fill"
+                  />
+                </Link>
+
+                <Link href="/trips" className="flex items-center py-3.5 px-5 mb-[1px] gap-3 border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7] w-full">
+                  <div className="flex flex-col shrink-0 items-start bg-[#FFF546] text-left py-[7px] px-2 rounded-lg border border-solid border-[#00000000]">
+                    <img
+                      src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7c63feb9-5af1-4e35-b4fd-7883f8fc67ce"
+                      className="w-4 h-4 rounded-lg object-fill"
+                    />
+                  </div>
+                  <div className="flex flex-col shrink-0 items-center">
+                    <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-start pr-[119px]">
+                        <span className="text-[#222222] text-sm font-bold">Đơn thuê</span>
+                      </div>
+                      <div className="flex flex-col items-start pr-[74px]">
+                        <span className="text-[#929292] text-xs">Xem lịch sử booking</span>
+                      </div>
+                    </div>
+                  </div>
+                  <img
+                    src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/aa5ebb2f-5b36-4529-b440-a412ec082c4c"
+                    className="w-4 h-4 object-fill"
+                  />
+                </Link>
+
+                <Link href="/contracts" className="flex items-center py-3.5 px-5 gap-3 w-full">
+                  <div className="flex flex-col shrink-0 items-start bg-[#FFF546] text-left py-[7px] px-2 rounded-lg border border-solid border-[#00000000]">
+                    <img
+                      src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9b9e3492-46ae-4e02-88be-26da2c6df897"
+                      className="w-4 h-4 rounded-lg object-fill"
+                    />
+                  </div>
+                  <div className="flex flex-col shrink-0 items-center">
+                    <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-start pr-[116px]">
+                        <span className="text-[#222222] text-sm font-bold">Hợp đồng</span>
+                      </div>
+                      <div className="flex flex-col items-start pr-[84px]">
+                        <span className="text-[#929292] text-xs">Quản lý hợp đồng</span>
+                      </div>
+                    </div>
+                  </div>
+                  <img
+                    src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/5230220a-809d-498f-8edb-152788789081"
+                    className="w-4 h-4 object-fill"
+                  />
+                </Link>
+              </div>
+            </div>
+
+            {/* Right content */}
+            <div className="flex-1">
+              {/* Account info */}
+              <div className="self-stretch bg-white pt-[1px] mb-[21px] rounded-[14px] border border-solid border-[#DDDDDD]">
+                <div className="flex items-center self-stretch py-5 mb-[21px] mx-[1px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
+                  <div className="flex flex-col shrink-0 items-center pt-0.5 ml-6 mr-3">
+                    <div className="flex flex-col items-start bg-[#FFF546] text-left py-[9px] px-2.5 rounded-[26843500px] border-0">
+                      <img
+                        src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/76016c50-ce1b-4034-a3c8-9df55d7beb2f"
+                        className="w-4 h-4 rounded-[26843500px] object-fill"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col shrink-0 items-center gap-[1px]">
+                    <div className="flex flex-col items-start pr-[45px]">
+                      <span className="text-[#222222] text-base font-bold">Thông tin tài khoản</span>
+                    </div>
+                    <span className="text-[#929292] text-xs">Thông tin cơ bản của tài khoản bạn</span>
+                  </div>
+                </div>
+                <div className="self-stretch mb-[21px] mx-[25px]">
+                  <div className="flex justify-between items-center self-stretch py-3.5 mb-[1px] border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7]">
+                    <span className="text-[#6A6A6A] text-sm">Họ và tên</span>
+                    <span className="text-[#222222] text-sm font-bold">{user.name}</span>
+                  </div>
+                  <div className="flex justify-between items-center self-stretch py-3.5 mb-[1px] border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7]">
+                    <span className="text-[#6A6A6A] text-sm">Email</span>
+                    <span className="text-[#222222] text-sm font-bold">{user.email}</span>
+                  </div>
+                  <div className="flex justify-between items-center self-stretch py-3.5 border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7]">
+                    <span className="text-[#6A6A6A] text-sm">Loại tài khoản</span>
+                    <div className="flex shrink-0 items-center gap-[9px]">
+                      <div className={cn('w-5 h-[21px] rounded-[26843500px]', role.style)} />
+                      <span className="text-[#222222] text-sm font-bold">{role.label}</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center self-stretch py-3.5 mb-[1px] border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7]">
+                    <span className="text-[#6A6A6A] text-sm">Trạng thái</span>
+                    <span className={cn('text-sm font-bold', user.isActive ? 'text-emerald-600' : 'text-[#929292]')}>
+                      {user.isActive ? 'Đang hoạt động' : 'Đã vô hiệu hoá'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center self-stretch py-3.5">
+                    <span className="text-[#6A6A6A] text-sm">Ngày tham gia</span>
+                    <span className="text-[#929292] text-sm font-bold">
+                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : '---'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Security */}
+              <SecuritySection user={user} onUpdate={handleUpdate} />
+
+              {/* Bank account */}
+              <BankSection user={user} onUpdate={handleUpdate} />
+
+              {/* ID card */}
+              <NationalIdSection user={user} onUpdate={handleUpdate} />
+            </div>
+          </div>
     </div>
   );
 }
 
-function StatSkeleton() {
-  return (
-    <div className="animate-pulse">
-      <div className="h-3 w-16 bg-[#ebebeb] rounded mb-1.5" />
-      <div className="h-6 w-10 bg-[#ebebeb] rounded" />
-    </div>
-  );
-}
-
-function PrimaryBtn({
-  loading,
-  children,
-  className,
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean }) {
-  return (
-    <button
-      {...props}
-      disabled={loading || props.disabled}
-      className={cn(
-        'flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 rounded-lg transition-all active:scale-[0.98]',
-        className,
-      )}
-    >
-      {loading && <Loader2 className="size-4 animate-spin" />}
-      {children}
-    </button>
-  );
-}
-
-function GhostBtn({
-  children,
-  className,
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      {...props}
-      className={cn(
-        'px-4 py-2 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors',
-        className,
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-// ─── avatar card ──────────────────────────────────────────────────────────────
-
-function AvatarCard({
+// Avatar section component
+function AvatarSection({
   user,
   onUpdate,
 }: {
@@ -210,7 +334,6 @@ function AvatarCard({
     try {
       setUploading(true);
       const [img] = await uploadImagesApi([file]);
-      // Optimistically update UI — avatar persistence requires backend endpoint
       onUpdate({ ...user, avatar: img.url });
       toast.success('Ảnh đại diện đã được cập nhật');
     } catch (err) {
@@ -222,29 +345,29 @@ function AvatarCard({
   };
 
   return (
-    <div className="bg-white border border-[#dddddd] rounded-card p-6 flex flex-col items-center text-center">
+    <div className="flex flex-col items-center">
       {/* Avatar */}
-      <div className="relative group mb-4">
-        <div className="size-24 rounded-full bg-[#222222] flex items-center justify-center text-white text-3xl font-bold overflow-hidden ring-4 ring-[#f7f7f7]">
-          {user.avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.avatar} alt={user.name} className="size-full object-cover" />
-          ) : (
-            user.name.charAt(0).toUpperCase()
-          )}
-        </div>
-        <button
-          type="button"
+      <div className="mb-4">
+        <div
+          className="w-24 h-24 rounded-full bg-[#00000066] overflow-hidden cursor-pointer relative group"
           onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
         >
-          {uploading ? (
-            <Loader2 className="size-5 text-white animate-spin" />
+          {user.avatar ? (
+            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
           ) : (
-            <Camera className="size-5 text-white" />
+            <div className="w-full h-full bg-[#ff385c] flex items-center justify-center text-white text-3xl font-bold">
+              {user.name?.charAt(0)?.toUpperCase() ?? 'U'}
+            </div>
           )}
-        </button>
+          {uploading && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-white" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+            <span className="text-white text-xs">Đổi ảnh</span>
+          </div>
+        </div>
         <input
           ref={fileRef}
           type="file"
@@ -254,131 +377,37 @@ function AvatarCard({
         />
       </div>
 
-      <h2 className="text-lg font-bold text-[#222222] leading-snug">{user.name}</h2>
-      <p className="text-sm text-[#6a6a6a] mt-0.5 truncate max-w-full">{user.email}</p>
+      {/* Name */}
+      <h3 className="text-lg font-bold text-[#222222] mb-1">
+        {user.name}
+      </h3>
 
-      <div className="flex flex-wrap justify-center gap-2 mt-3">
-        <span className={cn('text-xs font-semibold px-2.5 py-1 rounded-full', role.style)}>
+      {/* Email */}
+      <p className="text-sm text-[#6A6A6A] mb-3">
+        {user.email}
+      </p>
+
+      {/* Role badges */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className={cn('text-sm font-bold px-3 py-1 rounded-full', role.style)}>
           {role.label}
         </span>
         {!user.isActive && (
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-50 text-[#c13515] border border-red-100">
+          <span className="text-sm font-bold px-2.5 py-1 rounded-full bg-red-50 text-[#FF5E00] border border-[#FF5E00]">
             Vô hiệu hoá
           </span>
         )}
       </div>
 
-      <p className="text-xs text-[#929292] mt-3">
-        {user.createdAt
-          ? `Thành viên từ ${new Date(user.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}`
-          : 'Thành viên SmartRental'}
+      {/* Member text */}
+      <p className="text-xs text-[#929292]">
+        Thành viên Smart Rental
       </p>
     </div>
   );
 }
 
-// ─── stats card ───────────────────────────────────────────────────────────────
-
-function StatsCard() {
-  const { data: bookingsData, isLoading: loadingB } = useMyBookings();
-  const { data: contractsData, isLoading: loadingC } = useMyContracts();
-
-  const bookings = bookingsData?.data ?? [];
-  const contracts = contractsData?.data ?? [];
-
-  const stats = [
-    {
-      label: 'Tổng đơn thuê',
-      value: bookings.length,
-      sub: `${bookings.filter((b) => b.status === 'active').length} đang thuê`,
-      icon: CalendarDays,
-      color: 'text-[#2563eb]',
-      bg: 'bg-[#eff6ff]',
-      loading: loadingB,
-    },
-    {
-      label: 'Hợp đồng',
-      value: contracts.length,
-      sub: `${contracts.filter((c) => c.status === 'signed').length} đã ký`,
-      icon: FileText,
-      color: 'text-emerald-600',
-      bg: 'bg-emerald-50',
-      loading: loadingC,
-    },
-  ];
-
-  return (
-    <div className="bg-white border border-[#dddddd] rounded-card p-5 grid grid-cols-2 gap-4">
-      {stats.map(({ label, value, sub, icon: Icon, color, bg, loading }) => (
-        <div key={label} className="flex flex-col gap-1">
-          <div className={cn('size-8 rounded-lg flex items-center justify-center mb-1', bg)}>
-            <Icon className={cn('size-4', color)} />
-          </div>
-          {loading ? (
-            <StatSkeleton />
-          ) : (
-            <>
-              <p className="text-xs font-medium text-[#929292]">{label}</p>
-              <p className="text-xl font-bold text-[#222222]">{value}</p>
-              <p className="text-xs text-[#929292]">{sub}</p>
-            </>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ─── quick links card ─────────────────────────────────────────────────────────
-
-function QuickLinksCard() {
-  const { isLandlord, isAdmin, isProvider } = useAuth();
-
-  const links: { label: string; desc: string; href: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { label: 'Yêu thích', desc: 'BĐS đã lưu', href: '/wishlist', icon: Heart },
-    { label: 'Đơn thuê', desc: 'Xem lịch sử booking', href: '/trips', icon: CalendarDays },
-    { label: 'Hợp đồng', desc: 'Quản lý hợp đồng', href: '/contracts', icon: FileText },
-  ];
-
-  if (isLandlord) {
-    links.push({ label: 'Quản lý cho thuê', desc: 'Dashboard chủ nhà', href: '/hosting', icon: Building2 });
-  }
-  if (isAdmin) {
-    links.push({ label: 'Trang quản trị', desc: 'Admin dashboard', href: '/admin', icon: Shield });
-  }
-  if (isProvider) {
-    links.push({ label: 'Dịch vụ của tôi', desc: 'Xem đơn dịch vụ', href: '/provider', icon: Building2 });
-  }
-
-  return (
-    <div className="bg-white border border-[#dddddd] rounded-card overflow-hidden">
-      <p className="px-5 py-3.5 text-xs font-semibold text-[#929292] uppercase tracking-wider border-b border-[#dddddd]">
-        Truy cập nhanh
-      </p>
-      {links.map(({ label, desc, href, icon: Icon }) => (
-        <Link
-          key={href}
-          href={href}
-          className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#f7f7f7] transition-colors border-b border-[#f7f7f7] last:border-0 group"
-        >
-          <div className="size-8 rounded-lg bg-[#f7f7f7] group-hover:bg-white flex items-center justify-center shrink-0 transition-colors border border-transparent group-hover:border-[#dddddd]">
-            <Icon className="size-4 text-[#6a6a6a]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[#222222] truncate">{label}</p>
-            <p className="text-xs text-[#929292] truncate">{desc}</p>
-          </div>
-          <ArrowRight className="size-4 text-[#929292] group-hover:text-[#222222] transition-colors shrink-0" />
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-// ─── phone + security section ─────────────────────────────────────────────────
-
-type PhoneStep = 'view' | 'phone' | 'otp';
-
+// Security section
 function SecuritySection({
   user,
   onUpdate,
@@ -432,155 +461,182 @@ function SecuritySection({
   };
 
   return (
-    <SectionCard
-      id="security"
-      icon={Shield}
-      title="Bảo mật tài khoản"
-      subtitle="Quản lý số điện thoại và phương thức xác thực"
-    >
-      <div className="space-y-0 divide-y divide-[#f7f7f7]">
-
-        {/* Phone row */}
-        <div className="pb-5">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold text-[#222222]">Số điện thoại</p>
-                {user.isPhoneVerified && (
-                  <span className="flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                    <CheckCircle2 className="size-3" /> Đã xác thực
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-[#929292] mt-0.5">
-                {user.phone ?? 'Chưa cập nhật — dùng để xác thực và liên lạc'}
-              </p>
-            </div>
-            {step === 'view' && (
-              <button
-                onClick={() => setStep('phone')}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors shrink-0"
-              >
-                <Pencil className="size-3.5" />
-                {user.phone ? 'Thay đổi' : 'Thêm SĐT'}
-              </button>
-            )}
+    <div className="self-stretch bg-white pt-[1px] mb-5 rounded-[14px] border border-solid border-[#DDDDDD]">
+      <div className="flex items-center self-stretch py-5 mb-5 mx-[1px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
+        <div className="flex flex-col shrink-0 items-center pt-0.5 ml-6 mr-3">
+          <div className="flex flex-col items-start bg-[#FFF546] text-left py-[9px] px-2.5 rounded-[26843500px] border-0">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9a6ae306-d739-465b-b70a-f7e843066225"
+              className="w-4 h-4 rounded-[26843500px] object-fill"
+            />
           </div>
+        </div>
+        <div className="flex flex-col shrink-0 items-center gap-[1px]">
+          <div className="flex flex-col items-start pr-[110px]">
+            <span className="text-[#222222] text-base font-bold">Bảo mật tài khoản</span>
+          </div>
+          <span className="text-[#929292] text-xs">
+            Quản lý số điện thoại và phương thức xác thực
+          </span>
+        </div>
+      </div>
 
-          {step === 'phone' && (
-            <form
-              onSubmit={phoneForm.handleSubmit(submitPhone)}
-              className="bg-[#f7f7f7] rounded-[10px] p-4 space-y-3"
-            >
-              <p className="text-xs text-[#6a6a6a]">
-                {isLandlord
-                  ? 'Nhập số điện thoại mới. Mã OTP sẽ được gửi để xác thực.'
-                  : 'Nhập số điện thoại mới của bạn.'}
-              </p>
-              <div>
-                <Input
-                  type="tel"
-                  inputMode="numeric"
-                  placeholder="0912 345 678"
-                  autoFocus
-                  defaultValue={user.phone ?? ''}
-                  className={INPUT}
-                  {...phoneForm.register('phone')}
-                />
-                <FieldError msg={phoneForm.formState.errors.phone?.message} />
-              </div>
-              <div className="flex gap-2">
-                <PrimaryBtn loading={phoneForm.formState.isSubmitting} type="submit">
-                  {isLandlord ? 'Gửi mã OTP' : 'Lưu'}
-                </PrimaryBtn>
-                <GhostBtn type="button" onClick={cancelEdit}>Huỷ</GhostBtn>
-              </div>
-            </form>
-          )}
-
-          {step === 'otp' && (
-            <form
-              onSubmit={otpForm.handleSubmit(submitOtp)}
-              className="bg-[#f7f7f7] rounded-[10px] p-4 space-y-3"
-            >
-              <p className="text-xs text-[#6a6a6a]">
-                Nhập mã OTP 6 chữ số đã gửi đến{' '}
-                <span className="font-semibold text-[#222222]">{user.phone}</span>.
-                Mã có hiệu lực trong <span className="font-semibold text-[#222222]">5 phút</span>.
-              </p>
-              <div>
-                <Input
-                  placeholder="● ● ● ● ● ●"
-                  maxLength={6}
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  autoFocus
-                  className={cn(INPUT, 'text-center text-lg tracking-[0.5em] font-bold')}
-                  {...otpForm.register('otp')}
-                />
-                <FieldError msg={otpForm.formState.errors.otp?.message} />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex gap-2">
-                  <PrimaryBtn loading={otpForm.formState.isSubmitting} type="submit">
-                    Xác nhận
-                  </PrimaryBtn>
-                  <GhostBtn type="button" onClick={cancelEdit}>Huỷ</GhostBtn>
-                </div>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      await requestLandlordApi();
-                      toast.info('Đã gửi lại mã OTP.');
-                    } catch {
-                      toast.error('Không thể gửi lại OTP.');
-                    }
-                  }}
-                  className="text-xs font-semibold text-[#ff385c] hover:underline"
-                >
-                  Gửi lại
-                </button>
-              </div>
-            </form>
-          )}
+      <div className="flex flex-col self-stretch mb-[21px] mx-[25px] gap-[1px]">
+        {/* Phone row */}
+        <div className="flex justify-between items-center self-stretch pb-[31px] border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7]">
+          <div className="flex flex-col shrink-0 items-center gap-[1px]">
+            <div className="flex flex-col items-center pr-[237px]">
+              <span className="text-[#222222] text-sm font-bold">Số điện thoại</span>
+            </div>
+            <span className="text-[#929292] text-xs">
+              {user.phone ?? 'Cập nhật số điện thoại để xác thực và liên lạc nhanh chóng hơn'}
+            </span>
+          </div>
+          <button
+            onClick={() => setStep('phone')}
+            className="flex shrink-0 items-center bg-transparent text-left py-1.5 px-3 gap-1.5 rounded-lg border border-solid border-[#2683EB]"
+          >
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7b740a75-b978-4031-941d-e77c78491a25"
+              className="w-3.5 h-3.5 rounded-lg object-fill"
+            />
+            <span className="text-[#222222] text-xs font-bold">Chỉnh sửa</span>
+          </button>
         </div>
 
-        {/* Auth provider row */}
-        <div className="py-5">
-          <p className="text-sm font-semibold text-[#222222] mb-1">Phương thức đăng nhập</p>
-          <div className="flex items-center gap-2 mt-2">
+        {/* Phone form */}
+        {step === 'phone' && (
+          <div className="bg-[#f7f7f7] rounded-[10px] p-4 mt-3 space-y-3">
+            <p className="text-xs text-[#6a6a6a]">
+              {isLandlord
+                ? 'Nhập số điện thoại mới. Mã OTP sẽ được gửi để xác thực.'
+                : 'Nhập số điện thoại mới của bạn.'}
+            </p>
+            <div>
+              <Input
+                type="tel"
+                inputMode="numeric"
+                placeholder="0912 345 678"
+                autoFocus
+                defaultValue={user.phone ?? ''}
+                className="h-12 border-[#dddddd] focus-visible:border-[#222222] focus-visible:ring-2 focus-visible:ring-[#222222]/20 text-[#222222] placeholder:text-[#929292]"
+                {...phoneForm.register('phone')}
+              />
+              <FieldError msg={phoneForm.formState.errors.phone?.message} />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={phoneForm.handleSubmit(submitPhone)}
+                disabled={phoneForm.formState.isSubmitting}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 rounded-lg transition-all"
+              >
+                {phoneForm.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
+                {isLandlord ? 'Gửi mã OTP' : 'Lưu'}
+              </button>
+              <button
+                type="button"
+                onClick={cancelEdit}
+                className="px-4 py-2 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+              >
+                Huỷ
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* OTP form */}
+        {step === 'otp' && (
+          <div className="bg-[#f7f7f7] rounded-[10px] p-4 mt-3 space-y-3">
+            <p className="text-xs text-[#6a6a6a]">
+              Nhập mã OTP 6 chữ số đã gửi đến{' '}
+              <span className="font-semibold text-[#222222]">{user.phone}</span>.
+              Mã có hiệu lực trong <span className="font-semibold text-[#222222]">5 phút</span>.
+            </p>
+            <div>
+              <Input
+                placeholder="● ● ● ● ● ●"
+                maxLength={6}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                autoFocus
+                className="h-12 border-[#dddddd] focus-visible:border-[#222222] text-center text-lg tracking-[0.5em] font-bold text-[#222222]"
+                {...otpForm.register('otp')}
+              />
+              <FieldError msg={otpForm.formState.errors.otp?.message} />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex gap-2">
+                <button
+                  onClick={otpForm.handleSubmit(submitOtp)}
+                  disabled={otpForm.formState.isSubmitting}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 rounded-lg transition-all"
+                >
+                  {otpForm.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
+                  Xác nhận
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  className="px-4 py-2 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+                >
+                  Huỷ
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await requestLandlordApi();
+                    toast.info('Đã gửi lại mã OTP.');
+                  } catch {
+                    toast.error('Không thể gửi lại OTP.');
+                  }
+                }}
+                className="text-xs font-semibold text-[#ff385c] hover:underline"
+              >
+                Gửi lại
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Auth method */}
+        <div className="flex flex-col self-stretch py-[19px] gap-[7px]">
+          <div className="flex flex-col items-start self-stretch">
+            <span className="text-[#222222] text-sm font-bold">Phương thức đăng nhập</span>
+          </div>
+          <div className="flex items-center self-stretch">
             {user.authProvider === 'google' ? (
               <>
-                <svg viewBox="0 0 24 24" className="size-5 shrink-0">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                </svg>
-                <span className="text-sm text-[#222222] font-medium">Google Account</span>
-                <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 flex items-center gap-1">
-                  <CheckCircle2 className="size-3" /> Đã liên kết
-                </span>
+                <img
+                  src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/75bcb3f6-17ea-43df-b3e1-2e6938719f04"
+                  className="w-5 h-5 mr-[7px] object-fill"
+                />
+                <span className="text-[#222222] text-sm mr-2">Google Account</span>
+                <div className="flex shrink-0 items-center bg-[#EBFCF4] text-left py-[3px] px-[9px] gap-1 rounded-[26843500px] border border-solid border-[#D0FAE4]">
+                  <img
+                    src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/4f8feaa7-4ec0-4be9-bb3c-2b9747abe1f2"
+                    className="w-3 h-3 rounded-[26843500px] object-fill"
+                  />
+                  <span className="text-[#009865] text-xs font-bold">Đã liên kết</span>
+                </div>
               </>
             ) : (
               <>
-                <div className="size-5 rounded-full bg-[#222222] flex items-center justify-center shrink-0">
-                  <User className="size-3 text-white" />
+                <div className="size-5 rounded-full bg-[#222222] flex items-center justify-center shrink-0 mr-[7px]">
+                  <Phone className="size-3 text-white" />
                 </div>
-                <span className="text-sm text-[#222222] font-medium">Email & Mật khẩu</span>
+                <span className="text-[#222222] text-sm mr-2">Email & Mật khẩu</span>
               </>
             )}
           </div>
         </div>
-
       </div>
-    </SectionCard>
+    </div>
   );
 }
 
-// ─── bank section ─────────────────────────────────────────────────────────────
-
+// Bank section
 function BankSection({
   user,
   onUpdate,
@@ -613,58 +669,86 @@ function BankSection({
   };
 
   return (
-    <SectionCard
-      id="bank"
-      icon={CreditCard}
-      title="Tài khoản ngân hàng"
-      subtitle="Dùng để nhận thanh toán từ hợp đồng và đơn dịch vụ"
-    >
+    <div className="self-stretch bg-white pt-[1px] rounded-[14px] border border-solid border-[#DDDDDD]">
+      <div className="flex items-center self-stretch py-5 mb-[21px] mx-[1px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
+        <div className="flex flex-col shrink-0 items-center pt-0.5 ml-6 mr-3">
+          <div className="flex flex-col items-start bg-[#FFF546] text-left py-[9px] px-2.5 rounded-[26843500px] border-0">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d790544b-57f3-4c39-9782-2e9e496fe56a"
+              className="w-4 h-4 rounded-[26843500px] object-fill"
+            />
+          </div>
+        </div>
+        <div className="flex flex-col shrink-0 items-center gap-[1px]">
+          <div className="flex flex-col items-start pr-[130px]">
+            <span className="text-[#222222] text-base font-bold">Tài khoản ngân hàng</span>
+          </div>
+          <span className="text-[#929292] text-xs">
+            Dùng để nhận thanh toán từ hợp đồng và đơn dịch vụ
+          </span>
+        </div>
+      </div>
+
       {editing ? (
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="flex flex-col self-stretch mb-[21px] mx-[25px] gap-4">
           {[
-            { name: 'bankName', label: 'Tên ngân hàng', placeholder: 'VD: Vietcombank, BIDV, MB Bank…', required: true },
-            { name: 'accountNumber', label: 'Số tài khoản', placeholder: 'Nhập số tài khoản', required: true },
-            { name: 'accountName', label: 'Chủ tài khoản', placeholder: 'Viết HOA như trên sổ ngân hàng', required: true },
-            { name: 'branch', label: 'Chi nhánh', placeholder: 'VD: Chi nhánh Hà Nội', required: false },
+            { name: 'bankName' as const, label: 'Tên ngân hàng', placeholder: 'VD: Vietcombank, BIDV, MB Bank…', required: true },
+            { name: 'accountNumber' as const, label: 'Số tài khoản', placeholder: 'Nhập số tài khoản', required: true },
+            { name: 'accountName' as const, label: 'Chủ tài khoản', placeholder: 'Viết HOA như trên sổ ngân hàng', required: true },
+            { name: 'branch' as const, label: 'Chi nhánh', placeholder: 'VD: Chi nhánh Hà Nội', required: false },
           ].map(({ name, label, placeholder, required }) => (
             <div key={name}>
               <Label className="text-sm font-semibold text-[#222222]">
                 {label}
-                {required ? (
-                  <span className="text-[#c13515]"> *</span>
-                ) : (
-                  <span className="text-[#929292] font-normal"> (tuỳ chọn)</span>
-                )}
+                {required && <span className="text-[#c13515]"> *</span>}
               </Label>
               <Input
                 placeholder={placeholder}
                 {...(name === 'accountNumber' ? { inputMode: 'numeric' as const } : {})}
-                className={cn(INPUT, 'mt-1.5')}
-                {...form.register(name as keyof BankForm)}
+                className="h-12 border-[#dddddd] focus-visible:border-[#222222] focus-visible:ring-2 focus-visible:ring-[#222222]/20 text-[#222222] placeholder:text-[#929292] mt-1.5"
+                {...form.register(name)}
               />
-              <FieldError msg={form.formState.errors[name as keyof BankForm]?.message} />
+              <FieldError msg={form.formState.errors[name]?.message} />
             </div>
           ))}
 
           <div className="flex gap-2 pt-1">
-            <PrimaryBtn loading={form.formState.isSubmitting} type="submit">
+            <button
+              onClick={form.handleSubmit(onSubmit)}
+              disabled={form.formState.isSubmitting}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 rounded-lg transition-all"
+            >
+              {form.formState.isSubmitting && <Loader2 className="size-4 animate-spin" />}
               Lưu thay đổi
-            </PrimaryBtn>
-            <GhostBtn type="button" onClick={() => setEditing(false)}>Huỷ</GhostBtn>
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="px-4 py-2 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+            >
+              Huỷ
+            </button>
           </div>
-        </form>
+        </div>
       ) : bank ? (
-        <div>
+        <div className="flex flex-col self-stretch mb-[21px] mx-[25px]">
           <div className="flex items-center gap-2 mb-5 p-3 bg-emerald-50 rounded-[10px] border border-emerald-100">
             <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
-            <span className="text-sm font-semibold text-emerald-700">
-              Tài khoản ngân hàng đã được liên kết
-            </span>
+            <span className="text-sm font-semibold text-emerald-700">Tài khoản ngân hàng đã được liên kết</span>
           </div>
           <div className="divide-y divide-[#f7f7f7]">
-            <InfoRow label="Ngân hàng" value={bank.bankName} />
-            <InfoRow label="Số tài khoản" value={bank.accountNumber} />
-            <InfoRow label="Chủ tài khoản" value={bank.accountName} />
+            <div className="flex justify-between items-center py-3.5">
+              <span className="text-[#6A6A6A] text-sm">Ngân hàng</span>
+              <span className="text-[#222222] text-sm font-bold">{bank.bankName}</span>
+            </div>
+            <div className="flex justify-between items-center py-3.5">
+              <span className="text-[#6A6A6A] text-sm">Số tài khoản</span>
+              <span className="text-[#222222] text-sm font-bold">{bank.accountNumber}</span>
+            </div>
+            <div className="flex justify-between items-center py-3.5">
+              <span className="text-[#6A6A6A] text-sm">Chủ tài khoản</span>
+              <span className="text-[#222222] text-sm font-bold">{bank.accountName}</span>
+            </div>
           </div>
           <button
             onClick={() => setEditing(true)}
@@ -675,27 +759,33 @@ function BankSection({
           </button>
         </div>
       ) : (
-        <div className="flex flex-col items-center py-8 text-center">
-          <div className="size-14 bg-[#f7f7f7] rounded-full flex items-center justify-center mb-4">
-            <CreditCard className="size-6 text-[#929292]" />
+        <div className="flex flex-col items-center self-stretch py-8 mb-5 mx-[25px] gap-[9px]">
+          <div className="flex flex-col items-center pb-[3px]">
+            <span className="text-[#222222] text-sm font-bold">
+              Chưa liên kết tài khoản ngân hàng
+            </span>
           </div>
-          <p className="text-sm font-semibold text-[#222222] mb-1">
-            Chưa liên kết tài khoản ngân hàng
-          </p>
-          <p className="text-xs text-[#6a6a6a] leading-relaxed mb-5 max-w-xs">
-            Thêm tài khoản ngân hàng để nhận thanh toán khi hợp đồng hoàn thành hoặc dịch vụ được nghiệm thu.
-          </p>
-          <PrimaryBtn type="button" onClick={() => setEditing(true)}>
-            Thêm tài khoản ngân hàng
-          </PrimaryBtn>
+          <div className="flex flex-col items-center pb-[5px] px-1.5">
+            <span className="text-[#6A6A6A] text-xs text-center w-[276px]">
+              Thêm tài khoản ngân hàng để nhận thanh toán khi hợp
+              đồng hoàn thành hoặc dịch vụ được nghiệm thu.
+            </span>
+          </div>
+          <button
+            onClick={() => setEditing(true)}
+            className="flex flex-col items-start bg-black text-left py-[7px] px-4 rounded-lg border-0"
+          >
+            <span className="text-white text-sm font-bold">
+              Thêm tài khoản ngân hàng
+            </span>
+          </button>
         </div>
       )}
-    </SectionCard>
+    </div>
   );
 }
 
-// ─── national ID section ──────────────────────────────────────────────────────
-
+// National ID section
 function NationalIdSection({
   user,
   onUpdate,
@@ -736,14 +826,28 @@ function NationalIdSection({
     d ? new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '---';
 
   return (
-    <SectionCard
-      id="national-id"
-      icon={Fingerprint}
-      title="CMND / CCCD"
-      subtitle="Thông tin giấy tờ tuỳ thân — dùng trong hợp đồng thuê nhà"
-    >
+    <div className="self-stretch bg-white pt-[1px] rounded-[14px] border border-solid border-[#DDDDDD]">
+      <div className="flex items-center self-stretch py-5 mb-[21px] mx-[1px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
+        <div className="flex flex-col shrink-0 items-center pt-0.5 ml-6 mr-3">
+          <div className="flex flex-col items-start bg-[#FFF546] text-left p-2.5 rounded-[26843500px] border-0">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/c5b21e65-73fe-4f07-86d5-cb0fe2ea2cc6"
+              className="w-4 h-4 rounded-[26843500px] object-fill"
+            />
+          </div>
+        </div>
+        <div className="flex flex-col shrink-0 items-center mr-[304px] gap-0.5">
+          <div className="flex flex-col items-start pr-[166px]">
+            <span className="text-[#222222] text-base font-bold">Giấy tờ tuỳ thân</span>
+          </div>
+          <span className="text-[#929292] text-xs">
+            Thông tin giấy tờ tuỳ thân dùng trong hợp đồng thuê nhà
+          </span>
+        </div>
+      </div>
+
       {editing ? (
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="flex flex-col self-stretch mb-[21px] mx-[25px] gap-4">
           <div>
             <Label className="text-sm font-semibold text-[#222222]">
               Số CMND/CCCD <span className="text-[#c13515]">*</span>
@@ -752,7 +856,7 @@ function NationalIdSection({
               placeholder="VD: 034123456789"
               inputMode="numeric"
               maxLength={12}
-              className={cn(INPUT, 'mt-1.5')}
+              className="h-12 border-[#dddddd] focus-visible:border-[#222222] focus-visible:ring-2 focus-visible:ring-[#222222]/20 text-[#222222] placeholder:text-[#929292] mt-1.5"
               {...form.register('number')}
             />
             <FieldError msg={form.formState.errors.number?.message} />
@@ -764,7 +868,7 @@ function NationalIdSection({
             </Label>
             <Input
               type="date"
-              className={cn(INPUT, 'mt-1.5')}
+              className="h-12 border-[#dddddd] focus-visible:border-[#222222] focus-visible:ring-2 focus-visible:ring-[#222222]/20 text-[#222222] mt-1.5"
               {...form.register('issuedDate')}
             />
             <FieldError msg={form.formState.errors.issuedDate?.message} />
@@ -776,41 +880,52 @@ function NationalIdSection({
             </Label>
             <Input
               placeholder="VD: Cục Cảnh sát QLHC về TTXH"
-              className={cn(INPUT, 'mt-1.5')}
+              className="h-12 border-[#dddddd] focus-visible:border-[#222222] focus-visible:ring-2 focus-visible:ring-[#222222]/20 text-[#222222] placeholder:text-[#929292] mt-1.5"
               {...form.register('issuedPlace')}
             />
             <FieldError msg={form.formState.errors.issuedPlace?.message} />
           </div>
 
           <div className="flex gap-2 pt-1">
-            <PrimaryBtn loading={form.formState.isSubmitting} type="submit">
+            <button
+              onClick={form.handleSubmit(onSubmit)}
+              disabled={form.formState.isSubmitting}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 rounded-lg transition-all"
+            >
+              {form.formState.isSubmitting && <Loader2 className="size-4 animate-spin" />}
               Lưu thay đổi
-            </PrimaryBtn>
-            <GhostBtn type="button" onClick={() => setEditing(false)}>Huỷ</GhostBtn>
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="px-4 py-2 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+            >
+              Huỷ
+            </button>
           </div>
-        </form>
+        </div>
       ) : nid ? (
-        <div>
+        <div className="flex flex-col self-stretch mb-[21px] mx-[25px]">
           <div className="flex items-center gap-2 mb-5 p-3 bg-emerald-50 rounded-[10px] border border-emerald-100">
             <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
-            <span className="text-sm font-semibold text-emerald-700">
-              Đã cập nhật thông tin giấy tờ tuỳ thân
-            </span>
+            <span className="text-sm font-semibold text-emerald-700">Đã cập nhật thông tin giấy tờ tuỳ thân</span>
           </div>
           <div className="divide-y divide-[#f7f7f7]">
-            <InfoRow label="Số CMND/CCCD" value={nid.number ?? '---'} />
-            <InfoRow label="Ngày cấp" value={fmtDate(nid.issuedDate)} muted={!nid.issuedDate} />
-            <InfoRow label="Nơi cấp" value={nid.issuedPlace ?? '---'} muted={!nid.issuedPlace} />
+            <div className="flex justify-between items-center py-3.5">
+              <span className="text-[#6A6A6A] text-sm">Số CMND/CCCD</span>
+              <span className="text-[#222222] text-sm font-bold">{nid.number ?? '---'}</span>
+            </div>
+            <div className="flex justify-between items-center py-3.5">
+              <span className="text-[#6A6A6A] text-sm">Ngày cấp</span>
+              <span className="text-[#222222] text-sm font-bold">{fmtDate(nid.issuedDate)}</span>
+            </div>
+            <div className="flex justify-between items-center py-3.5">
+              <span className="text-[#6A6A6A] text-sm">Nơi cấp</span>
+              <span className="text-[#222222] text-sm font-bold">{nid.issuedPlace ?? '---'}</span>
+            </div>
           </div>
           <button
-            onClick={() => {
-              form.reset({
-                number: nid.number ?? '',
-                issuedDate: nid.issuedDate ? nid.issuedDate.slice(0, 10) : '',
-                issuedPlace: nid.issuedPlace ?? '',
-              });
-              setEditing(true);
-            }}
+            onClick={() => setEditing(true)}
             className="mt-5 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
           >
             <Pencil className="size-3.5" />
@@ -818,120 +933,28 @@ function NationalIdSection({
           </button>
         </div>
       ) : (
-        <div className="flex flex-col items-center py-8 text-center">
-          <div className="size-14 bg-[#f7f7f7] rounded-full flex items-center justify-center mb-4">
-            <Fingerprint className="size-6 text-[#929292]" />
+        <div className="flex flex-col items-center py-8 px-[148px] mb-[21px]">
+          <div className="flex flex-col items-center pb-[3px] mb-2">
+            <span className="text-[#222222] text-sm font-bold">
+              Chưa có thông tin giấy tờ tuỳ thân
+            </span>
           </div>
-          <p className="text-sm font-semibold text-[#222222] mb-1">
-            Chưa có thông tin giấy tờ tuỳ thân
-          </p>
-          <p className="text-xs text-[#6a6a6a] leading-relaxed mb-5 max-w-xs">
-            Bổ sung số CMND/CCCD để hợp đồng thuê nhà được điền đầy đủ thông tin pháp lý.
-          </p>
-          <PrimaryBtn type="button" onClick={() => setEditing(true)}>
-            Thêm CMND / CCCD
-          </PrimaryBtn>
+          <div className="flex flex-col items-center px-2 mb-[7px]">
+            <span className="text-[#6A6A6A] text-xs text-center w-[303px]">
+              Bổ sung số CMND/CCCD để hợp đồng thuê nhà được
+              điền đầy đủ thông tin pháp lý.
+            </span>
+          </div>
+          <button
+            onClick={() => setEditing(true)}
+            className="flex flex-col items-start bg-black text-left py-[7px] px-4 rounded-lg border-0"
+          >
+            <span className="text-white text-sm font-bold">
+              Thêm CMND/CCCD
+            </span>
+          </button>
         </div>
       )}
-    </SectionCard>
-  );
-}
-
-// ─── page ─────────────────────────────────────────────────────────────────────
-
-export default function ProfilePage() {
-  const storedUser = useAuthStore((s) => s.user);
-  const setUser = useAuthStore((s) => s.setUser);
-  const qc = useQueryClient();
-
-  const { data: user, isLoading } = useQuery({
-    queryKey: ['me'],
-    queryFn: getMeApi,
-    initialData: storedUser ?? undefined,
-  });
-
-  const handleUpdate = (updated: UserType) => {
-    setUser(updated);
-    qc.setQueryData(['me'], updated);
-  };
-
-  if (isLoading && !storedUser) {
-    return (
-      <div className="flex items-center justify-center py-32">
-        <div className="size-8 border-2 border-[#ff385c] border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!user) return null;
-
-  return (
-    <div className="space-y-6">
-      {/* Heading */}
-      <div>
-        <h1 className="text-2xl font-bold text-[#222222]">Hồ sơ cá nhân</h1>
-        <p className="text-sm text-[#6a6a6a] mt-1">
-          Quản lý thông tin và bảo mật tài khoản
-        </p>
-      </div>
-
-      {/* Layout */}
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
-
-        {/* Sidebar */}
-        <aside className="w-full lg:w-72 lg:sticky lg:top-24 shrink-0 space-y-4">
-          <AvatarCard user={user} onUpdate={handleUpdate} />
-          <StatsCard />
-          <QuickLinksCard />
-        </aside>
-
-        {/* Main content */}
-        <div className="flex-1 min-w-0 space-y-5">
-
-          {/* Account info */}
-          <SectionCard
-            id="info"
-            icon={User}
-            title="Thông tin tài khoản"
-            subtitle="Thông tin cơ bản của tài khoản bạn"
-          >
-            <div className="divide-y divide-[#f7f7f7]">
-              <InfoRow label="Họ và tên" value={user.name} />
-              <InfoRow label="Email" value={user.email} />
-              <InfoRow
-                label="Loại tài khoản"
-                value={ROLE_META[user.role]?.label ?? user.role}
-                badge={
-                  <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-full shrink-0', ROLE_META[user.role]?.style)}>
-                    &nbsp;
-                  </span>
-                }
-              />
-              <InfoRow
-                label="Trạng thái"
-                value={user.isActive ? 'Đang hoạt động' : 'Đã vô hiệu hoá'}
-                muted={!user.isActive}
-              />
-              <InfoRow
-                label="Ngày tham gia"
-                value={new Date(user.createdAt).toLocaleDateString('vi-VN', {
-                  day: '2-digit', month: 'long', year: 'numeric',
-                })}
-                muted
-              />
-            </div>
-          </SectionCard>
-
-          {/* Security */}
-          <SecuritySection user={user} onUpdate={handleUpdate} />
-
-          {/* Bank */}
-          <BankSection user={user} onUpdate={handleUpdate} />
-
-          {/* National ID */}
-          <NationalIdSection user={user} onUpdate={handleUpdate} />
-        </div>
-      </div>
     </div>
   );
 }

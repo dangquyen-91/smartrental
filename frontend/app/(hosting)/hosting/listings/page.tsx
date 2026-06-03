@@ -109,7 +109,7 @@ function DeleteModal({
           <button
             onClick={onConfirm}
             disabled={isPending}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-rausch hover:bg-deep-rausch rounded-lg transition-colors disabled:opacity-60 active:scale-95"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#2683EB] hover:bg-blue-600 rounded-lg transition-colors disabled:opacity-60 active:scale-95"
           >
             {isPending && <Loader2 className="size-3.5 animate-spin" />}
             Xoá
@@ -177,7 +177,7 @@ function ListingCard({
         {/* Top row: title + menu */}
         <div className="flex items-start justify-between gap-2">
           <Link href={`/properties/${property.id}`} className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-ink-black line-clamp-1 hover:text-rausch transition-colors leading-snug">
+            <p className="text-sm font-semibold text-ink-black line-clamp-1 hover:text-[#2683EB] transition-colors leading-snug">
               {property.title}
             </p>
           </Link>
@@ -215,7 +215,7 @@ function ListingCard({
                 <div className="h-px bg-hairline-gray mx-3 my-1" />
                 <button
                   onClick={() => { setMenuOpen(false); onDelete(property); }}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium text-rausch hover:bg-red-50 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium text-[#2683EB] hover:bg-red-50 transition-colors"
                 >
                   <Trash2 className="size-3.5" />
                   Xoá tin
@@ -290,7 +290,7 @@ function EmptyState({ filter }: { filter: StatusFilter }) {
       {isAll && (
         <Link
           href="/hosting/listings/new"
-          className="px-5 py-2.5 text-sm font-semibold text-white bg-rausch hover:bg-deep-rausch rounded-lg transition-all active:scale-95"
+          className="px-5 py-2.5 text-sm font-semibold text-white bg-[#2683EB] hover:bg-blue-600 rounded-lg transition-all active:scale-95"
         >
           Đăng tin đầu tiên
         </Link>
@@ -341,7 +341,7 @@ export default function HostingListingsPage() {
           <h1 className="text-2xl font-bold text-ink-black">Tin đăng của tôi</h1>
           <Link
             href="/hosting/listings/new"
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-rausch hover:bg-deep-rausch rounded-lg transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-[#2683EB] hover:bg-blue-600 rounded-lg transition-all active:scale-95"
           >
             <Plus className="size-4" />
             Đăng tin mới

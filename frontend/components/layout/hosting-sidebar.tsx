@@ -29,9 +29,9 @@ export default function HostingSidebar() {
       <div className="h-16 flex items-center px-4 border-b border-[#dddddd] shrink-0">
         <Link
           href="/"
-          className="flex items-center gap-2 text-sm font-semibold text-[#222222] hover:text-[#ff385c] transition-colors group"
+          className="flex items-center gap-2 text-sm font-semibold text-[#222222] hover:text-[#2683EB] transition-colors group"
         >
-          <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+          <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-200" />
           Khám phá
         </Link>
       </div>
@@ -51,14 +51,37 @@ export default function HostingSidebar() {
                 <Link
                   href={href}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-sm font-medium transition-colors',
+                    'group relative flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'bg-[#f7f7f7] text-[#222222] font-semibold'
-                      : 'text-[#6a6a6a] hover:bg-[#f7f7f7] hover:text-[#222222]',
+                      ? 'bg-[#2683EB]/8 text-[#2683EB] font-semibold shadow-sm'
+                      : 'text-[#6a6a6a] hover:bg-[#f7f7f7] hover:text-[#222222] hover:shadow-sm',
                   )}
                 >
-                  <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-[#ff385c]' : 'text-[#929292]')} />
-                  {label}
+                  {/* Active indicator bar */}
+                  <span
+                    className={cn(
+                      'absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-[#2683EB] transition-all duration-300',
+                      isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-40',
+                    )}
+                  />
+
+                  <Icon
+                    className={cn(
+                      'w-4 h-4 shrink-0 transition-all duration-200',
+                      isActive
+                        ? 'text-[#2683EB] scale-110'
+                        : 'text-[#929292] group-hover:text-[#2683EB] group-hover:scale-105',
+                    )}
+                  />
+
+                  <span className="transition-all duration-200">
+                    {label}
+                  </span>
+
+                  {/* Active dot */}
+                  {isActive && (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#2683EB] animate-pulse" />
+                  )}
                 </Link>
               </li>
             );
