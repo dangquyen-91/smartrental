@@ -416,13 +416,24 @@ function MatchesTab() {
   const send = useSendRoommateRequest();
   const [explainId, setExplainId] = useState<string | null>(null);
   const [viewProfileId, setViewProfileId] = useState<string | null>(null);
+  const [sentUserIds, setSentUserIds] = useState<Set<string>>(new Set());
+  const [inviteTarget, setInviteTarget] = useState<{ userId: string; userName: string } | null>(null);
 
   const matches = data?.data ?? [];
   const pagination = data?.pagination;
 
-  const handleSend = (userId: string) => {
-    send.mutate({ userId });
+  const handleSend = (userId: string, message?: string) => {
+    send.mutate(
+      { userId, message },
+      {
+        onSuccess: () => {
+          setSentUserIds((prev) => new Set(prev).add(userId));
+        },
+      }
+    );
   };
+
+  const isSending = (userId: string) => send.isPending && send.variables?.userId === userId;
 
   if (isLoading) return <MatchSkeleton />;
 
@@ -455,13 +466,25 @@ function MatchesTab() {
       {viewProfileId && (
         <ProfileModal userId={viewProfileId} onClose={() => setViewProfileId(null)} />
       )}
+      {inviteTarget && (
+        <InviteModal
+          userId={inviteTarget.userId}
+          userName={inviteTarget.userName}
+          onSend={(userId) => {
+            handleSend(userId);
+            setInviteTarget(null);
+          }}
+          onClose={() => setInviteTarget(null)}
+        />
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {matches.map((m) => (
           <MatchCard
             key={m.id}
             profile={m}
-            onSend={handleSend}
-            isSending={send.isPending}
+            onInvite={(userId, userName) => setInviteTarget({ userId, userName })}
+            isSending={isSending(m.user.id)}
+            isSent={sentUserIds.has(m.user.id)}
             onExplain={(userId) => setExplainId(explainId === userId ? null : userId)}
             isExplaining={explainId === m.user.id}
             onViewProfile={(userId) => setViewProfileId(userId)}
@@ -501,20 +524,21 @@ function MatchesTab() {
 }
 
 function MatchCard({
-  profile, onSend, isSending, onExplain, isExplaining, onViewProfile,
+  profile, onInvite, isSending, isSent, onExplain, isExplaining, onViewProfile,
 }: {
   profile: RoommateProfile;
-  onSend: (userId: string) => void;
+  onInvite: (userId: string, userName: string) => void;
   isSending: boolean;
+  isSent: boolean;
   onExplain: (userId: string) => void;
   isExplaining: boolean;
   onViewProfile: (userId: string) => void;
 }) {
   const user = profile.user;
   const requestStatus = profile.requestStatus;
-  const isPending  = requestStatus === 'pending';
-  const isAccepted = requestStatus === 'accepted';
-  const canSend    = !requestStatus;
+  const isPending   = requestStatus === 'pending' || isSent;
+  const isAccepted  = requestStatus === 'accepted';
+  const canSend     = !requestStatus && !isSent;
 
   return (
     <div className="bg-white border border-[#dddddd] rounded-card p-4 space-y-3 hover:shadow-sm transition-shadow">
@@ -557,7 +581,7 @@ function MatchCard({
       {/* Actions */}
       <div className="flex gap-2 pt-1">
         <button
-          onClick={() => canSend && onSend(user.id)}
+          onClick={() => canSend && onInvite(user.id, user.name)}
           disabled={isSending || !canSend}
           className={cn(
             'flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors',
@@ -766,6 +790,93 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+// ─── invite modal ────────────────────────────────────────────────────────────
+
+function InviteModal({
+  userId,
+  userName,
+  onSend,
+  onClose,
+}: {
+  userId: string;
+  userName: string;
+  onSend: (userId: string, message?: string) => void;
+  onClose: () => void;
+}) {
+  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    onSend(userId, message.trim() || undefined);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-sm"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#dddddd]">
+          <div className="flex items-center gap-2">
+            <Send size={16} className="text-[#ff385c]" />
+            <span className="font-semibold text-[#222222]">Gửi lời mời</span>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-[#f7f7f7] transition-colors">
+            <X size={16} className="text-[#6a6a6a]" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          <p className="text-sm text-[#6a6a6a]">
+            Gửi lời mời kết nối đến <span className="font-semibold text-[#222222]">{userName}</span>.
+            Bạn có thể thêm lời nhắn để tăng khả năng được chấp nhận.
+          </p>
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-[#222222]">
+              Lời nhắn <span className="text-[#6a6a6a] font-normal">(tuỳ chọn)</span>
+            </label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={3}
+              maxLength={300}
+              className={cn(inputCls(false), 'resize-none')}
+              placeholder="VD: Chào bạn, mình thấy hồ sơ của bạn rất phù hợp với mình..."
+              autoFocus
+            />
+            <p className="text-xs text-right text-[#6a6a6a]">{message.length}/300</p>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="flex-1 flex items-center justify-center gap-1.5 text-sm font-medium border border-[#dddddd] text-[#6a6a6a] py-2.5 rounded-lg hover:bg-[#f7f7f7] disabled:opacity-50 transition-colors"
+            >
+              Huỷ
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold bg-[#ff385c] text-white py-2.5 rounded-lg hover:bg-[#e00b41] disabled:opacity-60 transition-colors"
+            >
+              {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+              Gửi lời mời
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ─── requests tab ─────────────────────────────────────────────────────────────
 
 function formatRelativeTime(dateStr: string) {
@@ -957,6 +1068,8 @@ function RequestsTab() {
   const respond = useRespondRoommateRequest();
   const cancel  = useCancelRoommateRequest();
   const [viewProfileId, setViewProfileId] = useState<string | null>(null);
+  const [pendingRespond, setPendingRespond] = useState<Record<string, 'accepted' | 'rejected' | null>>({});
+  const [pendingCancel, setPendingCancel]   = useState<Set<string>>(new Set());
 
   const pendingReceivedCount = pendingReceivedRes?.pagination?.total ?? 0;
   const pendingSentCount     = pendingSentRes?.pagination?.total     ?? 0;
@@ -973,6 +1086,31 @@ function RequestsTab() {
     { id: 'received' as const, label: 'Nhận được', count: pendingReceivedCount },
     { id: 'sent'     as const, label: 'Đã gửi',    count: pendingSentCount     },
   ];
+
+  const handleRespond = (id: string, action: 'accepted' | 'rejected') => {
+    setPendingRespond((prev) => ({ ...prev, [id]: action }));
+    respond.mutate(
+      { id, action },
+      {
+        onSettled: () => {
+          setPendingRespond((prev) => ({ ...prev, [id]: null }));
+        },
+      }
+    );
+  };
+
+  const handleCancel = (id: string) => {
+    setPendingCancel((prev) => new Set(prev).add(id));
+    cancel.mutate(id, {
+      onSettled: () => {
+        setPendingCancel((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      },
+    });
+  };
 
   return (
     <div className="space-y-4 max-w-2xl">
@@ -1023,10 +1161,10 @@ function RequestsTab() {
             key={req.id}
             req={req}
             direction={type}
-            onRespond={(action) => respond.mutate({ id: req.id, action })}
-            onCancel={() => cancel.mutate(req.id)}
-            isResponding={respond.isPending}
-            isCancelling={cancel.isPending}
+            onRespond={(action) => handleRespond(req.id, action)}
+            onCancel={() => handleCancel(req.id)}
+            isResponding={!!pendingRespond[req.id]}
+            isCancelling={pendingCancel.has(req.id)}
             onViewProfile={setViewProfileId}
           />
         ))}
