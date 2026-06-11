@@ -256,7 +256,7 @@ function GenerateModal({
     const all = bookingsData?.data ?? [];
     return all.filter(
       (b) =>
-        (b.status === 'confirmed' || b.status === 'active') &&
+        (b.status === 'confirmed' || b.status === 'active' || b.status === 'completed') &&
         !existingContractBookingIds.has(b.id),
     );
   }, [bookingsData?.data, existingContractBookingIds]);

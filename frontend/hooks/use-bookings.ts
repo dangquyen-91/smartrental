@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   getMyBookingsApi,
+  getAllMyBookingsApi,
   getLandlordBookingsApi,
   getBookingApi,
   createBookingApi,
@@ -25,6 +26,17 @@ export function useMyBookings(status?: Booking["status"]) {
   return useQuery({
     queryKey: bookingKeys.mine(status),
     queryFn: () => getMyBookingsApi(status),
+    staleTime: 0,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useAllMyBookings() {
+  return useQuery({
+    queryKey: bookingKeys.mine(),
+    queryFn: getAllMyBookingsApi,
     staleTime: 0,
     refetchInterval: 30_000,
     refetchIntervalInBackground: false,

@@ -13,13 +13,17 @@ export interface PropertyFilters {
   search?: string;
   page?: number;
   limit?: number;
+  excludePropertyIds?: string[];
 }
 
 export async function getPropertiesApi(filters?: PropertyFilters) {
   const params = new URLSearchParams();
   if (filters) {
     Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
+      if (value === undefined || value === null || value === "") return;
+      if (key === "excludePropertyIds" && Array.isArray(value)) {
+        value.forEach((id) => params.append("excludePropertyIds", id));
+      } else {
         params.set(key, String(value));
       }
     });

@@ -43,7 +43,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
       await logoutApi();
     } finally {
       clearAuth();
-      router.push('/login');
+      router.push('/');
     }
   };
 

@@ -44,7 +44,7 @@ export default function AppNavbar({ center }: AppNavbarProps) {
       // logout API lỗi vẫn clear local auth
     } finally {
       clearAuth();
-      router.push('/login');
+      router.push('/');
     }
   };
 

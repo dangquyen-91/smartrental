@@ -225,7 +225,7 @@ export function PublicNavbar({ activeLink }: PublicNavbarProps) {
 export function PublicFooter() {
   return (
     <footer className="bg-[#FFED00] text-black py-12 px-4 md:px-8">
-      <div className="max-w-7xl mx-auto w-full">
+      <div className="mx-auto" style={{ maxWidth: '1280px' }}>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 pb-12 text-left">
           <div className="col-span-1 md:col-span-6 flex flex-col items-start gap-4">
             <div className="flex items-center gap-2">

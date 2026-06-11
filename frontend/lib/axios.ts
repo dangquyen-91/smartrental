@@ -68,7 +68,15 @@ api.interceptors.response.use(
     } catch (err) {
       processQueue(err, null);
       clearAuth();
-      if (typeof window !== 'undefined') window.location.href = '/login';
+      // Only redirect to /login for protected routes.
+      // Public routes (e.g. /, /properties, /about) should not redirect —
+      // just reject so the UI can show an error or guest content gracefully.
+      if (typeof window !== 'undefined') {
+        const PUBLIC_ROUTES = ['/', '/about', '/guide', '/news'];
+        const pathname = window.location.pathname;
+        const isProtected = !PUBLIC_ROUTES.includes(pathname) && !pathname.startsWith('/properties');
+        if (isProtected) window.location.href = '/login';
+      }
       return Promise.reject(err);
     } finally {
       isRefreshing = false;

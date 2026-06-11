@@ -19,13 +19,17 @@ const typeLabel: Record<Property["type"], string> = {
 interface PropertyCardProps {
   property: Property;
   className?: string;
+  rentedPropertyIds?: Set<string>;
 }
 
-export function PropertyCard({ property, className }: PropertyCardProps) {
+export function PropertyCard({ property, className, rentedPropertyIds }: PropertyCardProps) {
   const [imgIndex, setImgIndex] = useState(0);
   const { data: wishlistIds } = useWishlist();
   const { mutate: toggleWishlist, isPending } = useToggleWishlist(property.id);
   const wishlisted = wishlistIds?.includes(property.id) ?? false;
+
+  const isRented = rentedPropertyIds?.has(property.id) ?? false;
+  const effectiveStatus = isRented ? 'rented' : property.status;
 
   const images =
     property.images.length > 0
@@ -66,6 +70,13 @@ export function PropertyCard({ property, className }: PropertyCardProps) {
             <Badge variant="featured">Nổi bật</Badge>
           </div>
         )}
+
+        {/* Status badge — top right, below wishlist button */}
+        <div className="absolute bottom-3 right-3">
+          <Badge variant={effectiveStatus === 'rented' ? 'rented' : effectiveStatus === 'available' ? 'available' : 'maintenance'}>
+            {effectiveStatus === 'rented' ? 'Đã thuê' : effectiveStatus === 'available' ? 'Còn trống' : 'Bảo trì'}
+          </Badge>
+        </div>
 
         {/* Wishlist button — glassmorphism */}
         <button

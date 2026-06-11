@@ -21,6 +21,11 @@ export async function getLandlordBookingsApi(status?: Booking["status"]) {
   return res.data;
 }
 
+export async function getAllMyBookingsApi() {
+  const res = await api.get<ApiResponse<Booking[]>>("/bookings/my");
+  return res.data;
+}
+
 export async function getBookingApi(id: string) {
   const res = await api.get<ApiResponse<Booking>>(`/bookings/${id}`);
   return res.data;

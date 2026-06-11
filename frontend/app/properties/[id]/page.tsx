@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { PriceDisplay } from '@/components/ui/price-display';
 import { PropertyReviewSection } from '@/components/shared/review-list';
 import { useProperty } from '@/hooks/use-properties';
+import { useAllMyBookings } from '@/hooks/use-bookings';
 import { useCreateBooking } from '@/hooks/use-bookings';
 import { useAuth } from '@/hooks/use-auth';
 import { useWishlist, useToggleWishlist } from '@/hooks/use-wishlist';
@@ -181,7 +182,7 @@ function ImageGallery({ images, title }: { images: { url: string }[]; title: str
 
 // ─── booking panel ────────────────────────────────────────────────────────────
 
-function BookingPanel({ property, contactRevealed }: { property: Property; contactRevealed: boolean }) {
+function BookingPanel({ property, effectiveStatus, contactRevealed }: { property: Property; effectiveStatus: string; contactRevealed: boolean }) {
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   const { mutate: createBooking, isPending, error } = useCreateBooking();
@@ -191,7 +192,7 @@ function BookingPanel({ property, contactRevealed }: { property: Property; conta
   const [success, setSuccess] = useState(false);
 
   const isOwner = typeof property.owner === 'object' ? property.owner.id === user?.id : property.owner === user?.id;
-  const unavailable = property.status !== 'available';
+  const unavailable = effectiveStatus !== 'available';
   const totalRent = duration * property.price;
   const platformFee = Math.round(property.price * 0.1);
 
@@ -228,7 +229,7 @@ function BookingPanel({ property, contactRevealed }: { property: Property; conta
       {isOwner ? (
         <div className="text-center py-4 text-sm text-[#6A6A6A] border border-gray-100 rounded-xl w-full">Đây là bất động sản của bạn</div>
       ) : unavailable ? (
-        <div className="text-center py-4 text-sm text-[#6A6A6A] border border-gray-100 rounded-xl w-full">Phòng này hiện đang {property.status === 'rented' ? 'đã thuê' : 'bảo trì'}</div>
+        <div className="text-center py-4 text-sm text-[#6A6A6A] border border-gray-100 rounded-xl w-full">Phòng này hiện đang {effectiveStatus === 'rented' ? 'đã thuê' : 'bảo trì'}</div>
       ) : (
         <form onSubmit={handleSubmit} className="w-full">
           <div className="flex flex-col gap-3 mb-4">
@@ -329,6 +330,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const { id } = use(params);
   const { data, isLoading, isError } = useProperty(id);
   const { isAuthenticated, user } = useAuth();
+  const { data: myBookingsData } = useAllMyBookings();
   const { data: savedIds = [] } = useWishlist();
   const { mutate: toggleWishlist } = useToggleWishlist(id);
   const [heartAnim, setHeartAnim] = useState(false);
@@ -373,7 +375,15 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const contactRevealed = data.data.contactRevealed ?? false;
   const ownerUser = typeof p.owner === 'object' ? p.owner : null;
   const address = [p.address?.street, p.address?.ward, p.address?.district, p.address?.city].filter(Boolean).join(', ');
-  const statusLabel = p.status === 'available' ? 'Còn trống' : p.status === 'rented' ? 'Đã thuê' : 'Bảo trì';
+
+  // Build set of property IDs that the tenant has a confirmed/active/completed booking for
+  const rentedPropertyIds = new Set(
+    (myBookingsData?.data?.bookings ?? [])
+      .filter((b: any) => ['confirmed', 'active', 'completed'].includes(b.status))
+      .map((b: any) => b.property?.id ?? b.property)
+  );
+  const effectiveStatus = rentedPropertyIds.has(id) ? 'rented' : p.status;
+  const statusLabel = effectiveStatus === 'available' ? 'Còn trống' : effectiveStatus === 'rented' ? 'Đã thuê' : 'Bảo trì';
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -558,7 +568,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
         {/* Right: booking panel */}
         <div className="shrink-0 sticky top-6">
-          <BookingPanel property={p} contactRevealed={contactRevealed} />
+          <BookingPanel property={p} effectiveStatus={effectiveStatus} contactRevealed={contactRevealed} />
         </div>
       </div>
 

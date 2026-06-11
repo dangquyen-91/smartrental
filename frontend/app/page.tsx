@@ -13,6 +13,7 @@ import { PublicNavbar, PublicFooter } from '@/components/layout/public-navbar';
 import { PropertyCard } from '@/components/shared/property-card';
 import { PropertyCardSkeleton } from '@/components/ui/skeleton';
 import { useProperties } from '@/hooks/use-properties';
+import { useMyBookings, useAllMyBookings } from '@/hooks/use-bookings';
 import { useAuth } from '@/hooks/use-auth';
 import { WaveText } from '@/components/shared/wave-text';
 import type { Property } from '@/types';
@@ -49,6 +50,30 @@ const POPULAR_CITIES = [
   { city: 'Cần Thơ', subtitle: 'Phòng sinh viên' },
   { city: 'Bình Dương', subtitle: 'Phòng trọ KCN' },
   { city: 'Đồng Nai', subtitle: 'Nhà trọ công nhân' },
+  { city: 'Hải Phòng', subtitle: 'Căn hộ mini' },
+  { city: 'Nha Trang', subtitle: 'Phòng view biển' },
+  { city: 'Hạ Long', subtitle: 'Căn hộ du lịch' },
+  { city: 'Đà Lạt', subtitle: 'Phòng nghỉ dưỡng' },
+  { city: 'Vũng Tàu', subtitle: 'Căn hộ gần bãi biển' },
+  { city: 'Cần Thơ', subtitle: 'Phòng sinh viên' },
+  { city: 'Buôn Ma Thuột', subtitle: 'Nhà trọ giá rẻ' },
+  { city: 'Thanh Hoá', subtitle: 'Phòng trọ thành phố' },
+  { city: 'Nam Định', subtitle: 'Cho thuê phòng' },
+  { city: 'Huế', subtitle: 'Căn hộ sinh viên' },
+  { city: 'Quy Nhơn', subtitle: 'Phòng du lịch' },
+  { city: 'Vinh', subtitle: 'Nhà nguyên căn' },
+  { city: 'Bắc Ninh', subtitle: 'Phòng trọ KCN' },
+  { city: 'Hải Dương', subtitle: 'Căn hộ giá rẻ' },
+  { city: 'Thái Nguyên', subtitle: 'Phòng sinh viên' },
+  { city: 'Bến Tre', subtitle: 'Cho thuê phòng' },
+  { city: 'Long An', subtitle: 'Nhà trọ công nhân' },
+  { city: 'Tiền Giang', subtitle: 'Phòng trọ giá rẻ' },
+  { city: 'An Giang', subtitle: 'Căn hộ cho thuê' },
+  { city: 'Khánh Hoà', subtitle: 'Phòng nghỉ dưỡng' },
+  { city: 'Phú Quốc', subtitle: 'Căn hộ du lịch' },
+  { city: 'Pleiku', subtitle: 'Nhà trọ thành phố' },
+  { city: 'Kon Tum', subtitle: 'Phòng cho thuê' },
+  { city: 'Lâm Đồng', subtitle: 'Căn hộ nghỉ dưỡng' },
 ];
 
 // ─── Search bar ──────────────────────────────────────────────────────────────
@@ -210,6 +235,8 @@ function PropertySection({
   subtitle,
   showLoadMore = false,
   limit,
+  excludePropertyIds,
+  rentedPropertyIds,
 }: {
   activeType: Property['type'] | 'all';
   filters: PropertyFilters;
@@ -217,6 +244,8 @@ function PropertySection({
   subtitle?: string;
   showLoadMore?: boolean;
   limit?: number;
+  excludePropertyIds?: string[];
+  rentedPropertyIds?: Set<string>;
 }) {
   const [page, setPage] = useState(1);
 
@@ -226,6 +255,7 @@ function PropertySection({
     status: 'available',
     page,
     limit: limit ?? PAGE_SIZE,
+    excludePropertyIds,
   };
 
   const { data, isLoading } = useProperties(apiFilters);
@@ -256,7 +286,7 @@ function PropertySection({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {properties.slice(0, limit).map((p, i) => (
-            <PropertyCard key={p.id ?? `p-${i}`} property={p} />
+            <PropertyCard key={p.id ?? `p-${i}`} property={p} rentedPropertyIds={rentedPropertyIds} />
           ))}
         </div>
       )}
@@ -291,9 +321,19 @@ function EmptyState() {
 
 export default function HomePage() {
   const heroImgRef = useRef<HTMLImageElement>(null);
+  const marqueeRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, user } = useAuth();
   const [activeCategory, setActiveCategory] = useState<Property['type'] | 'all'>('all');
   const [apiFilters, setApiFilters] = useState<PropertyFilters>({});
+
+  const { data: myBookings } = useAllMyBookings();
+  const rentedPropertyIds = new Set(
+    (myBookings?.data ?? [])
+      .filter((b) => ['confirmed', 'active', 'completed'].includes(b.status))
+      .map((b) => (typeof b.property === 'string' ? b.property : b.property?.id))
+      .filter(Boolean) as string[],
+  );
+  const excludedPropertyIds = Array.from(rentedPropertyIds);
 
   useEffect(() => {
     if (!heroImgRef.current) return;
@@ -302,6 +342,19 @@ export default function HomePage() {
       { opacity: 0, y: 20 },
       { opacity: 1, y: 0, duration: 1, ease: 'power3.out' }
     );
+  }, []);
+
+  useEffect(() => {
+    if (!marqueeRef.current) return;
+    const el = marqueeRef.current;
+    const totalWidth = el.scrollWidth / 2;
+    gsap.set(el, { x: 0 });
+    gsap.to(el, {
+      x: -totalWidth,
+      duration: totalWidth / 60,
+      ease: 'none',
+      repeat: -1,
+    });
   }, []);
 
   const handleSearch = (s: SearchState) => {
@@ -352,15 +405,24 @@ export default function HomePage() {
             subtitle="Gợi ý những không gian sống tốt nhất dựa trên sở thích của bạn."
             limit={3}
             showLoadMore={false}
+            excludePropertyIds={excludedPropertyIds}
+            rentedPropertyIds={rentedPropertyIds}
           />
 
           <div className="mt-12 text-center">
-            <Link
-              href="/properties"
-              className="px-8 py-3 bg-[#ffef3d] text-[#1f1c00] text-sm font-semibold rounded-full hover:shadow-lg transition-all inline-block"
-            >
-              Xem thêm
-            </Link>
+          <Link
+            href={`/properties${apiFilters.search || apiFilters.minPrice || apiFilters.maxPrice || activeCategory !== 'all'
+              ? `?${[
+                  apiFilters.search ? `search=${encodeURIComponent(apiFilters.search)}` : '',
+                  apiFilters.minPrice ? `minPrice=${apiFilters.minPrice}` : '',
+                  apiFilters.maxPrice ? `maxPrice=${apiFilters.maxPrice}` : '',
+                  activeCategory !== 'all' ? `type=${activeCategory}` : '',
+                ].filter(Boolean).join('&')}`
+              : ''}`}
+            className="px-8 py-3 bg-[#ffef3d] text-[#1f1c00] text-sm font-semibold rounded-full hover:shadow-lg transition-all inline-block"
+          >
+            Xem thêm
+          </Link>
           </div>
         </section>
 
@@ -428,20 +490,22 @@ export default function HomePage() {
         </section>
 
         {/* ── Popular Cities ── */}
-        <section className="py-16 px-4 md:px-10 bg-[#f8f9fa]">
+        <section className="py-16 px-4 md:px-10 bg-[#f8f9fa] overflow-hidden">
           <div className="mx-auto" style={{ maxWidth: '1280px' }}>
             <h2 className="text-sm font-semibold text-[#191c1d] mb-8 uppercase tracking-widest text-center md:text-left">
               Khám phá theo thành phố
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-6">
-              {POPULAR_CITIES.map((c) => (
-                <div key={c.city} className="cursor-pointer group">
-                  <p className="text-sm font-semibold text-[#191c1d] group-hover:text-[#676000] transition-all">
-                    {c.city}
-                  </p>
-                  <p className="text-xs text-[#4a4733]">{c.subtitle}</p>
-                </div>
-              ))}
+            <div className="relative">
+              <div ref={marqueeRef} className="flex gap-6">
+                {[...POPULAR_CITIES, ...POPULAR_CITIES].map((c, i) => (
+                  <div key={`${c.city}-${i}`} className="cursor-pointer group shrink-0">
+                    <p className="text-sm font-semibold text-[#191c1d] group-hover:text-[#676000] transition-all whitespace-nowrap">
+                      {c.city}
+                    </p>
+                    <p className="text-xs text-[#4a4733] whitespace-nowrap">{c.subtitle}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -449,9 +513,10 @@ export default function HomePage() {
         {/* ── CTA ── */}
         <section className="py-24 px-4 md:px-10 bg-white">
           <div className="mx-auto text-center" style={{ maxWidth: '896px' }}>
-            <h2 className="text-4xl md:text-5xl font-bold text-[#676000] mb-6 leading-tight">
-              Bắt đầu ngay hôm nay!
-            </h2>
+            <WaveText
+              text="Bắt đầu ngay hôm nay!"
+              className="text-4xl md:text-5xl font-bold text-[#676000] mb-6 leading-tight"
+            />
             <p className="text-lg text-[#4a4733] mb-12">
               Tạo tài khoản miễn phí để lưu tin yêu thích, đặt phòng và nhận thông báo mới nhất.
             </p>
