@@ -78,6 +78,7 @@ export interface Property {
   };
   views?: number;
   isFeatured: boolean;
+  isVerified?: boolean;
   isActive?: boolean;
   createdAt: string;
 }

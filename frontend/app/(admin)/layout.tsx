@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { LogOut, User, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { PublicFooter } from '@/components/layout/public-navbar';
 import { LayoutDashboard, Users, Building2, CreditCard, Wrench, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -145,42 +146,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           {/* Footer */}
-          <footer className="flex flex-col self-stretch bg-[#FFF546] py-[39px] px-20 gap-8 border-t border-[#DDDDDD] w-full">
-            <div className="flex items-center self-stretch gap-8">
-              <div className="flex flex-1 flex-col items-start pb-[90px] gap-3">
-                <img
-                  src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/663e7294-f80c-47d2-9a49-b8bc489d4354"
-                  alt="SmartRental"
-                  className="w-[182px] h-[25px] object-fill"
-                />
-                <span className="text-black text-sm">Nền tảng thuê nhà thông minh cho thị trường Việt Nam.</span>
-              </div>
-
-              <div className="flex flex-1 flex-col gap-[11px]">
-                <span className="text-black text-sm font-bold">Hỗ trợ</span>
-                <div className="flex flex-col gap-2">
-                  <span className="text-[#6A6A6A] text-sm">Trung tâm trợ giúp</span>
-                  <span className="text-[#6A6A6A] text-sm">Liên hệ</span>
-                  <span className="text-[#6A6A6A] text-sm">Chính sách bảo mật</span>
-                  <span className="text-[#6A6A6A] text-sm">Điều khoản sử dụng</span>
-                </div>
-              </div>
-
-              <div className="flex flex-1 flex-col gap-[11px]">
-                <span className="text-black text-sm font-bold">Dành cho chủ nhà</span>
-                <div className="flex flex-col gap-2">
-                  <span className="text-[#6A6A6A] text-sm">Đăng tin cho thuê</span>
-                  <span className="text-[#6A6A6A] text-sm">Quản lý đặt phòng</span>
-                  <span className="text-[#6A6A6A] text-sm">Hợp đồng điện tử</span>
-                  <span className="text-[#6A6A6A] text-sm">Gói dịch vụ</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-start self-stretch pt-[25px] border-t border-[#6C6C6C]">
-              <span className="text-[#6C6C6C] text-xs">© 2026 Smart Rental. Nền tảng thuê nhà thông minh.</span>
-            </div>
-          </footer>
+          <PublicFooter />
         </div>
       </div>
     </div>

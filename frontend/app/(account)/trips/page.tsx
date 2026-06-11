@@ -20,6 +20,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useMyBookings, useCancelBooking } from '@/hooks/use-bookings';
 import { useCreateBookingPayment } from '@/hooks/use-payment';
+import { getBookingPaymentStatusApi } from '@/lib/api/payment.api';
 import { ReviewFormModal } from '@/components/shared/review-form-modal';
 import { useAuth } from '@/hooks/use-auth';
 import type { Booking, Property } from '@/types';
@@ -117,15 +118,12 @@ function BookingCard({
   const statusCfg  = STATUS_CONFIG[booking.status];
   const paymentCfg = PAYMENT_CONFIG[booking.paymentStatus];
 
-  const canPay    = (booking.status === 'confirmed' || booking.status === 'pending') && booking.paymentStatus === 'unpaid';
-  const canCancel = booking.status === 'pending' || booking.status === 'confirmed';
-  const canReview = booking.status === 'completed';
-  const showContract = ['active', 'completed'].includes(booking.status);
-  const isAwaiting   = booking.status === 'confirmed';
-
-  const countdown = canPay && booking.paymentDeadline
-    ? getTimeLeft(booking.paymentDeadline)
-    : null;
+  const isActiveUnpaid = booking.status === 'active' && booking.paymentStatus === 'unpaid';
+  const isAwaiting     = booking.status === 'confirmed';
+  const canPay         = isActiveUnpaid;
+  const canCancel      = booking.status === 'pending' || booking.status === 'confirmed';
+  const canReview      = booking.status === 'completed';
+  const showContract   = ['active', 'completed'].includes(booking.status);
 
   return (
     <div className="flex items-start bg-white py-[21px] px-5 gap-4 rounded-[14px] border border-solid border-[#DDDDDD]">
@@ -173,14 +171,25 @@ function BookingCard({
           </div>
         </div>
 
-        {countdown && (
+        {isActiveUnpaid && booking.paymentDeadline && (
           <div className="flex items-center mb-[7px] w-full">
             <img
               src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/cec79b00-4c3c-4f41-a518-a61aeca37613"
               className="w-3.5 h-3.5 mr-1 object-fill"
               alt=""
             />
-            <span className="text-[#E17100] text-xs">Còn {countdown} để thanh toán</span>
+            <span className="text-[#E17100] text-xs">Còn {getTimeLeft(booking.paymentDeadline)} để thanh toán</span>
+          </div>
+        )}
+
+        {booking.status === 'active' && booking.paymentStatus === 'unpaid' && !booking.paymentDeadline && (
+          <div className="flex items-center mb-[7px] w-full">
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/cec79b00-4c3c-4f41-a518-a61aeca37613"
+              className="w-3.5 h-3.5 mr-1 object-fill"
+              alt=""
+            />
+            <span className="text-amber-600 text-xs">Đang chờ thanh toán...</span>
           </div>
         )}
 
@@ -302,18 +311,68 @@ function PaymentToast() {
   const router = useRouter();
   const qc = useQueryClient();
   const handled = useRef(false);
+  const [isPolling, setIsPolling] = useState(false);
+  const pollCountRef = useRef(0);
+  const MAX_POLLS = 20;
+  const POLL_INTERVAL = 2000;
+
+  const pollPaymentStatus = async (bookingId: string) => {
+    if (pollCountRef.current >= MAX_POLLS) {
+      setIsPolling(false);
+      toast.error('Không thể xác nhận trạng thái thanh toán. Vui lòng kiểm tra lại.');
+      router.replace('/trips');
+      return;
+    }
+    pollCountRef.current++;
+    try {
+      const data = await getBookingPaymentStatusApi(bookingId);
+      // PayOS trả về status: 'PAID' ngay cả khi webhook chưa cập nhật DB
+      if (data.data?.status === 'PAID' || data.data?.paymentStatus === 'paid') {
+        setIsPolling(false);
+        toast.success('Thanh toán thành công! Chờ chủ nhà xác nhận check-in.');
+        qc.invalidateQueries({ queryKey: ['bookings'] });
+        sessionStorage.removeItem('pendingPayment');
+        router.replace('/trips');
+        return;
+      }
+    } catch {
+      // ignore single poll errors
+    }
+    setTimeout(() => pollPaymentStatus(bookingId), POLL_INTERVAL);
+  };
 
   useEffect(() => {
     if (handled.current) return;
     const result = params.get('payment');
-    if (result === 'success') {
+    const payosStatus = params.get('status'); // PAID, CANCELLED, etc.
+    
+    if (result === 'success' || payosStatus === 'PAID') {
       handled.current = true;
-      toast.success('Thanh toán thành công! Chờ chủ nhà xác nhận check-in.');
-      const t = setTimeout(() => qc.invalidateQueries({ queryKey: ['bookings'] }), 1500);
+      
+      // PayOS đã xác nhận thanh toán thành công → cập nhật UI ngay
+      if (payosStatus === 'PAID') {
+        toast.success('Thanh toán thành công! Chờ chủ nhà xác nhận check-in.');
+        qc.invalidateQueries({ queryKey: ['bookings'] });
+        sessionStorage.removeItem('pendingPayment');
+        router.replace('/trips');
+        return;
+      }
+      
+      // Fallback: poll BE nếu không có status từ PayOS
+      const pending = sessionStorage.getItem('pendingPayment');
+      if (pending) {
+        const { type, id } = JSON.parse(pending);
+        if (type === 'booking') {
+          setIsPolling(true);
+          pollCountRef.current = 0;
+          pollPaymentStatus(id);
+        }
+      }
+      setTimeout(() => qc.invalidateQueries({ queryKey: ['bookings'] }), 300);
       router.replace('/trips');
-      return () => clearTimeout(t);
     } else if (result === 'cancel') {
       handled.current = true;
+      sessionStorage.removeItem('pendingPayment');
       toast.info('Bạn đã huỷ thanh toán. Đơn đặt phòng vẫn còn hiệu lực.');
       router.replace('/trips');
     }

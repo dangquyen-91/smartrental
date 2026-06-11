@@ -146,10 +146,15 @@ export function useCancelServiceOrder() {
 export function useCreateServicePayment() {
   return useMutation({
     mutationFn: (orderId: string) => createServicePaymentApi(orderId),
-    onSuccess: (data) => {
+    onSuccess: (data, orderId) => {
       const url = data.data?.checkoutUrl;
-      if (url) window.location.href = url;
+      if (url) {
+        sessionStorage.setItem('pendingPayment', JSON.stringify({ type: 'service', id: orderId }));
+        window.location.href = url;
+      } else {
+        toast.error('Không nhận được liên kết thanh toán.');
+      }
     },
-    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể tạo link thanh toán.')),
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể tạo liên kết thanh toán.')),
   });
 }

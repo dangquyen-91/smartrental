@@ -160,3 +160,118 @@
     @apply font-sans;
   }
 }
+
+/* SmartRental Homepage color tokens (Material Design 3 inspired) */
+:root {
+  --surface: #f8f9fa;
+  --surface-container: #edeeef;
+  --surface-container-low: #f3f4f5;
+  --surface-container-lowest: #ffffff;
+  --surface-container-high: #e7e8e9;
+  --surface-container-highest: #e1e3e4;
+  --on-surface: #191c1d;
+  --on-surface-variant: #4a4733;
+  --primary: #676000;
+  --primary-container: #ffef3d;
+  --on-primary: #ffffff;
+  --on-primary-container: #1f1c00;
+  --secondary: #5f5e5e;
+  --secondary-container: #e2dfde;
+  --on-secondary-container: #636262;
+  --tertiary: #5e5e5e;
+  --tertiary-container: #edebeb;
+  --on-tertiary-container: #6a6a6a;
+  --outline: #7b7861;
+  --outline-variant: #ccc7ac;
+  --inverse-surface: #2e3132;
+  --inverse-on-surface: #f0f1f2;
+  --inverse-primary: #d8ca06;
+  --error: #ba1a1a;
+  --error-container: #ffdad6;
+  --on-error: #ffffff;
+  --on-error-container: #93000a;
+  --surface-bright: #f8f9fa;
+  --surface-tint: #676000;
+  --surface-dim: #d9dadb;
+  --secondary-fixed: #e5e2e1;
+  --secondary-fixed-dim: #c8c6c5;
+  --tertiary-fixed: #e4e2e2;
+  --tertiary-fixed-dim: #c8c6c6;
+  --on-secondary-fixed: #1c1b1b;
+  --on-secondary-fixed-variant: #474746;
+  --on-tertiary-fixed: #1b1c1c;
+  --on-tertiary-fixed-variant: #474747;
+  --primary-fixed: #f6e633;
+  --primary-fixed-dim: #d8ca06;
+  --on-primary-fixed: #1f1c00;
+  --on-primary-fixed-variant: #4e4800;
+}
+
+@layer components {
+  .hero-gradient {
+    background: linear-gradient(180deg, #d3eaf2 0%, #ffffff 100%);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  /* Wave loop animation for hero title */
+  .wave-char {
+    display: inline-block;
+    animation: wave-motion 2s ease-in-out infinite;
+  }
+
+  @keyframes wave-motion {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-stagger > * {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  .wave-char {
+    animation: none !important;
+  }
+}
+
+/* SmartRental Auth Pages — custom color tokens & spacing */
+:root {
+  --margin-mobile: 16px;
+  --container-max: 1280px;
+  --gutter: 24px;
+  --base: 8px;
+  --margin-desktop: 40px;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.animate-stagger > * {
+  opacity: 0;
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+.animate-stagger > *:nth-child(1) { animation-delay: 0.1s; }
+.animate-stagger > *:nth-child(2) { animation-delay: 0.2s; }
+.animate-stagger > *:nth-child(3) { animation-delay: 0.3s; }
+.animate-stagger > *:nth-child(4) { animation-delay: 0.4s; }
+.animate-stagger > *:nth-child(5) { animation-delay: 0.5s; }
+.animate-stagger > *:nth-child(6) { animation-delay: 0.6s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-stagger > * {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}

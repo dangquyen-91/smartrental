@@ -1,19 +1,75 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import GoogleButton from '@/components/shared/google-button';
 import { useAuthStore } from '@/stores/auth.store';
+import { PublicNavbar, PublicFooter } from '@/components/layout/public-navbar';
 import { loginApi } from '@/lib/api/auth.api';
 import type { User } from '@/types';
+import gsap from 'gsap';
+import { TextPlugin } from 'gsap/TextPlugin';
+
+gsap.registerPlugin(TextPlugin);
+
+function SplitText({ text }: { text: string }) {
+  return (
+    <>
+      {text.split('').map((char, i) => (
+        <span key={i} className="wave-letter inline-block" style={{ opacity: 0 }}>
+          {char === ' ' ? '\u00A0' : char}
+        </span>
+      ))}
+    </>
+  );
+}
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from') ?? '/';
   const setAuth = useAuthStore((s) => s.setAuth);
+  const headingRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const heroTitleRef = useRef<HTMLHeadingElement>(null);
+  const heroDescRef = useRef<HTMLParagraphElement>(null);
+  const heroFeaturesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      tl.fromTo(
+        heroTitleRef.current,
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.7 }
+      )
+        .fromTo(
+          heroDescRef.current,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.6 },
+          '-=0.3'
+        )
+        .fromTo(
+          heroFeaturesRef.current?.children ?? [],
+          { opacity: 0, x: -20 },
+          { opacity: 1, x: 0, duration: 0.5, stagger: 0.15 },
+          '-=0.3'
+        );
+    }, heroRef);
+    return () => ctx.revert();
+  }, []);
+
+  useEffect(() => {
+    const el = headingRef.current;
+    if (!el) return;
+    const letters = el.querySelectorAll('.wave-letter');
+    gsap.fromTo(
+      letters,
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, stagger: 0.04, ease: 'back.out(1.7)' }
+    );
+  }, []);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,7 +95,7 @@ function LoginForm() {
     try {
       const data = await loginApi(email, password);
       setAuth(data.user as unknown as User, data.accessToken, data.refreshToken);
-      router.push('/');
+      router.push(from);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Email hoặc mật khẩu không đúng.');
@@ -48,104 +104,133 @@ function LoginForm() {
     }
   };
 
-  return (
-    <div className="flex flex-col bg-white">
-      {/* Hero background */}
-      <div
-        className="self-stretch bg-white pb-[3px]"
-        style={{
-          backgroundImage: 'url(https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/879587f2-2234-4abb-8764-323ff1c58d50)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className="flex flex-col items-center self-stretch pt-[22px]">
-          {/* Top bar */}
-          <div className="flex justify-between items-center self-stretch mb-[156px] mx-20">
-            <Link href="/">
-              <img
-                src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/8ddaeb3f-3754-4581-926f-0edfe9e73c78"
-                className="w-[182px] h-[26px] object-fill cursor-pointer"
-                alt="SmartRental"
-              />
-            </Link>
-            <div className="flex shrink-0 items-center px-2 gap-2" />
-          </div>
+  const handleGoogleSuccess = () => {
+    router.push(from);
+  };
 
-          {/* Hero image */}
+  return (
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#f8f9fa' }}>
+      {/* ── Header ── */}
+      <header className="sticky top-0 z-50 flex items-center justify-between px-[40px] h-16 border-b" style={{ backgroundColor: 'rgba(248,249,250,0.8)', backdropFilter: 'blur(12px)', borderColor: 'rgba(204,199,172,0.3)' }}>
+        <Link href="/" className="cursor-pointer">
+          <img src="/logo/logo_header.png" alt="Smart Rental" className="h-4 w-auto object-contain" />
+        </Link>
+        <div className="hidden md:flex gap-6">
+          <a className="text-sm font-medium text-[#4a4733] hover:text-[#676000] transition-colors cursor-pointer" href="#">Tải ứng dụng</a>
+          <a className="text-sm font-medium text-[#4a4733] hover:text-[#676000] transition-colors cursor-pointer" href="#">Trợ giúp</a>
+        </div>
+      </header>
+
+      {/* ── Main ── */}
+      <main className="flex flex-1 flex-col md:flex-row overflow-hidden">
+        {/* Left: Inspiring Image & Brand Message */}
+        <section
+          className="relative w-full md:w-1/2 min-h-[300px] md:min-h-full flex flex-col justify-center px-[40px] overflow-hidden"
+          style={{ backgroundColor: '#f3f4f5' }}
+        >
           <img
-            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9b00bf18-b6a5-408b-a0d7-2ab62b36f961"
-            className="w-[943px] h-[110px] mb-[57px] object-fill"
-            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            src="/background/login.jpg"
+            alt="A sun-drenched, modern minimalist living room"
           />
 
-          {/* Hero text */}
-          <span className="text-black text-[35px] text-center w-[361px] mb-6">
-            Tìm nhà trọ phù hợp,
-            <br />dễ dàng và nhanh chóng
-          </span>
-          <span className="text-black text-xl mb-[71px]">
-            Hàng nghìn phòng trọ, căn hộ, nhà nguyên căn đang chờ bạn khám phá.
-          </span>
+          <div ref={heroRef} className="relative z-10 max-w-lg p-8 md:p-12 rounded-2xl border" style={{ backgroundColor: 'rgba(20,18,10,0.55)', backdropFilter: 'blur(16px)', borderColor: 'rgba(255,239,61,0.25)' }}>
+            <h1 ref={heroTitleRef} className="text-4xl font-bold leading-tight mb-6" style={{ color: '#ffffff', opacity: 0 }}>
+              Bắt đầu hành trình<br />tìm kiếm tổ ấm
+            </h1>
+            <p ref={heroDescRef} className="text-lg leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.92)', opacity: 0 }}>
+              Tham gia cộng đồng Smart Rental để khám phá hàng nghìn căn hộ, nhà nguyên căn chất lượng được xác thực mỗi ngày.
+            </p>
+            <div ref={heroFeaturesRef} className="flex flex-col gap-4">
+              <div className="flex items-center gap-4" style={{ opacity: 0 }}>
+                <span className="material-symbols-outlined p-2 rounded-lg" style={{ backgroundColor: '#ffef3d', color: '#1f1c00' }}>verified_user</span>
+                <span className="text-sm font-semibold" style={{ color: '#f5f0c0' }}>Thông tin nhà cho thuê minh bạch</span>
+              </div>
+              <div className="flex items-center gap-4" style={{ opacity: 0 }}>
+                <span className="material-symbols-outlined p-2 rounded-lg" style={{ backgroundColor: '#ffef3d', color: '#1f1c00' }}>speed</span>
+                <span className="text-sm font-semibold" style={{ color: '#f5f0c0' }}>Quy trình đăng ký nhanh chóng</span>
+              </div>
+            </div>
+          </div>
+        </section>
 
-          {/* Login form card */}
-          <div className="flex flex-col items-center bg-[#F6F8FB] py-[55px] px-[65px] mb-[65px] gap-6">
-            <div className="flex flex-col items-start px-[23px]">
-              <span className="text-[#222222] text-[35px] font-bold">Chào mừng bạn trở lại!</span>
+        {/* Right: Login Form */}
+        <section className="w-full md:w-1/2 flex items-center justify-center py-12 px-4 md:px-[40px] bg-white">
+          <div className="w-full max-w-md animate-stagger">
+            {/* Heading */}
+            <div className="mb-8">
+              <h2 ref={headingRef} className="text-2xl font-semibold mb-2" style={{ color: '#191c1d' }}>
+                <SplitText text="Chào mừng bạn trở lại!" />
+              </h2>
+              <p className="text-base" style={{ color: '#4a4733' }}>Vui lòng đăng nhập để tiếp tục khám phá ngôi nhà mơ ước của bạn.</p>
             </div>
 
-            {/* Google login */}
-            <GoogleButton redirectTo={from} onError={setError} />
+            {/* Google Login */}
+            <GoogleLoginButton onSuccess={handleGoogleSuccess} onError={setError} />
 
             {/* Divider */}
-            <div className="flex items-center gap-3">
-              <div className="bg-[#DDDDDD] w-[165px] h-[1px]" />
-              <span className="text-[#929292] text-xs">hoặc</span>
-              <div className="bg-[#DDDDDD] w-[165px] h-[1px]" />
+            <div className="relative flex items-center my-8">
+              <div className="flex-grow border-t" style={{ borderColor: 'rgba(204,199,172,0.5)' }} />
+              <span className="flex-shrink mx-4 text-xs font-medium px-2 bg-white" style={{ color: '#4a4733' }}>hoặc</span>
+              <div className="flex-grow border-t" style={{ borderColor: 'rgba(204,199,172,0.5)' }} />
             </div>
 
-            {/* Email/Password form */}
-            <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4">
-              <div className="flex flex-col items-center gap-1.5">
-                <div className="flex flex-col items-start pr-[352px]">
-                  <span className="text-[#222222] text-sm font-bold">Email</span>
-                </div>
+            {/* Email / Password Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold" style={{ color: '#191c1d' }} htmlFor="email">Email</label>
                 <input
+                  id="email"
                   type="email"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="text-[#222222] bg-white text-sm py-[15px] px-[10px] rounded-lg border border-solid border-[#DDDDDD] w-[400px] focus:outline-none focus:border-[#222222] focus:ring-2 focus:ring-[#222222]/20"
+                  className="w-full px-4 py-3 rounded-xl border text-base transition-all focus:outline-none focus:ring-2"
+                  style={{
+                    backgroundColor: '#ffffff',
+                    borderColor: '#ccc7ac',
+                    color: '#191c1d',
+                    '--tw-ring-color': '#ffef3d',
+                  } as React.CSSProperties}
                 />
               </div>
 
-              <div className="flex flex-col items-center gap-1.5">
-                <div className="flex items-center">
-                  <span className="text-[#222222] text-sm font-bold mr-[247px]">Mật khẩu</span>
-                  <Link href="/forgot-password" className="text-[#222222] text-xs underline underline-offset-2 hover:text-[#ff385c]">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-semibold" style={{ color: '#191c1d' }} htmlFor="password">Mật khẩu</label>
+                  <Link href="/forgot-password" className="text-xs font-medium hover:underline cursor-pointer" style={{ color: '#676000' }}>
                     Quên mật khẩu?
                   </Link>
                 </div>
-                <div className="flex items-center py-[15px] px-[10px] gap-3.5 rounded-lg border border-solid border-[#DDDDDD] w-[400px] bg-white focus-within:border-[#222222] focus-within:ring-2 focus-within:ring-[#222222]/20">
+                <div className="relative">
                   <input
+                    id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Mật khẩu"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="text-[#222222] bg-transparent text-sm flex-1 focus:outline-none placeholder:text-[#929292]"
+                    className="w-full px-4 py-3 pr-12 rounded-xl border text-base transition-all focus:outline-none focus:ring-2"
+                    style={{
+                      backgroundColor: '#ffffff',
+                      borderColor: '#ccc7ac',
+                      color: '#191c1d',
+                      '--tw-ring-color': '#ffef3d',
+                    } as React.CSSProperties}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-[#929292] hover:text-[#222222] transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer transition-colors hover:scale-110"
+                    style={{ color: '#4a4733' }}
+                    tabIndex={-1}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
               </div>
 
               {error && (
-                <p className="text-sm font-medium text-[#c13515] bg-[#c13515]/10 px-3 py-3 rounded-lg border border-[#c13515]/20 w-full text-center">
+                <p className="text-sm font-medium text-center p-3 rounded-xl border" style={{ color: '#c13515', backgroundColor: 'rgba(193,53,21,0.08)', borderColor: 'rgba(193,53,21,0.2)' }}>
                   {error}
                 </p>
               )}
@@ -153,65 +238,82 @@ function LoginForm() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex items-center justify-center bg-black text-white text-base py-3 px-[154px] rounded-lg border-0 hover:bg-[#3a3a3a] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                className="w-full text-base font-semibold py-4 rounded-xl transition-all active:scale-[0.98] hover:shadow-xl cursor-pointer"
+                style={{ backgroundColor: '#1b1c1b', color: '#ffffff' }}
               >
-                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Đăng nhập'}
+                {isSubmitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 size={18} className="animate-spin" />
+                    Đang xử lý...
+                  </span>
+                ) : 'Đăng nhập'}
               </button>
             </form>
 
-            <div className="flex flex-col items-start px-[94px]">
-              <span className="text-[#6A6A6A] text-sm">
+            {/* Register link */}
+            <div className="mt-10 text-center">
+              <p className="text-base" style={{ color: '#4a4733' }}>
                 Chưa có tài khoản?{' '}
-                <Link href="/register" className="text-[#222222] font-semibold underline underline-offset-2 hover:text-[#ff385c]">
+                <Link href="/register" className="font-bold hover:underline decoration-2 underline-offset-4 cursor-pointer transition-colors" style={{ color: '#191c1d' }}>
                   Đăng ký ngay
                 </Link>
-              </span>
+              </p>
             </div>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
 
-      {/* Footer */}
-      <div className="flex flex-col self-stretch bg-[#FFF546] py-10 px-20 gap-8 border-t border-solid border-[#DDDDDD]">
-        <div className="flex items-center self-stretch gap-8">
-          <div className="flex flex-1 flex-col items-start pb-[90px] gap-3">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/425bd9ed-f651-4d62-b267-8df70b58f710"
-              className="w-[182px] h-[25px] object-fill"
-              alt="SmartRental"
-            />
-            <span className="text-black text-sm">
-              Nền tảng thuê nhà thông minh cho thị trường Việt Nam.
-            </span>
-          </div>
-
-          <div className="flex flex-1 flex-col gap-[11px]">
-            <span className="text-black text-sm font-bold">Hỗ trợ</span>
-            <div className="flex flex-col self-stretch gap-2">
-              <span className="text-[#6A6A6A] text-sm pt-[3px]">Trung tâm trợ giúp</span>
-              <span className="text-[#6A6A6A] text-sm pt-[3px]">Liên hệ</span>
-              <span className="text-[#6A6A6A] text-sm pt-[3px]">Chính sách bảo mật</span>
-              <span className="text-[#6A6A6A] text-sm pt-[3px]">Điều khoản sử dụng</span>
-            </div>
-          </div>
-
-          <div className="flex flex-1 flex-col gap-[11px]">
-            <span className="text-black text-sm font-bold">Dành cho chủ nhà</span>
-            <div className="flex flex-col self-stretch gap-2">
-              <span className="text-[#6A6A6A] text-sm pt-[3px]">Đăng tin cho thuê</span>
-              <span className="text-[#6A6A6A] text-sm pt-[3px]">Quản lý đặt phòng</span>
-              <span className="text-[#6A6A6A] text-sm pt-[3px]">Hợp đồng điện tử</span>
-              <span className="text-[#6A6A6A] text-sm pt-[3px]">Gói dịch vụ</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-between items-start self-stretch pt-[25px] border-t border-solid border-[#6C6C6C]">
-          <span className="text-[#6C6C6C] text-xs">© 2026 Smart Rental. Nền tảng thuê nhà thông minh.</span>
-          <div className="w-[202px] h-[15px]" />
-        </div>
-      </div>
+      {/* ── Footer ── */}
+      <PublicFooter />
     </div>
+  );
+}
+
+/* ── Google Login Button (inline, no external dependency) ── */
+import { useGoogleLogin } from '@react-oauth/google';
+import { googleLoginApi } from '@/lib/api/auth.api';
+
+function GoogleLoginButton({ onSuccess, onError }: { onSuccess: () => void; onError: (msg: string) => void }) {
+  const [loading, setLoading] = useState(false);
+  const setAuth = useAuthStore((s) => s.setAuth);
+
+  const login = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setLoading(true);
+        const data = await googleLoginApi(tokenResponse.access_token);
+        setAuth(data.user as unknown as User, data.accessToken, data.refreshToken);
+        onSuccess();
+      } catch (err: unknown) {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        onError(msg || 'Đăng nhập Google thất bại, vui lòng thử lại.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => onError('Không thể kết nối Google.'),
+  });
+
+  return (
+    <button
+      type="button"
+      onClick={() => login()}
+      disabled={loading}
+      className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl border transition-all hover:shadow-md active:scale-95 cursor-pointer"
+      style={{ backgroundColor: '#ffffff', borderColor: '#ccc7ac', color: '#191c1d' }}
+    >
+      {loading ? (
+        <Loader2 size={18} className="animate-spin" style={{ color: '#4a4733' }} />
+      ) : (
+        <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+        </svg>
+      )}
+      <span className="text-sm font-semibold">Tiếp tục với Google</span>
+    </button>
   );
 }
 

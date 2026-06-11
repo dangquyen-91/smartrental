@@ -25,6 +25,7 @@ import {
   useCancelServiceOrder,
   useCreateServicePayment,
 } from '@/hooks/use-services';
+import { getServicePaymentStatusApi } from '@/lib/api/payment.api';
 import { ServiceOrderCardSkeleton } from '@/components/ui/skeleton';
 import type { ServiceOrder, ServiceCatalogEntry, Booking, Property, PaginatedResponse } from '@/types';
 
@@ -469,17 +470,68 @@ function PaymentToast() {
   const router  = useRouter();
   const qc      = useQueryClient();
   const handled = useRef(false);
+  const [isPolling, setIsPolling] = useState(false);
+  const pollCountRef = useRef(0);
+  const MAX_POLLS = 20;
+  const POLL_INTERVAL = 2000;
+
+  const pollPaymentStatus = async (orderId: string) => {
+    if (pollCountRef.current >= MAX_POLLS) {
+      setIsPolling(false);
+      toast.error('Không thể xác nhận trạng thái thanh toán. Vui lòng kiểm tra lại.');
+      router.replace('/services');
+      return;
+    }
+    pollCountRef.current++;
+    try {
+      const data = await getServicePaymentStatusApi(orderId);
+      // PayOS trả về status: 'PAID' ngay cả khi webhook chưa cập nhật DB
+      if (data.data?.status === 'PAID' || data.data?.paymentStatus === 'paid') {
+        setIsPolling(false);
+        toast.success('Thanh toán thành công! Chờ nhân viên được phân công và thực hiện dịch vụ.');
+        qc.invalidateQueries({ queryKey: ['services'] });
+        sessionStorage.removeItem('pendingPayment');
+        router.replace('/services');
+        return;
+      }
+    } catch {
+      // ignore single poll errors
+    }
+    setTimeout(() => pollPaymentStatus(orderId), POLL_INTERVAL);
+  };
 
   useEffect(() => {
     if (handled.current) return;
     const result = params.get('payment');
-    if (result === 'success') {
+    const payosStatus = params.get('status'); // PAID, CANCELLED, etc.
+
+    if (result === 'success' || payosStatus === 'PAID') {
       handled.current = true;
-      toast.success('Thanh toán thành công! Chờ nhân viên được phân công và thực hiện dịch vụ.');
-      setTimeout(() => qc.invalidateQueries({ queryKey: ['services'] }), 1500);
+
+      // PayOS đã xác nhận thanh toán thành công → cập nhật UI ngay
+      if (payosStatus === 'PAID') {
+        toast.success('Thanh toán thành công! Chờ nhân viên được phân công và thực hiện dịch vụ.');
+        qc.invalidateQueries({ queryKey: ['services'] });
+        sessionStorage.removeItem('pendingPayment');
+        router.replace('/services');
+        return;
+      }
+
+      // Fallback: poll BE nếu không có status từ PayOS
+      const pending = sessionStorage.getItem('pendingPayment');
+      if (pending) {
+        const { type, id } = JSON.parse(pending);
+        if (type === 'service') {
+          setIsPolling(true);
+          pollCountRef.current = 0;
+          pollPaymentStatus(id);
+        }
+      }
+      setTimeout(() => qc.invalidateQueries({ queryKey: ['services'] }), 300);
       router.replace('/services');
     } else if (result === 'cancel') {
       handled.current = true;
+      sessionStorage.removeItem('pendingPayment');
       toast.info('Bạn đã huỷ thanh toán. Yêu cầu dịch vụ vẫn còn hiệu lực.');
       router.replace('/services');
     }

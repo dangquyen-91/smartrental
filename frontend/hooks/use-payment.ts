@@ -9,10 +9,11 @@ import { getApiErrorMessage } from "@/lib/api-error";
 export function useCreateBookingPayment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: createBookingPaymentApi,
-    onSuccess: (data) => {
+    mutationFn: (bookingId: string) => createBookingPaymentApi(bookingId),
+    onSuccess: (data, bookingId) => {
       const url = data.data?.checkoutUrl;
       if (url) {
+        sessionStorage.setItem('pendingPayment', JSON.stringify({ type: 'booking', id: bookingId }));
         window.location.href = url;
       } else {
         toast.error("Không nhận được liên kết thanh toán.");
@@ -27,10 +28,11 @@ export function useCreateBookingPayment() {
 export function useCreateServicePayment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: createServicePaymentApi,
-    onSuccess: (data) => {
+    mutationFn: (orderId: string) => createServicePaymentApi(orderId),
+    onSuccess: (data, orderId) => {
       const url = data.data?.checkoutUrl;
       if (url) {
+        sessionStorage.setItem('pendingPayment', JSON.stringify({ type: 'service', id: orderId }));
         window.location.href = url;
       } else {
         toast.error("Không nhận được liên kết thanh toán.");

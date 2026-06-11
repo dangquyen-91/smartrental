@@ -43,9 +43,9 @@ export function PropertyCard({ property, className }: PropertyCardProps) {
   };
 
   return (
-    <Link href={`/properties/${property.id}`} className={cn("group block", className)}>
-      {/* Image container — 4:3 ratio, 14px radius, no shadow */}
-      <div className="relative aspect-4/3 overflow-hidden rounded-card bg-soft-cloud">
+    <Link href={`/properties/${property.id}`} className={cn("group block rounded-2xl border border-[#e0e0e0] bg-white overflow-hidden shadow-sm hover:shadow-xl hover:border-[#c0c0c0] hover:-translate-y-1 transition-all duration-300", className)}>
+      {/* Image container */}
+      <div className="relative aspect-4/3 overflow-hidden bg-soft-cloud">
         <img
           src={images[imgIndex]}
           alt={property.title}
@@ -53,49 +53,55 @@ export function PropertyCard({ property, className }: PropertyCardProps) {
           loading="lazy"
         />
 
-        {/* Wishlist button — circular 50% per DESIGN.md */}
+        {/* Verified badge — top left */}
+        {property.isVerified && (
+          <div className="absolute top-3 left-3">
+            <Badge variant="verified">Đã xác thực</Badge>
+          </div>
+        )}
+
+        {/* Featured badge — top left (below verified if both exist) */}
+        {property.isFeatured && !property.isVerified && (
+          <div className="absolute top-3 left-3">
+            <Badge variant="featured">Nổi bật</Badge>
+          </div>
+        )}
+
+        {/* Wishlist button — glassmorphism */}
         <button
           onClick={(e) => {
             e.preventDefault();
             toggleWishlist();
           }}
           disabled={isPending}
-          className="absolute top-3 right-3 flex size-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-transform active:scale-95 hover:bg-white disabled:opacity-70"
+          className="absolute top-3 right-3 flex size-8 items-center justify-center rounded-full bg-black/20 backdrop-blur-md border border-white/20 transition-transform active:scale-95 hover:bg-black/30 disabled:opacity-70"
           aria-label="Thêm vào yêu thích"
         >
           <Heart
             className={cn(
               "size-4 transition-all",
-              wishlisted ? "fill-rausch stroke-rausch" : "stroke-ink-black"
+              wishlisted ? "fill-white stroke-white" : "fill-none stroke-white"
             )}
           />
         </button>
-
-        {/* Featured badge */}
-        {property.isFeatured && (
-          <div className="absolute top-3 left-3">
-            <Badge variant="featured">Nổi bật</Badge>
-          </div>
-        )}
 
         {/* Carousel controls — visible on hover */}
         {images.length > 1 && (
           <>
             <button
               onClick={prev}
-              className="absolute left-2 top-1/2 -translate-y-1/2 flex size-8 items-center justify-center rounded-full bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-opacity active:scale-95"
+              className="absolute left-2 top-1/2 -translate-y-1/2 flex size-8 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity active:scale-95"
               aria-label="Ảnh trước"
             >
-              <ChevronLeft className="size-4 text-ink-black" />
+              <ChevronLeft className="size-4 text-white" />
             </button>
             <button
               onClick={next}
-              className="absolute right-2 top-1/2 -translate-y-1/2 flex size-8 items-center justify-center rounded-full bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-opacity active:scale-95"
+              className="absolute right-2 top-1/2 -translate-y-1/2 flex size-8 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity active:scale-95"
               aria-label="Ảnh tiếp"
             >
-              <ChevronRight className="size-4 text-ink-black" />
+              <ChevronRight className="size-4 text-white" />
             </button>
-            {/* Dot indicators */}
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
               {images.map((_, i) => (
                 <div
@@ -111,20 +117,25 @@ export function PropertyCard({ property, className }: PropertyCardProps) {
         )}
       </div>
 
-      {/* Metadata rows — 4-8px gap per DESIGN.md */}
-      <div className="mt-3 flex flex-col gap-1">
-        <p className="text-sm font-semibold text-ink-black line-clamp-1 leading-snug">
+      {/* Body — breathing room + grouped info */}
+      <div className="p-4 flex flex-col gap-3">
+        {/* Title */}
+        <p className="text-sm font-semibold text-ink-black line-clamp-2 leading-snug">
           {property.title}
         </p>
-        <p className="flex items-center gap-1 text-sm text-ash-gray">
-          <MapPin className="size-3.5 shrink-0" />
-          <span className="line-clamp-1">{address}</span>
-        </p>
-        <p className="text-xs text-stone-gray">
-          {typeLabel[property.type]} · {property.area} m²
-        </p>
-        <div className="mt-1">
-          <PriceDisplay amount={property.price} period="month" />
+
+        {/* Location + specs — grouped together */}
+        <div className="flex items-center gap-2">
+          <MapPin className="size-3.5 shrink-0 text-ash-gray" />
+          <span className="text-xs text-ash-gray line-clamp-1">{address}</span>
+          <span className="text-xs text-stone-gray shrink-0">
+            · {typeLabel[property.type]} · {property.area} m²
+          </span>
+        </div>
+
+        {/* Price — prominent, navy accent */}
+        <div>
+          <PriceDisplay amount={property.price} period="month" size="lg" highlight />
         </div>
       </div>
     </Link>

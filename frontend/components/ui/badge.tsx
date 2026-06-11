@@ -30,6 +30,7 @@ const badgeVariants = cva(
         // Generic
         default: "bg-soft-cloud text-ash-gray",
         featured: "bg-ink-black text-white",
+        verified: "bg-green-100 text-green-700",
       },
     },
     defaultVariants: {

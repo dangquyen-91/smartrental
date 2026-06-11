@@ -1,19 +1,13 @@
 import type { Metadata } from "next";
-import { Inter, Berkshire_Swash } from "next/font/google";
+import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "sonner";
 import Providers from "@/components/providers";
 import "./globals.css";
 
-const inter = Inter({
+const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-sans",
-  subsets: ["latin", "vietnamese"],
+  subsets: ["vietnamese"],
   weight: ["400", "500", "600", "700"],
-});
-
-const berkshireSwash = Berkshire_Swash({
-  variable: "--font-berkshire",
-  weight: "400",
-  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -27,7 +21,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={`${inter.variable} ${berkshireSwash.variable} h-full antialiased`}>
+    <html lang="vi" className={`${beVietnamPro.variable} h-full antialiased`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <Providers>{children}</Providers>
         <Toaster richColors position="top-right" />

@@ -9,6 +9,7 @@ import {
   Sofa, Camera, Flame, Droplets, Zap, Dog, Dumbbell, Tv,
   UtensilsCrossed, Sun, Package, Lock, AirVent, WashingMachine,
   ParkingCircle, ArrowUpDown, LockKeyhole, Check, Star, ArrowLeft, Heart,
+  CheckCircle2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PriceDisplay } from '@/components/ui/price-display';
@@ -88,32 +89,80 @@ function ImageGallery({ images, title }: { images: { url: string }[]; title: str
   const prev = () => setLightbox((n) => (n! === 0 ? urls.length - 1 : n! - 1));
   const next = () => setLightbox((n) => (n! === urls.length - 1 ? 0 : n! + 1));
 
-  return (
-    <>
-      <div className="flex gap-2 rounded-[20px] overflow-hidden">
-        <div className="flex-1 relative aspect-[548/480] bg-[#f0f0f0]">
-          {count > 0 ? (
+  // 1–2 images: full-width hero
+  if (count <= 2) {
+    return (
+      <>
+        <div className="grid grid-cols-1 gap-4">
+          <div className="relative w-full h-[400px] md:h-[500px] rounded-2xl overflow-hidden bg-[#f0f0f0]">
             <img src={urls[0]} alt={title} className="w-full h-full object-cover cursor-pointer" onClick={() => open(0)} />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-[#ccc]">No image</div>
+            {count > 1 && (
+              <button onClick={() => open(1)} className="absolute bottom-3 right-3 bg-black/50 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-black/70 transition-colors">
+                1 / {count}
+              </button>
+            )}
+          </div>
+          {count === 2 && (
+            <div className="relative w-full h-[280px] md:h-[360px] rounded-2xl overflow-hidden bg-[#f0f0f0]">
+              <img src={urls[1]} alt={title} className="w-full h-full object-cover cursor-pointer" onClick={() => open(1)} />
+            </div>
           )}
         </div>
-        <div className="flex flex-col gap-2 w-[548px]">
-          <div className="flex gap-2 flex-1">
-            {count > 1 && <div className="flex-1 relative bg-[#f0f0f0]"><img src={urls[1]} alt={title} className="w-full h-full object-cover cursor-pointer" onClick={() => open(1)} /></div>}
-            {count > 2 && <div className="flex-1 relative bg-[#f0f0f0]"><img src={urls[2]} alt={title} className="w-full h-full object-cover cursor-pointer" onClick={() => open(2)} /></div>}
+
+        {lightbox !== null && (
+          <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center" onClick={close}>
+            <button onClick={(e) => { e.stopPropagation(); close(); }} className="absolute top-4 right-4 text-white text-3xl">&times;</button>
+            <button onClick={(e) => { e.stopPropagation(); prev(); }} className="absolute left-4 text-white text-4xl">&#8249;</button>
+            <img src={urls[lightbox]} alt={title} className="max-h-[90vh] max-w-[90vw] object-contain" onClick={(e) => e.stopPropagation()} />
+            <button onClick={(e) => { e.stopPropagation(); next(); }} className="absolute right-4 text-white text-4xl">&#8250;</button>
+            <span className="absolute bottom-4 text-white/70 text-sm">{lightbox + 1} / {urls.length}</span>
           </div>
-          <div className="relative bg-[#f0f0f0] h-[154px]">
-            {count > 3 ? (
-              <>
-                <img src={urls[3]} alt={title} className="w-full h-full object-cover cursor-pointer" onClick={() => open(3)} />
-                {count > 5 && <div className="absolute inset-0 bg-[#00000066] flex items-center justify-center cursor-pointer" onClick={() => open(4)}><span className="text-white text-[15px] font-bold">+{count - 4} ảnh</span></div>}
-              </>
-            ) : count > 3 ? (
-              <img src={urls[3]} alt={title} className="w-full h-full object-cover cursor-pointer" onClick={() => open(3)} />
-            ) : <div className="w-full h-full" />}
-            <button onClick={() => open(0)} className="absolute bottom-3 right-3 bg-white px-3 py-1.5 rounded-lg text-sm font-semibold text-[#222222] shadow-sm hover:bg-[#f7f7f7] transition-colors">Xem tất cả ảnh</button>
-          </div>
+        )}
+      </>
+    );
+  }
+
+  // 3+ images: masonry-style grid
+  return (
+    <>
+      <div className="grid grid-cols-3 gap-4">
+        {/* Left: large image (spans 2 cols + 2 rows) */}
+        <div className="col-span-2 row-span-2 relative h-[400px] md:h-[500px] rounded-2xl overflow-hidden bg-[#f0f0f0]">
+          <img src={urls[0]} alt={title} className="w-full h-full object-cover cursor-pointer" onClick={() => open(0)} />
+        </div>
+
+        {/* Right: top small image */}
+        <div className="relative h-[195px] md:h-[245px] rounded-2xl overflow-hidden bg-[#f0f0f0]">
+          <img src={urls[1]} alt={title} className="w-full h-full object-cover cursor-pointer" onClick={() => open(1)} />
+        </div>
+
+        {/* Right: bottom small image with overlay */}
+        <div className="relative h-[195px] md:h-[245px] rounded-2xl overflow-hidden bg-[#f0f0f0]">
+          <img src={urls[2]} alt={title} className="w-full h-full object-cover cursor-pointer" onClick={() => open(2)} />
+          {count > 3 && (
+            <div
+              className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer hover:bg-black/40 transition-colors"
+              onClick={() => open(3)}
+            >
+              <span className="text-white text-lg font-bold">+{count - 3}</span>
+            </div>
+          )}
+          {count > 3 && (
+            <button
+              onClick={() => open(3)}
+              className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm text-[#222] text-sm font-semibold px-3 py-1.5 rounded-lg shadow-sm hover:bg-white transition-colors"
+            >
+              Xem tất cả {count} ảnh
+            </button>
+          )}
+          {count === 3 && (
+            <button
+              onClick={() => open(0)}
+              className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm text-[#222] text-sm font-semibold px-3 py-1.5 rounded-lg shadow-sm hover:bg-white transition-colors"
+            >
+              Xem tất cả {count} ảnh
+            </button>
+          )}
         </div>
       </div>
 
@@ -154,48 +203,64 @@ function BookingPanel({ property, contactRevealed }: { property: Property; conta
 
   if (success) {
     return (
-      <div className="flex flex-col shrink-0 items-start p-6 rounded-[20px] border border-solid border-[#DDDDDD]">
-        <div className="flex items-center mb-4">
-          <span className="text-[#222222] text-lg mr-0.5">{formatVnd(property.price)}</span>
-          <span className="text-[#6A6A6A] text-sm mr-[219px]">/tháng</span>
+      <div className="shrink-0 w-[340px] p-6 rounded-2xl border border-gray-100 shadow-lg shadow-black/5 bg-white">
+        <div className="mb-4">
+          <PriceDisplay amount={property.price} size="lg" />
+          <span className="text-ash-gray text-sm"> / tháng</span>
         </div>
         <div className="text-center py-4">
           <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3"><Check className="w-6 h-6 text-emerald-600" /></div>
           <h3 className="text-base font-semibold text-[#222222] mb-1">Đã gửi yêu cầu đặt phòng!</h3>
           <p className="text-sm text-[#6A6A6A] mb-4">Chủ nhà sẽ xác nhận trong vòng 24h.</p>
-          <Link href="/trips" className="inline-block w-full text-center py-3 bg-[#2683EB] hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors">Xem đơn thuê của tôi</Link>
+          <Link href="/trips" className="inline-block w-full text-center py-3 bg-black hover:bg-gray-800 text-white font-semibold rounded-xl transition-colors">Xem đơn thuê của tôi</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col shrink-0 items-start p-6 rounded-[20px] border border-solid border-[#DDDDDD]">
-      <div className="flex items-center mb-[15px]">
-        <span className="text-[#222222] text-lg mr-0.5">{formatVnd(property.price)}</span>
-        <span className="text-[#6A6A6A] text-sm mr-[219px]">/tháng</span>
+    <div className="shrink-0 w-[340px] p-6 rounded-2xl border border-gray-100 shadow-lg shadow-black/5 bg-white">
+      <div className="mb-5">
+        <PriceDisplay amount={property.price} size="lg" />
+        <span className="text-ash-gray text-sm"> / tháng</span>
       </div>
 
       {isOwner ? (
-        <div className="text-center py-4 text-sm text-[#6A6A6A] border border-[#DDDDDD] rounded-lg w-full">Đây là bất động sản của bạn</div>
+        <div className="text-center py-4 text-sm text-[#6A6A6A] border border-gray-100 rounded-xl w-full">Đây là bất động sản của bạn</div>
       ) : unavailable ? (
-        <div className="text-center py-4 text-sm text-[#6A6A6A] border border-[#DDDDDD] rounded-lg w-full">Phòng này hiện đang {property.status === 'rented' ? 'đã thuê' : 'bảo trì'}</div>
+        <div className="text-center py-4 text-sm text-[#6A6A6A] border border-gray-100 rounded-xl w-full">Phòng này hiện đang {property.status === 'rented' ? 'đã thuê' : 'bảo trì'}</div>
       ) : (
         <form onSubmit={handleSubmit} className="w-full">
-          <div className="flex flex-col items-center pt-1 mb-[17px] gap-3">
-            <div className="flex flex-col items-start p-[1px] gap-[1px] rounded-lg border border-solid border-[#DDDDDD] w-full">
-              <div className="flex flex-col items-start py-3 px-4 gap-1.5 border-b border-solid border-b-[#DDDDDD]">
+          <div className="flex flex-col gap-3 mb-4">
+            {/* Date + Duration fields */}
+            <div className="rounded-xl border border-gray-100 overflow-hidden">
+              <div className="flex flex-col py-3 px-4 gap-1.5 border-b border-gray-100">
                 <span className="text-[#222222] text-xs font-bold">NGÀY VÀO</span>
-                <input type="date" value={startDate} min={todayStr()} onChange={(e) => setStartDate(e.target.value)} className="w-full text-sm text-[#222222] outline-none bg-transparent" required />
+                <input
+                  type="date"
+                  value={startDate}
+                  min={todayStr()}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full text-sm text-[#222222] outline-none bg-transparent"
+                  required
+                />
               </div>
-              <div className="flex flex-col items-start py-[13px] px-4 gap-1.5">
+              <div className="flex flex-col py-3 px-4 gap-1.5">
                 <span className="text-[#222222] text-xs font-bold">THỜI HẠN THUÊ</span>
-                <select value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full text-sm text-[#222222] outline-none bg-transparent">
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{m} tháng</option>)}
+                <select
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value))}
+                  className="w-full text-sm text-[#222222] outline-none bg-transparent"
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                    <option key={m} value={m}>{m} tháng</option>
+                  ))}
                 </select>
               </div>
             </div>
-            <div className="flex flex-col items-center pt-1 gap-[7px] w-full">
+
+            {/* Price breakdown */}
+            <div className="flex flex-col gap-2">
               <div className="flex items-center w-full">
                 <span className="text-[#6A6A6A] text-[15px] flex-1">{formatVnd(property.price)} × {duration} tháng</span>
                 <span className="text-[#222222] text-[15px]">{formatVnd(totalRent)}</span>
@@ -204,22 +269,56 @@ function BookingPanel({ property, contactRevealed }: { property: Property; conta
                 <span className="text-[#6A6A6A] text-[15px] flex-1">Phí dịch vụ (10%)</span>
                 <span className="text-[#6A6A6A] text-[15px]">{formatVnd(platformFee)}</span>
               </div>
-              <div className="flex items-center py-[9px] border-t border-solid border-t-[#DDDDDD] w-full">
+              <div className="flex items-center py-3 border-t border-gray-100 w-full">
                 <span className="text-[#222222] text-[15px] font-bold flex-1">Thanh toán tháng đầu</span>
                 <span className="text-[#222222] text-[15px] font-bold">{formatVnd(property.price)}</span>
               </div>
             </div>
+
             {error && <p className="text-xs text-red-500 w-full">Không thể đặt phòng. Vui lòng thử lại.</p>}
-            <button type="submit" disabled={isPending} className="flex flex-col items-start bg-[#2683EB] text-left py-[13px] px-[81px] rounded-lg border-0 w-full justify-center disabled:opacity-60">
-              <span className="text-white text-[15px] font-bold w-full text-center">{isPending ? 'Đang gửi...' : isAuthenticated ? 'Đặt phòng' : 'Đăng nhập để đặt phòng'}</span>
+
+            {/* Black CTA button */}
+            <button
+              type="submit"
+              disabled={isPending}
+              className="w-full py-3.5 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-60 active:scale-[0.98]"
+            >
+              {isPending ? 'Đang gửi...' : isAuthenticated ? 'Đặt phòng' : 'Đăng nhập để đặt phòng'}
             </button>
           </div>
           {isAuthenticated && <p className="text-center text-xs text-[#6A6A6A]">Bạn chưa bị tính phí vào lúc này</p>}
         </form>
       )}
-      <div className="flex flex-col items-center pt-[17px] border-t border-solid border-t-[#DDDDDD] w-full mt-4">
-        <div className="flex items-center"><LockKeyhole className="w-4 h-4 mr-[7px] text-[#6A6A6A]" /><span className="text-[#6A6A6A] text-[15px]">SĐT hiển thị sau khi đặt phòng và thanh toán</span></div>
+
+      <div className="flex items-center gap-2 pt-5 border-t border-gray-100 mt-4">
+        <LockKeyhole className="w-4 h-4 text-[#6A6A6A] shrink-0" />
+        <span className="text-[#6A6A6A] text-xs leading-relaxed">SĐT hiển thị sau khi đặt phòng và thanh toán</span>
       </div>
+    </div>
+  );
+}
+
+// ─── quick info strip ─────────────────────────────────────────────────────────
+
+function QuickInfo({ property }: { property: Property }) {
+  const items = [
+    { icon: Maximize2, label: 'Diện tích', value: `${property.area} m²` },
+    ...(property.bedrooms !== undefined ? [{ icon: BedDouble, label: 'Phòng ngủ', value: String(property.bedrooms) }] : []),
+    ...(property.bathrooms !== undefined ? [{ icon: Bath, label: 'Phòng tắm', value: String(property.bathrooms) }] : []),
+    ...(property.pricePerM2 ? [{ icon: MapPin, label: 'Giá/m²', value: formatVnd(property.pricePerM2) }] : []),
+  ];
+
+  return (
+    <div className="flex items-center justify-between w-full py-4 border-b border-gray-100">
+      {items.map(({ icon: Icon, label, value }) => (
+        <div key={label} className="flex items-center gap-3">
+          <Icon className="w-5 h-5 text-[#6A6A6A] shrink-0" />
+          <div className="flex flex-col">
+            <span className="text-xs text-[#6A6A6A]">{label}</span>
+            <span className="text-base font-semibold text-[#222222]">{value}</span>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -265,7 +364,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       <div className="min-h-screen bg-white flex flex-col items-center justify-center">
         <h2 className="text-xl font-semibold text-[#222222] mb-2">Không tìm thấy bất động sản</h2>
         <p className="text-[#6A6A6A] text-sm mb-6">Tin đăng này có thể đã bị xoá hoặc không tồn tại.</p>
-        <Link href="/" className="px-5 py-2.5 bg-[#2683EB] text-white font-semibold rounded-lg text-sm hover:bg-blue-600 transition-colors">Về trang chủ</Link>
+        <Link href="/" className="px-5 py-2.5 bg-black text-white font-semibold rounded-xl text-sm hover:bg-gray-800 transition-colors">Về trang chủ</Link>
       </div>
     );
   }
@@ -278,99 +377,221 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <div className="self-stretch bg-white pb-[1px]">
-        {/* Header */}
-        <div className="self-stretch bg-cover bg-center py-6 px-20" style={{ backgroundImage: 'url(https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/30ac8eae-07ac-4021-b386-ee5d8a4d8a53)' }}>
-          <div className="flex justify-between items-center self-stretch">
-            <Link href="/"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/a949daa0-a417-4cbf-91d7-3ac6756bb215" className="w-[182px] h-[26px] object-fill cursor-pointer" /></Link>
-            <div className="flex shrink-0 items-center px-2 gap-2">
-              {isAuthenticated ? (
-                <Link href="/profile" className="flex flex-col shrink-0 items-start bg-[#222222] text-left py-2 px-4 rounded-[20px] border-0"><span className="text-white text-sm font-bold">{user?.name?.charAt(0)?.toUpperCase() ?? 'N'}</span></Link>
-              ) : (
-                <><Link href="/login" className="flex flex-col shrink-0 items-start py-2 px-4 rounded-[20px]"><span className="text-[#222222] text-sm font-bold">Đăng nhập</span></Link><Link href="/register" className="flex flex-col shrink-0 items-start bg-[#222222] text-left py-2 px-4 rounded-[20px] border-0"><span className="text-white text-sm font-bold">Đăng ký</span></Link></>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="self-stretch max-w-[1104px] mb-8 mx-auto px-6">
-          <div className="flex justify-between items-center self-stretch mb-2">
-            <Link href="/" className="flex shrink-0 items-center gap-1.5 hover:opacity-80 transition-opacity"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/14b739cb-da37-494f-9d45-6266b1ef9ea6" className="w-4 h-4" /><span className="text-[#222222] text-[15px]">Quay lại</span></Link>
-            <div className="flex shrink-0 items-center gap-[9px]">
-              <button className="flex shrink-0 items-center bg-transparent text-left py-1.5 px-[13px] gap-[5px] rounded-lg border border-solid border-[#DDDDDD] hover:bg-[#f7f7f7] transition-colors"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/5fce7812-788a-4412-b4ac-2a3641cc4662" className="w-4 h-4" /><span className="text-[#222222] text-sm">Chia sẻ</span></button>
-              <button onClick={toggleSaved} className={cn("flex shrink-0 items-center bg-transparent text-left py-1.5 px-[13px] gap-[5px] rounded-lg border border-solid border-[#DDDDDD] hover:bg-[#f7f7f7] transition-colors", heartAnim && "scale-110")}><Heart className={cn("w-4 h-4", saved ? "fill-red-500 text-red-500" : "text-[#222222]")} /><span className="text-[#222222] text-sm">{saved ? 'Đã lưu' : 'Lưu'}</span></button>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-start self-stretch pt-3 mb-2"><span className="text-[#222222] text-[25px] font-bold">{p.title}</span></div>
-
-          <div className="flex items-center self-stretch mb-[7px] gap-2 flex-wrap">
-            <div className="flex shrink-0 items-center gap-1"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/09083633-fdc4-468d-8ea1-cbd03c1eec93" className="w-3.5 h-3.5" /><span className="text-[#6A6A6A] text-[15px]">{address}</span></div>
-            <span className="text-[#DDDDDD] text-base">·</span>
-            <span className="text-[#6A6A6A] text-[15px]">{TYPE_LABEL[p.type]}</span>
-            <div className="flex flex-col shrink-0 items-start bg-[#FFF546] py-[1px] px-2 rounded-full"><span className="text-black text-[13px] font-bold">{statusLabel}</span></div>
-          </div>
-
-          <div className="flex items-center self-stretch pt-3 gap-2 rounded-[20px]"><ImageGallery images={p.images ?? []} title={p.title} /></div>
-        </div>
-
-        <div className="flex items-start self-stretch max-w-[1106px] mb-[1px] mx-auto gap-12 px-6">
-          <div className="flex-1">
-            <div className="flex items-start self-stretch border-b border-solid border-b-[#DDDDDD] pb-5">
-              <div className="flex shrink-0 items-center py-0.5 mb-7 mr-5 gap-2.5"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d027e3b0-765a-43c9-9150-83cd79b69cff" className="w-5 h-5" /><div className="flex flex-col shrink-0 items-center"><span className="text-black text-[15px]">Diện tích</span><span className="text-[#222222] text-[15px] font-bold">{p.area} m²</span></div></div>
-              {p.bedrooms !== undefined && <div className="flex shrink-0 items-center py-0.5 mr-5 gap-2.5"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/0f0db104-5c14-4ced-a8a4-e81d72ca3610" className="w-5 h-5" /><div className="flex flex-col shrink-0 items-center"><span className="text-black text-[15px]">Phòng ngủ</span><span className="text-[#222222] text-[15px] font-bold">{p.bedrooms}</span></div></div>}
-              <img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/8cc350da-f861-4d41-8357-4c73e2dd418e" className="w-5 h-5 mt-2.5 mr-2.5" />
-              {p.bathrooms !== undefined && <div className="flex flex-col shrink-0 items-center mt-0.5 mr-4"><span className="text-black text-[15px]">Phòng tắm</span><span className="text-[#222222] text-[15px] font-bold">{p.bathrooms}</span></div>}
-              {p.pricePerM2 && <><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/8390c653-26b3-43a3-b252-f227e3175e53" className="w-4 h-[11px] mt-4 mr-2" /><div className="flex flex-col shrink-0 items-center mt-0.5"><span className="text-black text-[15px]">Giá/m²</span><span className="text-[#222222] text-[15px] font-bold">{formatVnd(p.pricePerM2)}</span></div></>}
-            </div>
-
-            {p.description && <div className="flex flex-col self-stretch py-[27px] gap-[11px] border-b border-solid border-b-[#DDDDDD]"><span className="text-[#222222] text-xl font-bold">Mô tả</span><span className="text-[#3F3F3F] text-[15px] whitespace-pre-line">{p.description}</span></div>}
-
-            {(p.amenities ?? []).length > 0 && (
-              <div className="flex flex-col self-stretch py-[27px] mb-[1px] gap-[19px] border-b border-solid border-b-[#DDDDDD]">
-                <span className="text-[#222222] text-xl font-bold">Tiện nghi</span>
-                <div className="grid grid-cols-2 gap-y-4 gap-x-6">
-                  {(p.amenities ?? []).map((a) => { const Icon = getAmenityIcon(a); return <div key={a} className="flex items-center gap-3"><Icon className="w-5 h-5 text-[#222222] shrink-0" /><span className="text-[#222222] text-[15px] capitalize">{a}</span></div>; })}
-                </div>
-              </div>
+      {/* Navbar */}
+      <div className="bg-cover bg-center py-6 px-6 md:px-20" style={{ backgroundImage: 'url(https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/30ac8eae-07ac-4021-b386-ee5d8a4d8a53)' }}>
+        <div className="flex justify-between items-center max-w-[1280px] mx-auto">
+          <Link href="/"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/a949daa0-a417-4cbf-91d7-3ac6756bb215" className="w-[160px] h-auto object-fill cursor-pointer" /></Link>
+          <div className="flex shrink-0 items-center gap-2">
+            {isAuthenticated ? (
+              <Link href="/profile" className="flex items-center justify-center w-10 h-10 bg-[#222222] text-white font-bold rounded-full text-sm hover:bg-gray-800 transition-colors">
+                {user?.name?.charAt(0)?.toUpperCase() ?? 'N'}
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="py-2 px-4 text-[#222222] text-sm font-semibold hover:opacity-80 transition-opacity">Đăng nhập</Link>
+                <Link href="/register" className="py-2 px-4 bg-[#222222] text-white text-sm font-semibold rounded-full hover:bg-gray-800 transition-colors">Đăng ký</Link>
+              </>
             )}
+          </div>
+        </div>
+      </div>
 
-            {ownerUser && (
-              <div className="flex flex-col self-stretch py-7 gap-[15px] border-b border-solid border-b-[#DDDDDD]">
-                <span className="text-[#222222] text-xl font-bold">Chủ nhà</span>
-                <div className="flex items-center self-stretch gap-4">
-                  <div className="flex flex-col shrink-0 items-center bg-[#222222] rounded-full">{ownerUser.avatar ? <img src={ownerUser.avatar} alt={ownerUser.name ?? ''} className="w-14 h-14 rounded-full object-cover" /> : <span className="w-14 h-14 flex items-center justify-center text-white text-xl font-bold">{ownerUser.name?.charAt(0)?.toUpperCase() ?? '?'}</span>}</div>
-                  <div className="flex flex-col shrink-0 items-center gap-[1px]">
-                    <span className="text-[#222222] text-lg font-bold">{ownerUser.name}</span>
-                    <div className="flex items-center gap-1.5"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/1dbfcd7e-40d1-467d-a9ea-f59ac7751e4f" className="w-3.5 h-3.5" /><span className="text-[#6A6A6A] text-[15px]">{contactRevealed && ownerUser.phone ? ownerUser.phone : 'Thông tin sẽ hiển thị sau khi đặt phòng và thanh toán'}</span></div>
-                    <div className="flex items-center py-0.5"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9da1cc90-056b-457b-957b-bf4adfa8e51f" className="w-3 h-3 mr-1.5" /><span className="text-[#C1C1C1] text-[15px]">Chủ nhà này đã được xác minh</span></div>
+      <div className="max-w-[1280px] mx-auto px-6 w-full">
+        {/* Back + Actions */}
+        <div className="flex justify-between items-center py-4">
+          <Link href="/" className="flex items-center gap-1.5 text-[#222222] text-sm hover:opacity-70 transition-opacity">
+            <ArrowLeft className="w-4 h-4" />
+            Quay lại
+          </Link>
+          <div className="flex gap-2">
+            <button className="flex items-center gap-2 py-2 px-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">
+              <Camera className="w-4 h-4 text-[#222222]" />
+              <span className="text-[#222222] text-sm">Chia sẻ</span>
+            </button>
+            <button
+              onClick={toggleSaved}
+              className={cn("flex items-center gap-2 py-2 px-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors", heartAnim && "scale-105")}
+            >
+              <Heart className={cn("w-4 h-4", saved ? "fill-red-500 text-red-500" : "text-[#222222]")} />
+              <span className="text-[#222222] text-sm">{saved ? 'Đã lưu' : 'Lưu'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Title */}
+        <h1 className="text-2xl md:text-[28px] font-bold text-[#222222] mb-3 leading-tight">{p.title}</h1>
+
+        {/* Meta row */}
+        <div className="flex items-center gap-3 mb-6 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <MapPin className="w-4 h-4 text-[#6A6A6A]" />
+            <span className="text-[#6A6A6A] text-sm">{address}</span>
+          </div>
+          <span className="text-gray-300">·</span>
+          <span className="text-[#6A6A6A] text-sm">{TYPE_LABEL[p.type]}</span>
+          <span className="bg-[#FFF546] text-black text-xs font-bold px-2.5 py-0.5 rounded-full">{statusLabel}</span>
+        </div>
+
+        {/* Gallery */}
+        <div className="mb-10">
+          <ImageGallery images={p.images ?? []} title={p.title} />
+        </div>
+      </div>
+
+      {/* Two-column layout */}
+      <div className="max-w-[1280px] mx-auto px-6 w-full flex gap-12 items-start mt-8">
+        {/* Left: main content */}
+        <div className="flex-1 min-w-0">
+          {/* Quick info strip */}
+          <QuickInfo property={p} />
+
+          {/* Description */}
+          {p.description && (
+            <div className="py-8 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-[#222222] mb-3">Mô tả</h2>
+              <p className="text-[#3F3F3F] text-[15px] leading-relaxed whitespace-pre-line">{p.description}</p>
+            </div>
+          )}
+
+          {/* Amenities */}
+          {(p.amenities ?? []).length > 0 && (
+            <div className="py-8 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-[#222222] mb-4">Tiện nghi</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-8">
+                {(p.amenities ?? []).map((a) => {
+                  const Icon = getAmenityIcon(a);
+                  return (
+                    <div key={a} className="flex items-center gap-3">
+                      <Icon className="w-5 h-5 text-[#222222] shrink-0" />
+                      <span className="text-[#222222] text-sm capitalize">{a}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Owner */}
+          {ownerUser && (
+            <div className="py-8 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-[#222222] mb-4">Chủ nhà</h2>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-[#222222] rounded-full flex items-center justify-center shrink-0 overflow-hidden">
+                  {ownerUser.avatar
+                    ? <img src={ownerUser.avatar} alt={ownerUser.name ?? ''} className="w-full h-full rounded-full object-cover" />
+                    : <span className="text-white text-xl font-bold">{ownerUser.name?.charAt(0)?.toUpperCase() ?? '?'}</span>
+                  }
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[#222222] text-lg font-bold">{ownerUser.name}</span>
+                  <div className="flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-[#6A6A6A]" />
+                    <span className="text-[#6A6A6A] text-sm">
+                      {contactRevealed && ownerUser.phone ? ownerUser.phone : 'Thông tin sẽ hiển thị sau khi đặt phòng và thanh toán'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                    <span className="text-[#C1C1C1] text-sm">Chủ nhà đã được xác minh</span>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
+          {/* Reviews */}
+          <div className="mt-8">
             <PropertyReviewSection propertyId={p.id} />
+          </div>
 
-            <span className="text-[#222222] text-xl font-bold mb-[19px] block">Những điều biết trước khi thuê</span>
-            <div className="flex items-start mb-[94px] gap-6">
-              <div className="flex flex-col shrink-0 items-center pb-[19px] gap-[7px]"><span className="text-[#222222] text-base font-bold">Quy định</span><div className="flex flex-col items-center gap-[5px]"><div className="flex items-center"><div className="bg-[#DDDDDD] w-1 h-1 mr-1.5 rounded-full" /><span className="text-[#6A6A6A] text-[15px]">Không hút thuốc trong nhà</span></div><div className="flex items-center"><div className="bg-[#DDDDDD] w-1 h-1 mr-1.5 rounded-full" /><span className="text-[#6A6A6A] text-[15px]">Không nuôi thú cưng (hỏi chủ nhà)</span></div><div className="flex items-center"><div className="bg-[#DDDDDD] w-1 h-1 mr-1.5 rounded-full" /><span className="text-[#6A6A6A] text-[15px]">Giữ gìn vệ sinh chung</span></div></div></div>
-              <div className="flex flex-col shrink-0 items-center pb-[39px] gap-[7px]"><span className="text-[#222222] text-base font-bold">An toàn</span><div className="flex flex-col items-center gap-[5px]"><div className="flex items-center"><div className="bg-[#DDDDDD] w-1 h-1 mr-1.5 rounded-full" /><span className="text-[#6A6A6A] text-[15px]">Có khóa cửa an toàn</span></div><div className="flex items-center"><div className="bg-[#DDDDDD] w-1 h-1 mr-1.5 rounded-full" /><span className="text-[#6A6A6A] text-[15px]">Hệ thống camera an ninh</span></div><div className="flex items-center"><div className="bg-[#DDDDDD] w-1 h-1 mr-1.5 rounded-full" /><span className="text-[#6A6A6A] text-[15px]">Phòng cháy chữa cháy</span></div></div></div>
-              <div className="flex flex-col shrink-0 items-start"><span className="text-[#222222] text-base font-bold mb-2">Chính sách thanh toán</span><div className="flex items-start mb-1.5 gap-1.5"><div className="bg-[#DDDDDD] w-1 h-1 rounded-full mt-1.5 shrink-0" /><span className="text-[#6A6A6A] text-[15px]">Thanh toán tháng đầu qua nền tảng ({formatVnd(p.price)})</span></div><div className="flex items-center mb-1.5 gap-1.5"><div className="bg-[#DDDDDD] w-1 h-1 rounded-full shrink-0" /><span className="text-[#6A6A6A] text-[15px]">Phí dịch vụ 10% ({formatVnd(Math.round(p.price * 0.1))})</span></div><div className="flex items-start gap-1.5"><div className="bg-[#DDDDDD] w-1 h-1 rounded-full mt-1.5 shrink-0" /><span className="text-[#6A6A6A] text-[15px]">Các tháng tiếp theo thanh toán trực tiếp cho chủ nhà</span></div></div>
+          {/* Things to know */}
+          <div className="mt-16 mb-24">
+            <h2 className="text-xl font-bold text-[#222222] mb-6">Những điều biết trước khi thuê</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Quy định */}
+              <div>
+                <h3 className="text-base font-semibold text-[#222222] mb-4">Quy định</h3>
+                <ul className="space-y-2.5">
+                  {['Không hút thuốc trong nhà', 'Không nuôi thú cưng (hỏi chủ nhà)', 'Giữ gìn vệ sinh chung', 'Không phá hoại tài sản'].map((item) => (
+                    <li key={item} className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-[#222222] mt-0.5 shrink-0" />
+                      <span className="text-[#6A6A6A] text-sm leading-relaxed">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* An toàn */}
+              <div>
+                <h3 className="text-base font-semibold text-[#222222] mb-4">An toàn</h3>
+                <ul className="space-y-2.5">
+                  {['Có khóa cửa an toàn', 'Hệ thống camera an ninh', 'Phòng cháy chữa cháy', 'Khu vực yên tĩnh, an ninh'].map((item) => (
+                    <li key={item} className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-[#222222] mt-0.5 shrink-0" />
+                      <span className="text-[#6A6A6A] text-sm leading-relaxed">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Chính sách thanh toán */}
+              <div>
+                <h3 className="text-base font-semibold text-[#222222] mb-4">Chính sách thanh toán</h3>
+                <ul className="space-y-2.5">
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-[#222222] mt-0.5 shrink-0" />
+                    <span className="text-[#6A6A6A] text-sm leading-relaxed">Thanh toán tháng đầu qua nền tảng ({formatVnd(p.price)})</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-[#222222] mt-0.5 shrink-0" />
+                    <span className="text-[#6A6A6A] text-sm leading-relaxed">Phí dịch vụ 10% ({formatVnd(Math.round(p.price * 0.1))})</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-[#222222] mt-0.5 shrink-0" />
+                    <span className="text-[#6A6A6A] text-sm leading-relaxed">Các tháng tiếp theo thanh toán trực tiếp cho chủ nhà</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
-
-          <BookingPanel property={p} contactRevealed={contactRevealed} />
         </div>
 
-        {/* Footer */}
-        <div className="flex flex-col self-stretch bg-[#FFF546] py-10 px-20 gap-8 border-t border-solid border-t-[#FFF546]">
-          <div className="flex items-center self-stretch gap-8">
-            <div className="flex flex-1 flex-col items-start pb-[90px] gap-3"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/fc449148-484f-423d-b331-e6325dd4b7b7" className="w-[182px] h-[25px] object-fill" /><span className="text-black text-sm">Nền tảng thuê nhà thông minh cho thị trường Việt Nam.</span></div>
-            <div className="flex flex-1 flex-col gap-[11px]"><span className="text-black text-sm font-bold">Hỗ trợ</span><div className="flex flex-col gap-2 text-[#6A6A6A] text-sm"><span>Trung tâm trợ giúp</span><span>Liên hệ</span><span>Chính sách bảo mật</span><span>Điều khoản sử dụng</span></div></div>
-            <div className="flex flex-1 flex-col gap-[11px]"><span className="text-black text-sm font-bold">Dành cho chủ nhà</span><div className="flex flex-col gap-2 text-[#6A6A6A] text-sm"><span>Đăng tin cho thuê</span><span>Quản lý đặt phòng</span><span>Hợp đồng điện tử</span><span>Gói dịch vụ</span></div></div>
+        {/* Right: booking panel */}
+        <div className="shrink-0 sticky top-6">
+          <BookingPanel property={p} contactRevealed={contactRevealed} />
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="bg-[#FFF546] py-10 px-6 md:px-20 mt-auto">
+        <div className="max-w-[1280px] mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8 border-b border-black/10">
+            <div>
+              <img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/fc449148-484f-423d-b331-e6325dd4b7b7" className="w-[160px] h-auto mb-3" />
+              <p className="text-black text-sm">Nền tảng thuê nhà thông minh cho thị trường Việt Nam.</p>
+            </div>
+            <div>
+              <h4 className="text-black text-sm font-bold mb-3">Hỗ trợ</h4>
+              <div className="flex flex-col gap-2 text-black/60 text-sm">
+                <span className="hover:text-black cursor-pointer transition-colors">Trung tâm trợ giúp</span>
+                <span className="hover:text-black cursor-pointer transition-colors">Liên hệ</span>
+                <span className="hover:text-black cursor-pointer transition-colors">Chính sách bảo mật</span>
+                <span className="hover:text-black cursor-pointer transition-colors">Điều khoản sử dụng</span>
+              </div>
+            </div>
+            <div>
+              <h4 className="text-black text-sm font-bold mb-3">Dành cho chủ nhà</h4>
+              <div className="flex flex-col gap-2 text-black/60 text-sm">
+                <span className="hover:text-black cursor-pointer transition-colors">Đăng tin cho thuê</span>
+                <span className="hover:text-black cursor-pointer transition-colors">Quản lý đặt phòng</span>
+                <span className="hover:text-black cursor-pointer transition-colors">Hợp đồng điện tử</span>
+                <span className="hover:text-black cursor-pointer transition-colors">Gói dịch vụ</span>
+              </div>
+            </div>
           </div>
-          <div className="flex justify-between items-start self-stretch pt-[25px] border-t border-solid border-t-[#6C6C6C]"><span className="text-[#6C6C6C] text-xs">© 2026 Smart Rental. Nền tảng thuê nhà thông minh.</span><div className="w-[202px] h-[15px]" /></div>
+          <div className="flex justify-between items-start pt-6">
+            <span className="text-black/40 text-xs">© 2026 Smart Rental. Nền tảng thuê nhà thông minh.</span>
+          </div>
         </div>
       </div>
     </div>

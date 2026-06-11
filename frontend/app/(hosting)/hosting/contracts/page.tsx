@@ -1,10 +1,6 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useRouter } from 'next/navigation';
-import { useEffect, useRef } from 'react';
 import {
   FileText,
   Home,
@@ -15,10 +11,11 @@ import {
   AlertCircle,
   X,
   ChevronDown,
+  Banknote,
+  Hourglass,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/use-auth';
 import { useMyContracts, useGenerateContract, useSignContract } from '@/hooks/use-contracts';
 import { useLandlordBookings } from '@/hooks/use-bookings';
 import {
@@ -37,42 +34,17 @@ import { SignatureBadge } from '@/components/shared/signature-badge';
 import { SignModal } from '@/components/shared/sign-modal';
 import type { Contract, Booking } from '@/types';
 
-// ─── Sidebar nav items ─────────────────────────────────────────────────────────
-
-const NAV_ITEMS = [
-  {
-    label: 'Tổng quan',
-    href: '/hosting',
-    icon: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/0975cf20-29ba-4c90-a408-0bcb7c01067a',
-  },
-  {
-    label: 'Tin đăng',
-    href: '/hosting/listings',
-    icon: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/3998786a-cbc4-41c7-a67f-040f52104128',
-  },
-  {
-    label: 'Yêu cầu thuê',
-    href: '/hosting/reservations',
-    icon: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/99881c0f-0190-4fc8-a573-480c848bdd9a',
-  },
-  {
-    label: 'Hợp đồng',
-    href: '/hosting/contracts',
-    icon: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/f3631b44-54e6-4752-af63-c3fb94f41dd8',
-    active: true,
-  },
-  {
-    label: 'Dịch vụ',
-    href: '/hosting/services',
-    icon: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7b068a65-5445-42dc-98b5-f2c163ec67fe',
-  },
-];
-
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 function formatVnd(n: number) {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(n);
 }
+
+const PAYMENT_CONFIG: Record<Booking['paymentStatus'], { label: string; className: string }> = {
+  unpaid:   { label: 'Chưa thanh toán', className: 'text-amber-600' },
+  paid:     { label: 'Đã thanh toán',   className: 'text-emerald-600' },
+  refunded: { label: 'Đã hoàn tiền',    className: 'text-blue-600' },
+};
 
 // ─── contract card ────────────────────────────────────────────────────────────
 
@@ -88,10 +60,13 @@ function ContractCard({
   const [isDownloading, setIsDownloading] = useState(false);
   const property = asProperty(contract.property);
   const tenant = asUser(contract.tenant);
+  const booking = asBooking(contract.booking);
   const imgUrl = property ? getPrimaryImage(property) : null;
 
   const statusCfg = STATUS_CONFIG[contract.status];
   const canSign = contract.status === 'awaiting_signatures' && !contract.signedByLandlord.signed;
+
+  const paymentCfg = booking ? PAYMENT_CONFIG[booking.paymentStatus] : null;
 
   return (
     <div className="flex items-start self-stretch bg-white py-[21px] px-5 gap-4 rounded-[14px] border border-solid border-[#DDDDDD]">
@@ -156,7 +131,7 @@ function ContractCard({
         </div>
 
         {/* Signature badges */}
-        <div className="flex gap-[9px] mb-[9px]">
+        <div className="flex gap-[9px] mb-[9px] flex-wrap">
           <button className="flex shrink-0 items-center bg-[#F7F7F7] text-left py-[5px] px-[11px] gap-[5px] rounded-lg border border-solid border-[#DDDDDD]">
             <img
               src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d85e7988-abae-422f-8280-7ac0748fbf12"
@@ -178,6 +153,36 @@ function ContractCard({
             </span>
           </button>
         </div>
+
+        {/* Payment status */}
+        {paymentCfg && (
+          <div className="flex items-center gap-2 mb-[9px]">
+            {booking?.paymentStatus === 'paid' ? (
+              <Banknote className="size-3.5 text-emerald-600 shrink-0" />
+            ) : (
+              <img
+                src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/cec79b00-4c3c-4f41-a518-a61aeca37613"
+                className="w-3.5 h-3.5 object-fill shrink-0"
+                alt=""
+              />
+            )}
+            <span className={cn('text-xs font-medium', paymentCfg.className)}>
+              {paymentCfg.label}
+            </span>
+            {booking?.paymentStatus === 'paid' && booking?.payoutStatus === 'pending' && (
+              <span className="flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                <Hourglass className="size-3 shrink-0" />
+                Chờ nhận tiền
+              </span>
+            )}
+            {booking?.paymentStatus === 'paid' && booking?.payoutStatus === 'paid' && (
+              <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                <Banknote className="size-3 shrink-0" />
+                Đã nhận tiền
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Footer: download + sign */}
         <div className="flex justify-end items-start self-stretch pt-[13px] gap-[9px] border-t border-solid border-t-[#DDDDDD]">
@@ -450,41 +455,9 @@ function EmptyState({ tabId, onGenerate }: { tabId: TabId; onGenerate: () => voi
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function HostingContractsPage() {
-  const pathname = usePathname();
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>('pending');
   const [signingContract, setSigningContract] = useState<Contract | null>(null);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
-
-  const { user, logout, isAuthenticated, isLandlord, isAdmin, hasHydrated } = useAuth();
-
-  // Auth redirect
-  useEffect(() => {
-    if (!hasHydrated) return;
-    if (!isAuthenticated) { router.replace('/login'); return; }
-    if (!isLandlord && !isAdmin) router.replace('/');
-  }, [hasHydrated, isAuthenticated, isLandlord, isAdmin, router]);
-
-  // Close user menu on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-        setUserMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  if (!hasHydrated || !isAuthenticated || (!isLandlord && !isAdmin)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="w-8 h-8 border-2 border-[#2683EB] border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   const { data, isLoading } = useMyContracts();
   const { mutate: signContract, isPending: isSigning, variables: signingId } = useSignContract();
@@ -518,227 +491,73 @@ export default function HostingContractsPage() {
   };
 
   return (
-    <div className="flex flex-col bg-white">
-      {/* ── Header ── */}
-      <div
-        className="bg-cover bg-center py-[22px] px-20"
-        style={{
-          backgroundImage: 'url(https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/eb609fa3-9a4b-4bf7-8291-56c045573ba8)',
-        }}
-      >
-        <div className="flex justify-between items-center self-stretch">
-          <Link href="/">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/cc012ec2-2e37-440b-a5a8-14c2ae1bf1b0"
-              alt="SmartRental"
-              className="w-[182px] h-[26px] object-fill cursor-pointer"
+    <div className="flex flex-col self-stretch gap-6">
+      {/* Title row */}
+      <div className="flex justify-between items-center self-stretch">
+        <span className="text-[#222222] text-[25px] font-bold">Hợp đồng</span>
+        <button
+          onClick={() => setShowGenerateModal(true)}
+          className="flex shrink-0 items-center bg-[#2683EB] text-left py-2 px-4 gap-2 rounded-lg border-0"
+        >
+          <img
+            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/66e90a74-9b83-4c04-8d5c-235a3bff0c2e"
+            className="w-4 h-4 object-fill"
+            alt=""
+          />
+          <span className="text-white text-sm font-bold">Tạo hợp đồng</span>
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex items-center self-stretch gap-1 border-b border-solid border-b-[#DDDDDD]">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              'flex shrink-0 items-center pb-3 px-2 gap-2 transition-colors',
+              activeTab === tab.id ? 'pb-[11px] border-b-2 border-[#222222] -mb-px' : '',
+            )}
+          >
+            {tabCounts[tab.id] > 0 && activeTab !== tab.id ? (
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="text-[#222222] text-[15px] font-bold">{tab.label}</span>
+                <div className="flex flex-col shrink-0 items-start bg-[#222222] py-0.5 px-1.5 rounded-[26843550px]">
+                  <span className="text-white text-[11px] font-bold">{tabCounts[tab.id]}</span>
+                </div>
+              </div>
+            ) : (
+              <span className={cn(
+                'text-[15px] font-bold',
+                activeTab === tab.id ? 'text-[#222222]' : 'text-[#6A6A6A]',
+              )}>
+                {tab.label}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Contract list */}
+      {isLoading ? (
+        <div className="flex flex-col gap-4 self-stretch">
+          <ContractCardSkeleton />
+          <ContractCardSkeleton />
+        </div>
+      ) : filtered.length === 0 ? (
+        <EmptyState tabId={activeTab} onGenerate={() => setShowGenerateModal(true)} />
+      ) : (
+        <div className="flex flex-col gap-4 self-stretch">
+          {filtered.map((contract) => (
+            <ContractCard
+              key={contract.id}
+              contract={contract}
+              onSign={setSigningContract}
+              isSigningThis={isSigning && signingId === contract.id}
             />
-          </Link>
-
-          <div className="flex shrink-0 items-center">
-            {/* Admin label */}
-            <div className="flex flex-col shrink-0 items-center py-2 mr-1 rounded-[20px]">
-              <span className="text-[#222222] text-sm font-bold">Quản lý cho thuê</span>
-            </div>
-
-            {/* Avatar dropdown */}
-            <div className="relative" ref={userMenuRef}>
-              <div className="flex shrink-0 items-center py-[5px] px-[13px] mx-2 gap-[9px] rounded-[20px] border border-solid border-black">
-                <img
-                  src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/66c8ca5a-7553-49d9-be3c-ab10680e0f66"
-                  className="w-4 h-3 rounded-[20px] object-fill"
-                  alt=""
-                />
-                <button
-                  onClick={() => setUserMenuOpen((v) => !v)}
-                  className="flex flex-col shrink-0 items-center bg-[#222222] text-left py-1.5 px-[11px] rounded-[26843500px] border-0"
-                >
-                  <span className="text-white text-sm font-bold">
-                    {user?.name?.charAt(0)?.toUpperCase() ?? 'N'}
-                  </span>
-                </button>
-              </div>
-
-              {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-[#DDDDDD] rounded-xl shadow-lg py-2 z-50">
-                  <div className="px-4 py-2 border-b border-[#DDDDDD]">
-                    <p className="text-sm font-semibold text-[#222222] truncate">{user?.name}</p>
-                    <p className="text-xs text-[#6A6A6A] truncate">{user?.email}</p>
-                  </div>
-                  <button
-                    onClick={() => { setUserMenuOpen(false); logout(); router.push('/'); }}
-                    className="flex items-center w-full px-4 py-2.5 text-sm text-[#c13515] hover:bg-red-50 transition-colors gap-2"
-                  >
-                    Đăng xuất
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+          ))}
         </div>
-      </div>
-
-      {/* ── Body ── */}
-      <div className="flex flex-col items-start self-stretch">
-        <div className="flex self-stretch flex-1">
-          {/* Sidebar */}
-          <aside className="w-[223px] shrink-0 flex flex-col items-start bg-white border-r border-[#DDDDDD]">
-            {/* Explore */}
-            <div className="flex items-center py-[21px] pl-[15px] pr-[118px] gap-2 border-b border-solid border-b-[#DDDDDD]">
-              <img
-                src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/0d8421f1-fd5e-40b4-8d7c-757a4e29614d"
-                className="w-4 h-4 object-fill"
-                alt=""
-              />
-              <span className="text-[#222222] text-[15px] font-bold">Khám phá</span>
-            </div>
-
-            {/* Section label */}
-            <div className="flex flex-col items-start py-4 pl-[15px] pr-[70px] border-b border-solid border-b-[#DDDDDD]">
-              <span className="text-[#929292] text-[13px] font-bold">QUẢN LÝ CHO THUÊ</span>
-            </div>
-
-            {/* Nav items */}
-            <nav className="flex flex-col items-start px-[7px] pt-3 gap-0.5 w-full">
-              {NAV_ITEMS.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      'flex items-center py-2.5 rounded-lg w-full',
-                      isActive ? 'bg-[#F7F7F7]' : '',
-                    )}
-                  >
-                    <img
-                      src={item.icon}
-                      className="w-4 h-4 mx-3 rounded-lg object-fill"
-                      alt=""
-                    />
-                    <span className={cn(
-                      'text-[15px]',
-                      isActive ? 'text-[#222222] font-bold' : 'text-[#6A6A6A]',
-                    )}>
-                      {item.label}
-                    </span>
-                  </Link>
-                );
-              })}
-            </nav>
-          </aside>
-
-          {/* Main content */}
-          <main className="flex-1 bg-[#F6F8FB] pt-8 pb-[436px] px-24">
-            <div className="flex flex-col self-stretch gap-6 max-w-[1217px]">
-              {/* Title row */}
-              <div className="flex justify-between items-center self-stretch">
-                <span className="text-[#222222] text-[25px] font-bold">Hợp đồng</span>
-                <button
-                  onClick={() => setShowGenerateModal(true)}
-                  className="flex shrink-0 items-center bg-[#2683EB] text-left py-2 px-4 gap-2 rounded-lg border-0"
-                >
-                  <img
-                    src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/66e90a74-9b83-4c04-8d5c-235a3bff0c2e"
-                    className="w-4 h-4 object-fill"
-                    alt=""
-                  />
-                  <span className="text-white text-sm font-bold">Tạo hợp đồng</span>
-                </button>
-              </div>
-
-              {/* Tabs */}
-              <div className="flex items-center self-stretch gap-1 border-b border-solid border-b-[#DDDDDD]">
-                {TABS.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={cn(
-                      'flex shrink-0 items-center pb-3 px-2 gap-2 transition-colors',
-                      activeTab === tab.id ? 'pb-[11px] border-b-2 border-[#222222] -mb-px' : '',
-                    )}
-                  >
-                    {tabCounts[tab.id] > 0 && activeTab !== tab.id ? (
-                      <div className="flex shrink-0 items-center gap-2">
-                        <span className="text-[#222222] text-[15px] font-bold">{tab.label}</span>
-                        <div className="flex flex-col shrink-0 items-start bg-[#222222] py-0.5 px-1.5 rounded-[26843550px]">
-                          <span className="text-white text-[11px] font-bold">{tabCounts[tab.id]}</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <span className={cn(
-                        'text-[15px] font-bold',
-                        activeTab === tab.id ? 'text-[#222222]' : 'text-[#6A6A6A]',
-                      )}>
-                        {tab.label}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              {/* Contract list */}
-              {isLoading ? (
-                <div className="flex flex-col gap-4 self-stretch">
-                  <ContractCardSkeleton />
-                  <ContractCardSkeleton />
-                </div>
-              ) : filtered.length === 0 ? (
-                <EmptyState tabId={activeTab} onGenerate={() => setShowGenerateModal(true)} />
-              ) : (
-                <div className="flex flex-col gap-4 self-stretch">
-                  {filtered.map((contract) => (
-                    <ContractCard
-                      key={contract.id}
-                      contract={contract}
-                      onSign={setSigningContract}
-                      isSigningThis={isSigning && signingId === contract.id}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </main>
-        </div>
-
-        {/* Footer */}
-        <footer className="flex flex-col self-stretch bg-[#FFF546] py-10 px-20 gap-8 border-t border-solid border-t-[#FFF546]">
-          <div className="flex items-center self-stretch gap-8">
-            <div className="flex flex-1 flex-col items-start pb-[90px] gap-3">
-              <img
-                src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/22dc7a32-fc83-4861-94b5-8fe718f89037"
-                alt="SmartRental"
-                className="w-[182px] h-[25px] object-fill"
-              />
-              <span className="text-black text-sm">Nền tảng thuê nhà thông minh cho thị trường Việt Nam.</span>
-            </div>
-
-            <div className="flex flex-1 flex-col gap-[11px]">
-              <span className="text-black text-sm font-bold">Hỗ trợ</span>
-              <div className="flex flex-col gap-2">
-                <span className="text-[#6A6A6A] text-sm">Trung tâm trợ giúp</span>
-                <span className="text-[#6A6A6A] text-sm">Liên hệ</span>
-                <span className="text-[#6A6A6A] text-sm">Chính sách bảo mật</span>
-                <span className="text-[#6A6A6A] text-sm">Điều khoản sử dụng</span>
-              </div>
-            </div>
-
-            <div className="flex flex-1 flex-col gap-[11px]">
-              <span className="text-black text-sm font-bold">Dành cho chủ nhà</span>
-              <div className="flex flex-col gap-2">
-                <span className="text-[#6A6A6A] text-sm">Đăng tin cho thuê</span>
-                <span className="text-[#6A6A6A] text-sm">Quản lý đặt phòng</span>
-                <span className="text-[#6A6A6A] text-sm">Hợp đồng điện tử</span>
-                <span className="text-[#6A6A6A] text-sm">Gói dịch vụ</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-between items-start self-stretch pt-[25px] border-t border-solid border-t-[#6C6C6C]">
-            <span className="text-[#6C6C6C] text-xs">© 2026 Smart Rental. Nền tảng thuê nhà thông minh.</span>
-          </div>
-        </footer>
-      </div>
+      )}
 
       {/* Sign modal */}
       {signingContract && (

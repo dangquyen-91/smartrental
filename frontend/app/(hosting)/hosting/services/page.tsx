@@ -1,16 +1,19 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
   useLandlordServiceOrders,
   useUpdateServiceStatus,
   useCreateServicePayment,
+  useServiceCatalog,
 } from '@/hooks/use-services';
-import type { ServiceOrder } from '@/types';
+import { getServicePaymentStatusApi } from '@/lib/api/payment.api';
+import type { ServiceOrder, ServiceCatalogEntry } from '@/types';
 
 type ServiceStatus = ServiceOrder['status'];
 
@@ -23,14 +26,9 @@ const SERVICE_META: Record<ServiceOrder['type'], { emoji: string; label: string 
   registration: { emoji: '📋', label: 'Đăng ký tạm trú' },
 };
 
-const SERVICE_CATALOG = [
-  { type: 'cleaning' as const,     price: '2.000 ₫/lần' },
-  { type: 'moving' as const,        price: '300.000 ₫/lần' },
-  { type: 'painting' as const,      price: '1.000.000 ₫/phòng' },
-  { type: 'registration' as const,  price: '100.000 ₫/hồ sơ' },
-  { type: 'repair' as const,        price: '200.000 ₫/lần' },
-  { type: 'wifi' as const,          price: '500.000 ₫/lần' },
-];
+function fmtPrice(n: number) {
+  return n.toLocaleString('vi-VN') + '₫';
+}
 
 const STATUS_CONFIG: Record<ServiceOrder['status'], { label: string; className: string }> = {
   pending:     { label: 'Chờ xác nhận',  className: 'bg-[#FF5E00] border-[#FF5E00] text-white' },
@@ -38,6 +36,12 @@ const STATUS_CONFIG: Record<ServiceOrder['status'], { label: string; className: 
   in_progress: { label: 'Đang xử lý',   className: 'bg-violet-50 text-violet-700 border-violet-200' },
   done:        { label: 'Hoàn thành',    className: 'bg-stone-100 text-stone-500 border-stone-200' },
   cancelled:   { label: 'Đã huỷ',       className: 'bg-red-50 text-[#c13515] border-red-100' },
+};
+
+const PAYMENT_CONFIG: Record<ServiceOrder['paymentStatus'], { label: string; className: string }> = {
+  unpaid:   { label: 'Chưa thanh toán', className: 'text-amber-600' },
+  paid:     { label: 'Đã thanh toán',   className: 'text-emerald-600' },
+  refunded: { label: 'Đã hoàn tiền',    className: 'text-blue-600' },
 };
 
 const TABS: { id: TabId; label: string; statuses: ServiceStatus[] }[] = [
@@ -55,10 +59,6 @@ function fmtDateTime(dt: string) {
   });
 }
 
-function fmtPrice(n: number) {
-  return n.toLocaleString('vi-VN') + '₫';
-}
-
 function ServiceOrderCard({
   order,
   onCancel,
@@ -72,9 +72,10 @@ function ServiceOrderCard({
   isActing: boolean;
   isPaying: boolean;
 }) {
-  const meta    = SERVICE_META[order.type];
-  const sc      = STATUS_CONFIG[order.status];
-  const prop    = typeof order.property === 'object' ? order.property : null;
+  const meta       = SERVICE_META[order.type];
+  const sc         = STATUS_CONFIG[order.status];
+  const pc         = PAYMENT_CONFIG[order.paymentStatus];
+  const prop       = typeof order.property === 'object' ? order.property : null;
 
   return (
     <div className="flex items-start self-stretch bg-white py-[21px] px-5 gap-4 rounded-[14px] border border-solid border-[#DDDDDD]">
@@ -135,9 +136,7 @@ function ServiceOrderCard({
         <div className="flex justify-between items-start self-stretch pt-[13px] border-t border-solid border-t-[#DDDDDD]">
           <div className="flex shrink-0 items-center gap-[7px]">
             <span className="text-[#222222] text-sm font-bold">{fmtPrice(order.price)}</span>
-            <span className="text-[#FF5E00] text-xs">
-              · {order.paymentStatus === 'unpaid' ? 'Chưa thanh toán' : order.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Đã hoàn tiền'}
-            </span>
+            <span className={cn('text-xs', pc.className)}>· {pc.label}</span>
           </div>
           <div className="flex shrink-0 gap-2">
             {order.paymentStatus === 'unpaid' && order.status !== 'pending' && (
@@ -206,12 +205,87 @@ function SkeletonCard() {
   );
 }
 
+// ─── payment result toast ───────────────────────────────────────────────────────
+
+function PaymentToast() {
+  const params  = useSearchParams();
+  const router  = useRouter();
+  const qc      = useQueryClient();
+  const handled = useRef(false);
+  const [isPolling, setIsPolling] = useState(false);
+  const pollCountRef = useRef(0);
+  const MAX_POLLS = 20;
+  const POLL_INTERVAL = 2000;
+
+  const pollPaymentStatus = async (orderId: string) => {
+    if (pollCountRef.current >= MAX_POLLS) {
+      setIsPolling(false);
+      toast.error('Không thể xác nhận trạng thái thanh toán. Vui lòng kiểm tra lại.');
+      router.replace('/hosting/services');
+      return;
+    }
+    pollCountRef.current++;
+    try {
+      const data = await getServicePaymentStatusApi(orderId);
+      if (data.data?.status === 'PAID' || data.data?.paymentStatus === 'paid') {
+        setIsPolling(false);
+        toast.success('Thanh toán dịch vụ thành công!');
+        qc.invalidateQueries({ queryKey: ['services', 'landlord'] });
+        sessionStorage.removeItem('pendingPayment');
+        router.replace('/hosting/services');
+        return;
+      }
+    } catch {
+      // ignore single poll errors
+    }
+    setTimeout(() => pollPaymentStatus(orderId), POLL_INTERVAL);
+  };
+
+  useEffect(() => {
+    if (handled.current) return;
+    const result = params.get('payment');
+    const payosStatus = params.get('status');
+
+    if (result === 'success' || payosStatus === 'PAID') {
+      handled.current = true;
+
+      if (payosStatus === 'PAID') {
+        toast.success('Thanh toán dịch vụ thành công!');
+        qc.invalidateQueries({ queryKey: ['services', 'landlord'] });
+        sessionStorage.removeItem('pendingPayment');
+        router.replace('/hosting/services');
+        return;
+      }
+
+      const pending = sessionStorage.getItem('pendingPayment');
+      if (pending) {
+        const { type, id } = JSON.parse(pending);
+        if (type === 'service') {
+          setIsPolling(true);
+          pollCountRef.current = 0;
+          pollPaymentStatus(id);
+        }
+      }
+      setTimeout(() => qc.invalidateQueries({ queryKey: ['services', 'landlord'] }), 300);
+      router.replace('/hosting/services');
+    } else if (result === 'cancel') {
+      handled.current = true;
+      sessionStorage.removeItem('pendingPayment');
+      toast.info('Bạn đã huỷ thanh toán. Yêu cầu dịch vụ vẫn còn hiệu lực.');
+      router.replace('/hosting/services');
+    }
+  }, [params, router, qc]);
+
+  return null;
+}
+
 export default function HostingServicesPage() {
-  const pathname     = usePathname();
+  const router     = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>('active');
   const [cancelId, setCancelId]   = useState<string | null>(null);
 
   const { data, isLoading }             = useLandlordServiceOrders();
+  const { data: catalogData, isLoading: isCatalogLoading } = useServiceCatalog();
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateServiceStatus();
   const { mutate: createPayment, isPending: isCreatingPayment } = useCreateServicePayment();
 
@@ -240,6 +314,8 @@ export default function HostingServicesPage() {
 
   return (
     <div className="flex flex-col self-stretch bg-[#F6F8FB] gap-[25px]">
+      <Suspense><PaymentToast /></Suspense>
+
       {/* Title row */}
       <div className="flex justify-between items-center self-stretch">
         <span className="text-[#222222] text-[25px] font-bold">Dịch vụ của tôi</span>
@@ -252,19 +328,28 @@ export default function HostingServicesPage() {
       </div>
 
       {/* Service type cards */}
-      <div className="flex items-center self-stretch">
-        {SERVICE_CATALOG.map((svc) => (
-          <div
-            key={svc.type}
-            className="flex flex-1 flex-col items-center bg-white text-left py-4 mr-5 gap-[7px] rounded-xl border border-solid border-[#DDDDDD] last:mr-0 hover:border-[#2683EB] transition-colors cursor-pointer"
-            onClick={() => toast.success(`Tính năng đặt ${SERVICE_META[svc.type].label} sắp ra mắt!`)}
-          >
-            <span className="text-[#222222] text-3xl">{SERVICE_META[svc.type].emoji}</span>
-            <span className="text-[#6A6A6A] text-xs font-bold">{SERVICE_META[svc.type].label}</span>
-            <span className="text-[#929292] text-[11px]">{svc.price}</span>
-          </div>
-        ))}
-      </div>
+      {isCatalogLoading ? (
+        <div className="flex items-center self-stretch gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex-1 h-[105px] bg-[#ebebeb] rounded-xl animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="flex items-center self-stretch gap-3">
+          {(catalogData ?? []).map((entry: ServiceCatalogEntry) => (
+            <button
+              key={entry.type}
+              type="button"
+              onClick={() => router.push(`/hosting/services/request?type=${entry.type}`)}
+              className="flex flex-1 flex-col items-center text-left py-4 gap-[7px] rounded-xl border border-solid border-[#DDDDDD] last:mr-0 hover:border-[#2683EB] hover:shadow-[0_0_0_1px_#2683EB] transition-all cursor-pointer"
+            >
+              <span className="text-[#222222] text-3xl">{SERVICE_META[entry.type].emoji}</span>
+              <span className="text-[#6A6A6A] text-xs font-bold">{SERVICE_META[entry.type].label}</span>
+              <span className="text-[#929292] text-[11px]">{fmtPrice(entry.price)}/{entry.unit}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex items-center self-stretch gap-1 border-b border-solid border-b-[#DDDDDD]">

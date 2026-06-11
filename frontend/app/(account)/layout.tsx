@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { LogOut, Heart, CalendarCheck, FileText, Users, Wrench, Compass, User } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { PublicFooter } from '@/components/layout/public-navbar';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
@@ -104,18 +105,22 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       </div>
 
       {/* ── Body: sidebar + content ── */}
-      <div className="flex flex-1 self-stretch">
-        {/* Sidebar */}
-        <aside className="w-[223px] shrink-0 flex flex-col items-start bg-white border-r border-[#DDDDDD]">
-          {/* Explore */}
-          <div className="flex items-center py-[21px] pl-[15px] pr-[118px] gap-2 border-b border-solid border-b-[#DDDDDD]">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/0d8421f1-fd5e-40b4-8d7c-757a4e29614d"
-              className="w-4 h-4 object-fill"
-              alt=""
-            />
-            <span className="text-[#222222] text-[15px] font-bold">Khám phá</span>
+      <div className="flex flex-1 self-stretch relative">
+        {/* Hover trigger pill — always visible to hint at the hidden sidebar */}
+        <div className="absolute left-0 top-0 z-20 w-0 group-hover:w-6 transition-[width] duration-200 ease-out overflow-visible">
+          <div className="flex items-center gap-0 py-[21px] pl-[15px] pr-0 gap-2">
+            <div className="flex flex-col items-center gap-0.5 cursor-pointer" style={{ paddingLeft: '1px' }}>
+              <div className="w-3 h-[2px] bg-[#6A6A6A] rounded-full" />
+              <div className="w-3 h-[2px] bg-[#6A6A6A] rounded-full" />
+              <div className="w-3 h-[2px] bg-[#6A6A6A] rounded-full" />
+            </div>
           </div>
+        </div>
+
+        {/* Sidebar — collapsible on hover */}
+        <aside className="group relative w-0 hover:w-[223px] transition-[width] duration-200 ease-out overflow-hidden shrink-0 flex flex-col items-start bg-white border-r border-[#DDDDDD]">
+          {/* Expand trigger area */}
+          <div className="flex items-center py-[21px] pl-[15px] pr-[118px] gap-2 border-b border-solid border-b-[#DDDDDD]" />
 
           {/* Section label */}
           <div className="flex flex-col items-start py-4 pl-[15px] pr-[70px] border-b border-solid border-b-[#DDDDDD]">
@@ -160,42 +165,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       </div>
 
       {/* ── Footer ── */}
-      <footer className="flex flex-col self-stretch bg-[#FFF546] py-10 px-20 gap-8 border-t border-solid border-t-[#FFF546]">
-        <div className="flex items-center self-stretch gap-8">
-          <div className="flex flex-1 flex-col items-start pb-[90px] gap-3">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/22dc7a32-fc83-4861-94b5-8fe718f89037"
-              alt="SmartRental"
-              className="w-[182px] h-[25px] object-fill"
-            />
-            <span className="text-black text-sm">Nền tảng thuê nhà thông minh cho thị trường Việt Nam.</span>
-          </div>
-
-          <div className="flex flex-1 flex-col gap-[11px]">
-            <span className="text-black text-sm font-bold">Hỗ trợ</span>
-            <div className="flex flex-col gap-2">
-              <span className="text-[#6A6A6A] text-sm">Trung tâm trợ giúp</span>
-              <span className="text-[#6A6A6A] text-sm">Liên hệ</span>
-              <span className="text-[#6A6A6A] text-sm">Chính sách bảo mật</span>
-              <span className="text-[#6A6A6A] text-sm">Điều khoản sử dụng</span>
-            </div>
-          </div>
-
-          <div className="flex flex-1 flex-col gap-[11px]">
-            <span className="text-black text-sm font-bold">Dành cho chủ nhà</span>
-            <div className="flex flex-col gap-2">
-              <span className="text-[#6A6A6A] text-sm">Đăng tin cho thuê</span>
-              <span className="text-[#6A6A6A] text-sm">Quản lý đặt phòng</span>
-              <span className="text-[#6A6A6A] text-sm">Hợp đồng điện tử</span>
-              <span className="text-[#6A6A6A] text-sm">Gói dịch vụ</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-between items-start self-stretch pt-[25px] border-t border-solid border-t-[#6C6C6C]">
-          <span className="text-[#6C6C6C] text-xs">© 2026 Smart Rental. Nền tảng thuê nhà thông minh.</span>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

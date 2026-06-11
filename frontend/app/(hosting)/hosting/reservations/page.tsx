@@ -356,21 +356,23 @@ function ReservationCard({
             </>
           )}
 
-          {/* Confirmed: check-in button + reclaim */}
+          {/* Confirmed: check-in button + reclaim (only if not yet paid) */}
           {isConfirmed && (
             <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => onReclaim(booking.id)}
-                disabled={isReclaiming}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-ash-gray border border-hairline-gray hover:border-[#c13515] hover:text-[#c13515] rounded-lg transition-colors disabled:opacity-60"
-              >
-                {isReclaiming ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <RotateCcw className="size-3.5" />
-                )}
-                Thu hồi
-              </button>
+              {booking.paymentStatus === 'unpaid' && (
+                <button
+                  onClick={() => onReclaim(booking.id)}
+                  disabled={isReclaiming}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-ash-gray border border-hairline-gray hover:border-[#c13515] hover:text-[#c13515] rounded-lg transition-colors disabled:opacity-60"
+                >
+                  {isReclaiming ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <RotateCcw className="size-3.5" />
+                  )}
+                  Thu hồi
+                </button>
+              )}
               <button
                 onClick={() => onActivate(booking.id)}
                 disabled={isActivating}

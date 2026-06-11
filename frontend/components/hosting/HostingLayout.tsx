@@ -2,8 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { PublicFooter } from '@/components/layout/public-navbar';
 import { cn } from '@/lib/utils';
+import { gsap } from 'gsap';
 
 const NAV_ITEMS = [
   { label: 'Tổng quan', href: '/hosting', active: '/hosting' },
@@ -21,6 +24,26 @@ function isActive(pathname: string, item: typeof NAV_ITEMS[0]) {
 export default function HostingLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const navListRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sidebarRef.current) return;
+    const links = sidebarRef.current.querySelectorAll('a');
+    const label = sidebarRef.current.querySelector('span');
+    const tl = gsap.timeline();
+    tl.fromTo(
+      label,
+      { opacity: 0, x: -12 },
+      { opacity: 1, x: 0, duration: 0.3, ease: 'power2.out' }
+    )
+      .fromTo(
+        links,
+        { opacity: 0, x: -16 },
+        { opacity: 1, x: 0, duration: 0.35, stagger: 0.07, ease: 'power2.out' },
+        '-=0.15'
+      );
+  }, [pathname]);
 
   return (
     <div className="flex flex-col bg-white">
@@ -64,49 +87,67 @@ export default function HostingLayout({ children }: { children: React.ReactNode 
         {/* Main content with sidebar */}
         <div className="flex items-start self-stretch">
           {/* Sidebar */}
-          <div className="flex flex-col shrink-0 items-center bg-white pb-[1px]">
+          <div ref={sidebarRef} className="flex flex-col shrink-0 items-center bg-white pb-[1px]">
             <Link
               href="/"
               className="flex items-center py-[21px] pl-4 pr-[117px] gap-2 border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD] hover:opacity-80 transition-opacity"
-            >
-              <img
-                src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/5e74c0ee-f146-406a-8f00-27e4e04f80a7"
-                className="w-4 h-4 object-fill"
-              />
-              <span className="text-[#222222] text-[15px] font-bold">Khám phá</span>
-            </Link>
+            />
             <div className="flex flex-col items-start py-4 pl-4 pr-[81px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
-              <span className="text-[#929292] text-[13px] font-bold">QUẢN LÝ CHO THUÊ</span>
+              <span style={{ opacity: 0 }} className="text-[#929292] text-[13px] font-bold">QUẢN LÝ CHO THUÊ</span>
             </div>
             <div className="flex flex-col items-center pt-3">
-              <div className="flex flex-col items-start px-2 gap-0.5">
-                {NAV_ITEMS.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      'flex items-center py-2.5 rounded-lg w-full',
-                      isActive(pathname, item) ? 'bg-[#F6F8FB]' : ''
-                    )}
-                  >
-                    <img
-                      src={
-                        item.href === '/hosting' ? 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9302bd31-9df7-4ad9-ac85-c7362a7c1429' :
-                        item.href === '/hosting/listings' ? 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/fd20a51c-09ce-46ab-867e-eaace5405f4d' :
-                        item.href === '/hosting/reservations' ? 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/e6bccfb9-fe5b-46fa-851f-bbce964ac950' :
-                        item.href === '/hosting/contracts' ? 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/568fb559-5f11-48b0-8430-c4aac2f043e6' :
-                        'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/116d5d89-5e4f-400e-a1d0-6854978476b7'
-                      }
-                      className="w-4 h-4 mx-3 rounded-lg object-fill"
-                    />
-                    <span className={cn(
-                      'text-[15px]',
-                      isActive(pathname, item) ? 'font-bold text-[#222222]' : 'text-[#6A6A6A]'
-                    )}>
-                      {item.label}
-                    </span>
-                  </Link>
-                ))}
+              <div ref={navListRef} className="flex flex-col items-start px-2 gap-0.5">
+                {NAV_ITEMS.map((item) => {
+                  const active = isActive(pathname, item);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      style={{ opacity: 0 }}
+                      className={cn(
+                        'group relative flex items-center py-2.5 rounded-lg w-full transition-all duration-200',
+                        active
+                          ? 'bg-[#2683EB]/8 font-semibold'
+                          : 'hover:bg-[#f7f7f7] hover:shadow-sm',
+                      )}
+                    >
+                      {/* Active indicator bar */}
+                      <span
+                        className={cn(
+                          'absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-[#2683EB] transition-all duration-300',
+                          active ? 'opacity-100' : 'opacity-0 group-hover:opacity-40',
+                        )}
+                      />
+
+                      <img
+                        src={
+                          item.href === '/hosting' ? 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9302bd31-9df7-4ad9-ac85-c7362a7c1429' :
+                          item.href === '/hosting/listings' ? 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/fd20a51c-09ce-46ab-867e-eaace5405f4d' :
+                          item.href === '/hosting/reservations' ? 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/e6bccfb9-fe5b-46fa-851f-bbce964ac950' :
+                          item.href === '/hosting/contracts' ? 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/568fb559-5f11-48b0-8430-c4aac2f043e6' :
+                          'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/116d5d89-5e4f-400e-a1d0-6854978476b7'
+                        }
+                        className={cn(
+                          'w-4 h-4 mx-3 rounded-lg object-fill transition-all duration-200',
+                          active
+                            ? 'text-[#2683EB] scale-110'
+                            : 'text-[#929292] group-hover:text-[#2683EB] group-hover:scale-105',
+                        )}
+                      />
+                      <span className={cn(
+                        'text-[15px] transition-all duration-200',
+                        active ? 'font-bold text-[#2683EB]' : 'text-[#6A6A6A] group-hover:text-[#222222]'
+                      )}>
+                        {item.label}
+                      </span>
+
+                      {/* Active dot */}
+                      {active && (
+                        <span className="ml-auto mr-4 w-1.5 h-1.5 rounded-full bg-[#2683EB] animate-pulse" />
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -120,65 +161,7 @@ export default function HostingLayout({ children }: { children: React.ReactNode 
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col self-stretch bg-[#FFF546] py-10 px-20 gap-8 border-t-[0.800000011920929px] border-solid border-t-[#FFF546]">
-          <div className="flex items-center self-stretch gap-8">
-            <div className="flex flex-1 flex-col items-start pb-[90px] gap-3">
-              <img
-                src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/64095eea-7684-418f-9cb3-74965741f6cc"
-                className="w-[182px] h-[25px] object-fill"
-              />
-              <div className="flex flex-col items-start self-stretch">
-                <span className="text-black text-sm">
-                  Nền tảng thuê nhà thông minh cho thị trường Việt Nam.
-                </span>
-              </div>
-            </div>
-            <div className="flex flex-1 flex-col gap-[11px]">
-              <div className="flex flex-col items-start self-stretch">
-                <span className="text-black text-sm font-bold">Hỗ trợ</span>
-              </div>
-              <div className="flex flex-col self-stretch gap-2">
-                <div className="flex flex-col items-start self-stretch pt-[3px]">
-                  <span className="text-[#6A6A6A] text-sm">Trung tâm trợ giúp</span>
-                </div>
-                <div className="flex flex-col items-start self-stretch pt-[3px]">
-                  <span className="text-[#6A6A6A] text-sm">Liên hệ</span>
-                </div>
-                <div className="flex flex-col items-start self-stretch pt-[3px]">
-                  <span className="text-[#6A6A6A] text-sm">Chính sách bảo mật</span>
-                </div>
-                <div className="flex flex-col items-start self-stretch pt-[3px]">
-                  <span className="text-[#6A6A6A] text-sm">Điều khoản sử dụng</span>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-1 flex-col gap-[11px]">
-              <div className="flex flex-col items-start self-stretch">
-                <span className="text-black text-sm font-bold">Dành cho chủ nhà</span>
-              </div>
-              <div className="flex flex-col self-stretch gap-2">
-                <div className="flex flex-col items-start self-stretch pt-[3px]">
-                  <span className="text-[#6A6A6A] text-sm">Đăng tin cho thuê</span>
-                </div>
-                <div className="flex flex-col items-start self-stretch pt-[3px]">
-                  <span className="text-[#6A6A6A] text-sm">Quản lý đặt phòng</span>
-                </div>
-                <div className="flex flex-col items-start self-stretch pt-[3px]">
-                  <span className="text-[#6A6A6A] text-sm">Hợp đồng điện tử</span>
-                </div>
-                <div className="flex flex-col items-start self-stretch pt-[3px]">
-                  <span className="text-[#6A6A6A] text-sm">Gói dịch vụ</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-between items-start self-stretch pt-[25px] border-t-[0.800000011920929px] border-solid border-t-[#6C6C6C]">
-            <span className="text-[#6C6C6C] text-xs">
-              © 2026 Smart Rental. Nền tảng thuê nhà thông minh.
-            </span>
-            <div className="w-[202px] h-[15px]" />
-          </div>
-        </div>
+        <PublicFooter />
       </div>
     </div>
   );

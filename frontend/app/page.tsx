@@ -1,17 +1,23 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { Search, MapPin, SlidersHorizontal, Building2, Home, Hotel, Box, LogOut, User, Settings, LayoutDashboard, ChevronDown } from 'lucide-react';
+import {
+  Building2,
+  Home,
+  Hotel,
+  Box,
+  Search,
+} from 'lucide-react';
+import { PublicNavbar, PublicFooter } from '@/components/layout/public-navbar';
 import { PropertyCard } from '@/components/shared/property-card';
 import { PropertyCardSkeleton } from '@/components/ui/skeleton';
 import { useProperties } from '@/hooks/use-properties';
 import { useAuth } from '@/hooks/use-auth';
-import { cn } from '@/lib/utils';
+import { WaveText } from '@/components/shared/wave-text';
 import type { Property } from '@/types';
 import type { PropertyFilters } from '@/lib/api/properties.api';
+import { gsap } from 'gsap';
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -45,111 +51,7 @@ const POPULAR_CITIES = [
   { city: 'Đồng Nai', subtitle: 'Nhà trọ công nhân' },
 ];
 
-// ─── User dropdown menu ─────────────────────────────────────────────────────
-
-function UserMenu({ user }: { user: { name?: string | null; email?: string | null; avatar?: string | null; role?: string } | null }) {
-  const [open, setOpen] = useState(false);
-  const router = useRouter();
-  const { logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-    router.push('/');
-  };
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-[#f7f7f7] transition-colors"
-      >
-        {user?.avatar ? (
-          <Image
-            src={user.avatar}
-            alt={user.name ?? 'Avatar'}
-            width={32}
-            height={32}
-            className="w-8 h-8 rounded-full object-cover border border-[#ddd]"
-          />
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-[#ff385c] text-white flex items-center justify-center text-sm font-bold">
-            {user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
-          </div>
-        )}
-        <ChevronDown className={cn('w-4 h-4 text-[#6A6A6A] transition-transform', open && 'rotate-180')} />
-      </button>
-
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 w-[220px] bg-white rounded-xl shadow-lg border border-[#EEEEEE] z-50 overflow-hidden">
-            {/* User info */}
-            <div className="px-4 py-3 border-b border-[#EEEEEE]">
-              <p className="text-sm font-semibold text-[#222222] truncate">{user?.name}</p>
-              <p className="text-xs text-[#6A6A6A] truncate mt-0.5">{user?.email}</p>
-            </div>
-
-            {/* Menu items */}
-            <div className="py-1">
-              <Link
-                href="/profile"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#222222] hover:bg-[#F6F8FB] transition-colors"
-              >
-                <User className="w-4 h-4" />
-                Tài khoản của tôi
-              </Link>
-
-              {user?.role === 'admin' && (
-                <Link
-                  href="/admin"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#2683EB] hover:bg-[#F6F8FB] transition-colors font-semibold"
-                >
-                  <LayoutDashboard className="w-4 h-4" />
-                  Trang quản trị
-                </Link>
-              )}
-
-              {user?.role === 'landlord' && (
-                <Link
-                  href="/hosting"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#222222] hover:bg-[#F6F8FB] transition-colors"
-                >
-                  <LayoutDashboard className="w-4 h-4" />
-                  Quản lý chỗ ở
-                </Link>
-              )}
-
-              <Link
-                href="/settings"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#222222] hover:bg-[#F6F8FB] transition-colors"
-              >
-                <Settings className="w-4 h-4" />
-                Cài đặt
-              </Link>
-            </div>
-
-            {/* Logout */}
-            <div className="py-1 border-t border-[#EEEEEE]">
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#c13515] hover:bg-[#F6F8FB] transition-colors w-full"
-              >
-                <LogOut className="w-4 h-4" />
-                Đăng xuất
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-// ─── search bar ──────────────────────────────────────────────────────────────
+// ─── Search bar ──────────────────────────────────────────────────────────────
 
 interface SearchState {
   location: string;
@@ -157,11 +59,83 @@ interface SearchState {
   type: Property['type'] | 'all';
 }
 
-function HeroSearchBar({
-  onSearch,
+function DropdownField({
+  label,
+  value,
+  options,
+  onSelect,
 }: {
-  onSearch: (s: SearchState) => void;
+  label: string;
+  value: string;
+  options: { label: string; value: string; icon?: React.ElementType }[];
+  onSelect: (v: string) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    if (open) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div className="relative shrink-0" ref={ref}>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((o) => !o);
+        }}
+        className="h-full px-6 flex flex-col justify-center text-left hover:bg-black/5 transition-colors gap-0.5"
+      >
+        <span className="text-[10px] font-bold text-black/40 uppercase tracking-wide leading-none">
+          {label}
+        </span>
+        <span className="text-sm font-medium text-black leading-tight flex items-center gap-1">
+          {value}
+          <svg
+            className={`size-3 text-black/40 transition-transform ${open ? 'rotate-180' : ''}`}
+            viewBox="0 0 12 12"
+            fill="currentColor"
+          >
+            <path d="M6 8L1 3h10z" />
+          </svg>
+        </span>
+      </button>
+
+      {open && (
+        <div
+          className="absolute top-full left-0 mt-2 bg-white rounded-2xl shadow-xl border border-black/5 py-2 w-52 z-50"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                onSelect(opt.value);
+                setOpen(false);
+              }}
+              className={`w-full text-left px-4 py-2.5 text-sm hover:bg-black/5 transition-colors flex items-center gap-2 ${
+                value === opt.value
+                  ? 'font-semibold text-black'
+                  : 'font-medium text-black/60'
+              }`}
+            >
+              {opt.icon && <opt.icon className="size-4 shrink-0" />}
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HeroSearchBar({ onSearch }: { onSearch: (s: SearchState) => void }) {
   const [state, setState] = useState<SearchState>({
     location: '',
     priceIndex: 0,
@@ -169,82 +143,59 @@ function HeroSearchBar({
   });
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSearch(state);
-      }}
-    >
-      {/* Yellow pill search */}
-      <div className="flex items-stretch bg-[#FFF546] rounded-[40px] overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
-        {/* Location */}
-        <div className="flex-1 px-8 py-4 border-r border-black/10 text-left min-w-0">
-          <p className="text-[12px] font-bold text-black mb-0.5 flex items-center gap-1 uppercase tracking-wide">
-            Địa điểm
-          </p>
-          <input
-            type="text"
-            value={state.location}
-            onChange={(e) =>
-              setState((s) => ({ ...s, location: e.target.value }))
-            }
-            placeholder="Tìm quận, thành phố..."
-            className="w-full text-sm font-medium text-black placeholder:text-[#929292] outline-none bg-transparent"
-          />
-        </div>
-
-        {/* Price range */}
-        <div className="px-8 py-4 border-r border-black/10 text-left shrink-0">
-          <p className="text-[12px] font-bold text-black mb-0.5 uppercase tracking-wide">
-            Khoảng giá
-          </p>
-          <select
-            value={state.priceIndex}
-            onChange={(e) =>
-              setState((s) => ({ ...s, priceIndex: Number(e.target.value) }))
-            }
-            className="text-sm font-medium text-black outline-none bg-transparent cursor-pointer"
-          >
-            {PRICE_RANGES.map((r, i) => (
-              <option key={i} value={i}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Property type */}
-        <div className="px-8 py-4 text-left shrink-0">
-          <p className="text-[12px] font-bold text-black mb-0.5 uppercase tracking-wide">
-            Loại phòng
-          </p>
-          <select
-            value={state.type}
-            onChange={(e) =>
-              setState((s) => ({ ...s, type: e.target.value as SearchState['type'] }))
-            }
-            className="text-sm font-medium text-black outline-none bg-transparent cursor-pointer"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Submit */}
-        <div className="p-2 shrink-0 flex items-center">
-          <button
-            type="submit"
-            className="w-12 h-12 bg-black hover:bg-[#3a3a3a] rounded-full flex items-center justify-center text-white transition-all active:scale-95"
-            aria-label="Tìm kiếm"
-          >
-            <Search className="size-5" />
-          </button>
-        </div>
+    <div className="flex items-stretch bg-[#ffef3d] rounded-full shadow-xl h-[72px]">
+      {/* Địa điểm */}
+      <div className="flex-1 px-6 flex flex-col justify-center text-left min-w-0 hover:bg-black/5 transition-colors cursor-text">
+        <span className="text-[10px] font-bold text-black/40 uppercase tracking-wide leading-none mb-1">
+          Địa điểm
+        </span>
+        <input
+          type="text"
+          value={state.location}
+          onChange={(e) => setState((s) => ({ ...s, location: e.target.value }))}
+          placeholder="Tìm quận, thành phố..."
+          className="w-full text-sm font-medium text-black placeholder:text-black/40 outline-none bg-transparent leading-tight"
+        />
       </div>
-    </form>
+
+      {/* Divider */}
+      <div className="flex items-center">
+        <div className="w-px h-8 bg-black/10" />
+      </div>
+
+      {/* Khoảng giá */}
+      <DropdownField
+        label="Khoảng giá"
+        value={PRICE_RANGES[state.priceIndex].label}
+        options={PRICE_RANGES.map((r, i) => ({ label: r.label, value: String(i) }))}
+        onSelect={(v) => setState((s) => ({ ...s, priceIndex: Number(v) }))}
+      />
+
+      {/* Divider */}
+      <div className="flex items-center">
+        <div className="w-px h-8 bg-black/10" />
+      </div>
+
+      {/* Loại phòng */}
+      <DropdownField
+        label="Loại phòng"
+        value={CATEGORIES.find((c) => c.value === state.type)?.label ?? 'Tất cả'}
+        options={CATEGORIES.map((c) => ({ label: c.label, value: c.value, icon: c.icon }))}
+        onSelect={(v) => setState((s) => ({ ...s, type: v as SearchState['type'] }))}
+      />
+
+      {/* Nút tìm kiếm */}
+      <div className="p-2 shrink-0 flex items-center">
+        <button
+          type="button"
+          onClick={() => onSearch(state)}
+          className="w-14 h-14 bg-black text-white rounded-full flex items-center justify-center hover:bg-[#4a4733] transition-all active:scale-95"
+          aria-label="Tìm kiếm"
+        >
+          <Search className="size-5" />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -252,68 +203,71 @@ function HeroSearchBar({
 
 const PAGE_SIZE = 12;
 
-function ListingSection({
+function PropertySection({
   activeType,
   filters,
+  title,
+  subtitle,
+  showLoadMore = false,
+  limit,
 }: {
   activeType: Property['type'] | 'all';
   filters: PropertyFilters;
+  title?: string;
+  subtitle?: string;
+  showLoadMore?: boolean;
+  limit?: number;
 }) {
   const [page, setPage] = useState(1);
-  const [, startTransition] = useTransition();
 
   const apiFilters: PropertyFilters = {
     ...filters,
     type: activeType !== 'all' ? activeType : undefined,
     status: 'available',
     page,
-    limit: PAGE_SIZE,
+    limit: limit ?? PAGE_SIZE,
   };
 
-  const { data, isLoading, isFetching } = useProperties(apiFilters);
+  const { data, isLoading } = useProperties(apiFilters);
 
   const properties = data?.data ?? [];
   const pagination = data?.pagination;
-  const hasMore = pagination ? page < pagination.totalPages : false;
-  const total = pagination?.total ?? 0;
+  const hasMore = showLoadMore && pagination ? page < pagination.totalPages : false;
 
   return (
     <div>
-      {/* Result count */}
-      {!isLoading && total > 0 && (
-        <p className="text-sm text-[#6A6A6A] mb-6">
-          <span className="font-semibold text-[#222222]">{total}</span> bất động sản phù hợp với bạn
-        </p>
+      {title && (
+        <div className="flex justify-between items-end mb-12">
+          <div>
+            <h2 className="text-2xl font-semibold text-[#191c1d] mb-2">{title}</h2>
+            {subtitle && <p className="text-[#4a4733]">{subtitle}</p>}
+          </div>
+        </div>
       )}
 
-      {/* Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
-          {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 3 }).map((_, i) => (
             <PropertyCardSkeleton key={i} />
           ))}
         </div>
       ) : properties.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
-          {properties.map((p, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {properties.slice(0, limit).map((p, i) => (
             <PropertyCard key={p.id ?? `p-${i}`} property={p} />
           ))}
         </div>
       )}
 
-      {/* Load more */}
-      {hasMore && (
-        <div className="mt-10 text-center">
+      {showLoadMore && hasMore && (
+        <div className="mt-12 text-center">
           <button
-            onClick={() =>
-              startTransition(() => setPage((n) => n + 1))
-            }
-            disabled={isFetching}
-            className="px-6 py-3 text-sm font-semibold text-[#222222] border border-[#222222] rounded-[40px] hover:bg-[#FFF546] transition-colors disabled:opacity-50"
+            onClick={() => setPage((n) => n + 1)}
+            className="px-8 py-3 bg-[#ffef3d] text-[#1f1c00] text-sm font-semibold rounded-full hover:shadow-lg transition-all"
           >
-            {isFetching ? 'Đang tải...' : 'Xem thêm'}
+            Xem thêm
           </button>
         </div>
       )}
@@ -324,15 +278,11 @@ function ListingSection({
 function EmptyState() {
   return (
     <div className="py-20 text-center">
-      <div className="size-16 bg-[#f7f7f7] rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="w-16 h-16 bg-[#f3f4f5] rounded-full flex items-center justify-center mx-auto mb-4">
         <Search className="size-7 text-[#c1c1c1]" />
       </div>
-      <h3 className="text-base font-semibold text-[#222222] mb-1">
-        Không tìm thấy kết quả
-      </h3>
-      <p className="text-sm text-[#6A6A6A]">
-        Thử thay đổi bộ lọc hoặc tìm kiếm ở khu vực khác.
-      </p>
+      <h3 className="text-base font-semibold text-[#191c1d] mb-1">Không tìm thấy kết quả</h3>
+      <p className="text-sm text-[#4a4733]">Thử thay đổi bộ lọc hoặc tìm kiếm ở khu vực khác.</p>
     </div>
   );
 }
@@ -340,15 +290,21 @@ function EmptyState() {
 // ─── main page ────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
+  const heroImgRef = useRef<HTMLImageElement>(null);
   const { isAuthenticated, user } = useAuth();
   const [activeCategory, setActiveCategory] = useState<Property['type'] | 'all'>('all');
   const [apiFilters, setApiFilters] = useState<PropertyFilters>({});
 
-  const handleSearch = (s: {
-    location: string;
-    priceIndex: number;
-    type: Property['type'] | 'all';
-  }) => {
+  useEffect(() => {
+    if (!heroImgRef.current) return;
+    gsap.fromTo(
+      heroImgRef.current,
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 1, ease: 'power3.out' }
+    );
+  }, []);
+
+  const handleSearch = (s: SearchState) => {
     const pr = PRICE_RANGES[s.priceIndex];
     setActiveCategory(s.type);
     setApiFilters({
@@ -359,261 +315,182 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-[#f8f9fa] flex flex-col">
+      <PublicNavbar activeLink="search" />
+
       <main className="flex-1">
         {/* ── Hero ── */}
-        <section
-          className="relative bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: "url('/hero-bg.jpg')",
-            paddingTop: 22,
-            paddingBottom: 1,
-          }}
-        >
-          {/* Top bar */}
-          <div className="max-w-[1218px] mx-auto px-5 flex items-center justify-between mb-[160px]">
-            {/* Logo */}
-            <Link href="/" className="flex items-center">
-              <Image
-                src="/logo/SmartRental_02.png"
-                alt="SmartRental"
-                width={182}
-                height={26}
-                className="w-auto h-auto object-contain"
-                priority
-              />
-            </Link>
-
-            {/* Auth buttons / User avatar */}
-            <div className="flex items-center gap-2 relative z-10">
-              {isAuthenticated ? (
-                <UserMenu user={user} />
-              ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className="px-4 py-2 text-sm font-bold text-[#222222] hover:bg-[#f7f7f7] rounded-[20px] transition-colors"
-                  >
-                    Đăng nhập
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="px-4 py-2 text-sm font-bold text-white bg-[#222222] hover:bg-[#3a3a3a] rounded-[20px] transition-colors"
-                  >
-                    Đăng ký
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Hero content */}
-          <div className="max-w-[1218px] mx-auto px-5 flex flex-col items-center text-center mb-[137px]">
-            <h1 className="text-[35px] font-bold text-black leading-tight mb-6">
-              Tìm nhà trọ phù hợp,
-              <br />
-              dễ dàng và nhanh chóng
-            </h1>
-            <p className="text-[20px] text-black mb-[55px]">
+        <section className="hero-gradient pt-16 pb-32 px-4 md:px-10 text-center relative overflow-hidden">
+          <div className="mx-auto mb-12" style={{ maxWidth: '768px' }}>
+          <img
+            ref={heroImgRef}
+            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d6a19a6c-fe0a-4c34-8af3-68d6a777b244"
+            className="w-[943px] h-[113px] mb-12 object-fill opacity-0"
+            alt=""
+          />
+          <WaveText
+            text="Tìm nhà trọ phù hợp,<br>dễ dàng và nhanh chóng"
+              className="text-4xl md:text-5xl font-bold text-[#191c1d] leading-tight mb-6"
+            />
+            <p className="text-lg text-[#4a4733]">
               Hàng nghìn phòng trọ, căn hộ, nhà nguyên căn đang chờ bạn khám phá.
             </p>
+          </div>
+
+          <div className="mx-auto" style={{ maxWidth: '896px' }}>
             <HeroSearchBar onSearch={handleSearch} />
           </div>
         </section>
 
-        {/* ── Listings ── */}
-        <section className="max-w-[1218px] mx-auto px-6 py-10">
-          <h2 className="text-[25px] font-bold text-[#222222] mb-6">
-            03 bất động sản phù hợp với bạn
-          </h2>
-
-          <ListingSection
-            key={`${activeCategory}-${JSON.stringify(apiFilters)}`}
+        {/* ── Featured Properties ── */}
+        <section className="py-24 px-4 md:px-10 mx-auto" style={{ maxWidth: '1280px' }}>
+          <PropertySection
+            key={`featured-${activeCategory}-${JSON.stringify(apiFilters)}`}
             activeType={activeCategory}
             filters={apiFilters}
+            title="Bất động sản phù hợp với bạn"
+            subtitle="Gợi ý những không gian sống tốt nhất dựa trên sở thích của bạn."
+            limit={3}
+            showLoadMore={false}
           />
 
-          {/* View all button */}
-          <div className="mt-10 text-center">
-            <button className="px-6 py-3 text-[25px] font-medium text-black bg-[#FFF546] rounded-[40px] hover:brightness-95 transition-all active:scale-95">
+          <div className="mt-12 text-center">
+            <Link
+              href="/properties"
+              className="px-8 py-3 bg-[#ffef3d] text-[#1f1c00] text-sm font-semibold rounded-full hover:shadow-lg transition-all inline-block"
+            >
               Xem thêm
-            </button>
+            </Link>
           </div>
         </section>
 
-        {/* ── Trusted brand banner ── */}
-        <section className="bg-black py-9 px-[208px] mb-[84px]">
-          <p className="max-w-[1024px] mx-auto text-center text-white font-[family-name:var(--font-berkshire)] text-[clamp(1.75rem,4vw,3rem)] tracking-[0.05em]">
-            Smart choice, smart life
-          </p>
-        </section>
-
         {/* ── Stats ── */}
-        <section className="bg-[#F6F8FB] py-16 px-6 mb-[55px]">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-[40px] font-bold text-black mb-3 leading-tight">
+        <section className="bg-[#edeeef] py-24 px-4 md:px-10">
+          <div className="max-w-5xl mx-auto text-center">
+            <h2 className="text-2xl font-semibold text-[#191c1d] mb-4">
               Được tin dùng bởi hàng nghìn người
             </h2>
-            <p className="text-[20px] text-[#6A6A6A] mb-12 leading-relaxed">
+            <p className="text-[#4a4733] mb-16 max-w-2xl mx-auto leading-relaxed">
               Nền tảng thuê nhà thông minh, minh bạch từ đăng tin đến ký hợp đồng.
               <br />
               Tất cả trong một nơi.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
               {[
                 { value: '10.000+', label: 'Tin đăng', sub: 'Trên toàn quốc' },
                 { value: '2.500+', label: 'Chủ nhà đã xác minh', sub: 'Hồ sơ rõ ràng' },
                 { value: '8.000+', label: 'Người thuê hài lòng', sub: 'Đánh giá 4.8/5' },
               ].map((s) => (
-                <div key={s.label}>
-                  <p className="text-[40px] font-bold text-[#2683EB] mb-1">{s.value}</p>
-                  <p className="text-[18px] font-semibold text-[#222222]">{s.label}</p>
-                  <p className="text-[15px] text-[#6A6A6A] mt-0.5">{s.sub}</p>
+                <div key={s.label} className="p-8 rounded-3xl bg-white shadow-sm">
+                  <p className="text-4xl font-bold text-[#676000] mb-2">{s.value}</p>
+                  <p className="text-sm font-semibold text-[#191c1d]">{s.label}</p>
+                  <p className="text-xs text-[#4a4733]">{s.sub}</p>
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* ── Popular cities ── */}
-        <section className="max-w-[1232px] mx-auto px-6 py-10 mb-[56px]">
-          <h2 className="text-[25px] font-bold text-[#222222] mb-7">
-            Khám phá theo thành phố
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-y-5">
-            {POPULAR_CITIES.map((c, i) => (
-              <div key={c.city} className="flex flex-col items-start">
-                <p className="text-base font-bold text-black leading-snug">{c.city}</p>
-                <p className="text-sm text-[#6C6C6C] mt-0.5">{c.subtitle}</p>
-              </div>
-            ))}
           </div>
         </section>
 
         {/* ── How it works ── */}
-        <section className="bg-[#F6F8FB] py-16 px-[208px] mb-[114px]">
-          <h2 className="text-[40px] font-bold text-black mb-10 text-center">
-            Cách Smart Rental hoạt động
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-10">
-            {[
-              {
-                step: '1',
-                title: 'Tìm & đặt phòng',
-                desc: 'Lọc theo khu vực, giá, loại phòng.\nGửi yêu cầu đặt phòng ngay trên app.',
-              },
-              {
-                step: '2',
-                title: 'Xác nhận & thanh toán',
-                desc: 'Chủ nhà xác nhận trong 24h.\nThanh toán tiền cọc và tháng đầu an toàn.',
-              },
-              {
-                step: '3',
-                title: 'Ký hợp đồng điện tử',
-                desc: 'Hợp đồng số hóa, có hiệu lực pháp lý.\nLưu trữ trên cloud, truy cập mọi lúc.',
-              },
-            ].map((item) => (
-              <div key={item.step} className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 rounded-full bg-[#2683EB] text-white font-bold text-[18px] flex items-center justify-center mb-4">
-                  {item.step}
+        <section className="py-24 px-4 md:px-10 bg-[#f3f4f5]">
+          <div className="mx-auto" style={{ maxWidth: '1280px' }}>
+            <h2 className="text-2xl font-semibold text-[#191c1d] text-center mb-16">
+              Cách Smart Rental hoạt động
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+              {[
+                {
+                  step: '1',
+                  title: 'Tìm & đặt phòng',
+                  desc: 'Lọc theo khu vực, giá, loại phòng.\nGửi yêu cầu đặt phòng ngay trên app.',
+                },
+                {
+                  step: '2',
+                  title: 'Xác nhận & thanh toán',
+                  desc: 'Chủ nhà xác nhận trong 24h.\nThanh toán tiền cọc và tháng đầu an toàn.',
+                },
+                {
+                  step: '3',
+                  title: 'Ký hợp đồng điện tử',
+                  desc: 'Hợp đồng số hóa, có hiệu lực pháp lý.\nLưu trữ trên cloud, truy cập mọi lúc.',
+                },
+              ].map((item) => (
+                <div key={item.step} className="flex flex-col items-center text-center">
+                  <div className="w-12 h-12 rounded-full bg-[#676000] text-white font-bold text-xl flex items-center justify-center mb-6 shadow-lg">
+                    {item.step}
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#191c1d] mb-3">{item.title}</h3>
+                  <p className="text-[#4a4733] leading-relaxed whitespace-pre-line">{item.desc}</p>
                 </div>
-                <h3 className="text-[20px] font-semibold text-[#222222] mb-2">{item.title}</h3>
-                <p className="text-[15px] text-[#6A6A6A] leading-relaxed whitespace-pre-line">{item.desc}</p>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Popular Cities ── */}
+        <section className="py-16 px-4 md:px-10 bg-[#f8f9fa]">
+          <div className="mx-auto" style={{ maxWidth: '1280px' }}>
+            <h2 className="text-sm font-semibold text-[#191c1d] mb-8 uppercase tracking-widest text-center md:text-left">
+              Khám phá theo thành phố
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-6">
+              {POPULAR_CITIES.map((c) => (
+                <div key={c.city} className="cursor-pointer group">
+                  <p className="text-sm font-semibold text-[#191c1d] group-hover:text-[#676000] transition-all">
+                    {c.city}
+                  </p>
+                  <p className="text-xs text-[#4a4733]">{c.subtitle}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
         {/* ── CTA ── */}
-        <section className="max-w-[1218px] mx-auto px-6 py-10 mb-[137px] flex flex-col items-center gap-5">
-          <h2 className="text-[50px] font-bold text-[#2683EB] leading-tight">
-            Bắt đầu ngay hôm nay!
-          </h2>
-          <p className="text-[20px] text-[#6A6A6A]">
-            Tạo tài khoản miễn phí để lưu tin yêu thích, đặt phòng và nhận thông báo mới nhất.
-          </p>
-          <div className="flex items-center gap-4 pt-4">
-            <Link
-              href="/register"
-              className="px-5 py-4 text-base font-bold text-white bg-black hover:bg-[#3a3a3a] rounded-[8px] transition-colors"
-            >
-              Tạo tài khoản miễn phí
-            </Link>
-            <Link
-              href="/login"
-              className="px-5 py-4 text-base font-bold text-[#222222] border border-[#DDDDDD] rounded-[8px] hover:bg-[#f7f7f7] transition-colors"
-            >
-              Đăng nhập
-            </Link>
-          </div>
-        </section>
-
-        {/* ── Landlord CTA ── */}
-        <section className="max-w-[1024px] mx-auto px-6 py-14 flex flex-col md:flex-row items-center justify-between gap-8 border-t border-[#DDDDDD] mb-[90px]">
-          <div>
-            <h2 className="text-[25px] font-bold text-[#222222] mb-2">
-              Bạn là chủ nhà?
+        <section className="py-24 px-4 md:px-10 bg-white">
+          <div className="mx-auto text-center" style={{ maxWidth: '896px' }}>
+            <h2 className="text-4xl md:text-5xl font-bold text-[#676000] mb-6 leading-tight">
+              Bắt đầu ngay hôm nay!
             </h2>
-            <p className="text-[15px] text-[#6A6A6A] max-w-md leading-relaxed">
-              Đăng tin miễn phí, quản lý đặt phòng và hợp đồng điện tử.
-              <br />
-              Tất cả chỉ trong một dashboard!
+            <p className="text-lg text-[#4a4733] mb-12">
+              Tạo tài khoản miễn phí để lưu tin yêu thích, đặt phòng và nhận thông báo mới nhất.
             </p>
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+              <Link
+                href="/register"
+                className="w-full md:w-auto px-10 py-4 bg-black text-white text-sm font-semibold rounded-full hover:bg-[#4a4733] shadow-lg transition-all active:scale-95"
+              >
+                Tạo tài khoản miễn phí
+              </Link>
+              <Link
+                href="/login"
+                className="w-full md:w-auto px-10 py-4 border border-[#7b7861] text-[#191c1d] text-sm font-semibold rounded-full hover:bg-[#f3f4f5] transition-all active:scale-95"
+              >
+                Đăng nhập
+              </Link>
+            </div>
+
+            <div className="mt-24 p-8 md:p-12 bg-[#f3f4f5] rounded-[40px] flex flex-col md:flex-row items-center justify-between text-left gap-8">
+              <div>
+                <h3 className="text-xl font-semibold text-[#191c1d] mb-2">Bạn là chủ nhà?</h3>
+                <p className="text-[#4a4733] leading-relaxed">
+                  Đăng tin miễn phí, quản lý đặt phòng và hợp đồng điện tử.
+                  <br />
+                  Tất cả chỉ trong một dashboard!
+                </p>
+              </div>
+              <Link
+                href={isAuthenticated ? '/hosting' : '/register'}
+                className="shrink-0 px-8 py-4 bg-black text-white text-sm font-semibold rounded-full hover:shadow-xl transition-all active:scale-95"
+              >
+                Đăng tin cho thuê
+              </Link>
+            </div>
           </div>
-          <Link
-            href={isAuthenticated ? '/hosting' : '/register'}
-            className="shrink-0 px-6 py-3 text-sm font-bold text-white bg-black hover:bg-[#3a3a3a] rounded-[8px] transition-colors whitespace-nowrap"
-          >
-            Đăng tin cho thuê
-          </Link>
         </section>
       </main>
 
-      {/* ── Footer ── */}
-      <footer className="bg-[#FFF546] border-t border-[#DDDDDD] py-10 px-[80px]">
-        <div className="max-w-[1218px] mx-auto">
-          <div className="flex flex-col sm:flex-row gap-8 mb-8">
-            {/* Brand */}
-            <div className="flex-1">
-              <Image
-                src="/logo/SmartRental_02.png"
-                alt="SmartRental"
-                width={182}
-                height={25}
-                style={{ width: 'auto', height: 'auto' }}
-                className="object-contain mb-3"
-              />
-              <p className="text-[14px] text-black leading-relaxed">
-                Nền tảng thuê nhà thông minh cho thị trường Việt Nam.
-              </p>
-            </div>
-
-            {/* Support */}
-            <div className="flex-1 flex flex-col gap-3">
-              <p className="text-[14px] font-bold text-black">Hỗ trợ</p>
-              {['Trung tâm trợ giúp', 'Liên hệ', 'Chính sách bảo mật', 'Điều khoản sử dụng'].map((t) => (
-                <p key={t} className="text-[14px] text-[#6A6A6A] cursor-pointer hover:text-black transition-colors">
-                  {t}
-                </p>
-              ))}
-            </div>
-
-            {/* For landlords */}
-            <div className="flex-1 flex flex-col gap-3">
-              <p className="text-[14px] font-bold text-black">Dành cho chủ nhà</p>
-              {['Đăng tin cho thuê', 'Quản lý đặt phòng', 'Hợp đồng điện tử', 'Gói dịch vụ'].map((t) => (
-                <p key={t} className="text-[14px] text-[#6A6A6A] cursor-pointer hover:text-black transition-colors">
-                  {t}
-                </p>
-              ))}
-            </div>
-          </div>
-
-          <div className="border-t border-[#6C6C6C] pt-6 flex items-center justify-between">
-            <p className="text-[12px] text-[#6C6C6C]">© 2026 Smart Rental. Nền tảng thuê nhà thông minh.</p>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
