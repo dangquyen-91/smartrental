@@ -1,9 +1,25 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import Link from 'next/link';
 import { PublicNavbar, PublicFooter } from '@/components/layout/public-navbar';
 import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
+
+// Split text into per-character spans
+function SplitChars({ text, className }: { text: string; className?: string }) {
+  return (
+    <span className={className}>
+      {text.split('').map((ch, i) => (
+        <span key={i} className="inline-block overflow-hidden">
+          <span className="inline-block gsap-char" style={{ display: 'inline-block' }}>
+            {ch === ' ' ? '\u00A0' : ch}
+          </span>
+        </span>
+      ))}
+    </span>
+  );
+}
 
 const TEAM = [
   {
@@ -57,15 +73,50 @@ const VALUES = [
 
 export default function AboutPage() {
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const teamRef = useRef<HTMLDivElement>(null);
+  const teamHeadingRef = useRef<HTMLHeadingElement>(null);
 
-  useEffect(() => {
+  useGSAP(() => {
+    if (!teamRef.current) return;
+    gsap.fromTo(
+      '.team-card',
+      { opacity: 0, y: 30 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        ease: 'power3.out',
+        stagger: 0.12,
+      }
+    );
+  }, { scope: teamRef });
+
+  useGSAP(() => {
+    if (!teamHeadingRef.current) return;
+    const chars = teamHeadingRef.current.querySelectorAll('.gsap-char');
+    if (!chars.length) return;
+    gsap.fromTo(
+      chars,
+      { y: 80, opacity: 0, rotateX: -90 },
+      {
+        y: 0,
+        opacity: 1,
+        rotateX: 0,
+        duration: 0.7,
+        ease: 'back.out(1.7)',
+        stagger: 0.03,
+      }
+    );
+  }, { scope: teamHeadingRef });
+
+  useGSAP(() => {
     if (!headingRef.current) return;
     gsap.fromTo(
       headingRef.current,
       { opacity: 0, y: 30 },
       { opacity: 1, y: 0, duration: 1, ease: 'power3.out' }
     );
-  }, []);
+  }, { scope: headingRef });
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex flex-col">
@@ -158,13 +209,16 @@ export default function AboutPage() {
               <span className="text-xs font-bold text-[#676000] uppercase tracking-widest mb-4 block">
                 Đội ngũ
               </span>
-              <h2 className="text-2xl md:text-3xl font-bold text-[#191c1d]">
-                Những người xây dựng SmartRental
+              <h2 ref={teamHeadingRef} className="text-2xl md:text-3xl font-bold text-[#191c1d]">
+                <SplitChars text="Những người xây dựng SmartRental" />
               </h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            <div ref={teamRef} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {TEAM.map((m) => (
-                <div key={m.name} className="bg-white rounded-2xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+                <div
+                  key={m.name}
+                  className="team-card bg-white rounded-2xl p-6 text-center shadow-sm hover:shadow-md transition-shadow opacity-0 translate-y-4"
+                >
                   <div className="w-20 h-20 rounded-full bg-[#f3f4f5] mx-auto mb-4 overflow-hidden">
                     <img src={m.avatar} alt={m.name} className="w-full h-full object-cover" />
                   </div>

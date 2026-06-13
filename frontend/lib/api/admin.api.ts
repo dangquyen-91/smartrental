@@ -38,7 +38,8 @@ export async function getAdminDashboardApi() {
 
 // ─── Analytics ────────────────────────────────────────────────────────────────
 
-export type Period = '7d' | '30d' | '90d' | '1y';
+export type Period = '7d' | '30d' | '90d' | '1y' | 'week' | 'month' | 'year';
+export type Granularity = 'day' | 'week' | 'month';
 
 export interface RevenueTimeline {
   date: string;
@@ -53,8 +54,68 @@ export interface RevenueAnalytics {
   totals: { booking: number; service: number; total: number };
 }
 
+export interface UserGrowthEntry {
+  _id: string;
+  total: number;
+  tenants: number;
+  landlords: number;
+  providers: number;
+}
+
+export interface UserAnalytics {
+  period: Period;
+  growth: UserGrowthEntry[];
+  distribution: {
+    byRole: Record<string, { total: number; active: number }>;
+    byAuthProvider: Record<string, number>;
+  };
+  topLandlords: Array<{
+    landlordId: string;
+    name: string;
+    email: string;
+    avatar?: string;
+    totalPayout: number;
+    bookingCount: number;
+  }>;
+}
+
+export interface BookingAnalytics {
+  period: Period;
+  granularity: Granularity;
+  timeline: Array<{
+    _id: string;
+    total: number;
+    confirmed: number;
+    active: number;
+    completed: number;
+    cancelled: number;
+    revenue: number;
+  }>;
+  summary: {
+    byStatus: Record<string, number>;
+    completionRate: number;
+    cancellationRate: number;
+    avgDurationMonths: number | null;
+  };
+  revenueByPropertyType: Array<{
+    _id: string;
+    count: number;
+    revenue: number;
+  }>;
+}
+
 export async function getAdminRevenueAnalyticsApi(period: Period = '30d') {
   const res = await api.get<ApiResponse<RevenueAnalytics>>(`/admin/analytics/revenue?period=${period}`);
+  return res.data;
+}
+
+export async function getAdminUserAnalyticsApi(period: Period = '30d') {
+  const res = await api.get<ApiResponse<UserAnalytics>>(`/admin/analytics/users?period=${period}`);
+  return res.data;
+}
+
+export async function getAdminBookingAnalyticsApi(period: Period = '30d', granularity: Granularity = 'week') {
+  const res = await api.get<ApiResponse<BookingAnalytics>>(`/admin/analytics/bookings?period=${period}&granularity=${granularity}`);
   return res.data;
 }
 

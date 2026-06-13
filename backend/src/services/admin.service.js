@@ -6,21 +6,29 @@ import AppError from '../utils/app-error.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const VALID_PERIODS = ['7d', '30d', '90d', '1y'];
+const VALID_PERIODS = ['7d', '30d', '90d', '1y', 'week', 'month', 'year'];
+
+// Booking trend granularity: 'day' | 'week' | 'month'
+const VALID_GRANULARITIES = ['day', 'week', 'month'];
 
 const parsePeriod = (period = '30d') => {
-  const days = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 }[period] ?? 30;
+  const days = { '7d': 7, '30d': 30, '90d': 90, '1y': 365, week: 28, month: 90, year: 365 }[period] ?? 30;
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
   startDate.setHours(0, 0, 0, 0);
   return { startDate, days };
 };
 
+const parseGranularity = (granularity = 'week') => {
+  if (!VALID_GRANULARITIES.includes(granularity)) return 'week';
+  return granularity;
+};
+
 // Returns a MongoDB aggregation expression that groups a date field by day/week/month
-const dateGroupExpr = (field, days) => {
+const dateGroupExpr = (field, granularity = 'day') => {
   const d = `$${field}`;
-  if (days <= 30) return { $dateToString: { format: '%Y-%m-%d', date: d } };
-  if (days <= 90) {
+  if (granularity === 'day') return { $dateToString: { format: '%Y-%m-%d', date: d } };
+  if (granularity === 'week') {
     return {
       $concat: [
         { $toString: { $isoWeekYear: d } },
@@ -294,17 +302,18 @@ export const getUserAnalytics = async (period = '30d') => {
 
 // ─── Booking Analytics ────────────────────────────────────────────────────────
 
-export const getBookingAnalytics = async (period = '30d') => {
-  if (!VALID_PERIODS.includes(period)) throw new AppError('Invalid period. Use: 7d, 30d, 90d, 1y', 400);
+export const getBookingAnalytics = async (period = '30d', granularity = 'week') => {
+  if (!VALID_PERIODS.includes(period)) throw new AppError('Invalid period. Use: 7d, 30d, 90d, 1y, week, month, year', 400);
   const { startDate, days } = parsePeriod(period);
+  const gran = parseGranularity(granularity);
 
-  const [timeline, statusDist, cancellationByActor, avgDuration, revenueByPropertyType] =
+  const       [timeline, statusDist, cancellationByActor, avgDuration, revenueByPropertyType] =
     await Promise.all([
       Booking.aggregate([
         { $match: { createdAt: { $gte: startDate } } },
         {
           $group: {
-            _id: dateGroupExpr('createdAt', days),
+            _id: dateGroupExpr('createdAt', gran),
             total: { $sum: 1 },
             confirmed: { $sum: { $cond: [{ $eq: ['$status', 'confirmed'] }, 1, 0] } },
             active: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } },
@@ -347,6 +356,7 @@ export const getBookingAnalytics = async (period = '30d') => {
 
   return {
     period,
+    granularity: gran,
     timeline,
     summary: {
       byStatus: Object.fromEntries(statusDist.map((r) => [r._id, r.count])),

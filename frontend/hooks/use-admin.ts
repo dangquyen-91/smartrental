@@ -4,6 +4,8 @@ import { getApiErrorMessage } from '@/lib/api-error';
 import {
   getAdminDashboardApi,
   getAdminRevenueAnalyticsApi,
+  getAdminUserAnalyticsApi,
+  getAdminBookingAnalyticsApi,
   getAdminUsersApi,
   updateUserStatusApi,
   updateUserRoleApi,
@@ -26,6 +28,8 @@ import {
 export const adminKeys = {
   dashboard: () => ['admin', 'dashboard'] as const,
   revenueAnalytics: (period: Period) => ['admin', 'analytics', 'revenue', period] as const,
+  userAnalytics: (period: Period) => ['admin', 'analytics', 'user', period] as const,
+  bookingAnalytics: (period: Period) => ['admin', 'analytics', 'booking', period] as const,
   users: (params: AdminUsersParams) => ['admin', 'users', params] as const,
   properties: (params: AdminPropertiesParams) => ['admin', 'properties', params] as const,
   serviceOrders: (params: AdminServiceOrdersParams) => ['admin', 'serviceOrders', params] as const,
@@ -48,6 +52,22 @@ export function useAdminRevenueAnalytics(period: Period = '30d') {
   return useQuery({
     queryKey: adminKeys.revenueAnalytics(period),
     queryFn: () => getAdminRevenueAnalyticsApi(period),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useAdminUserAnalytics(period: Period = '30d') {
+  return useQuery({
+    queryKey: adminKeys.userAnalytics(period),
+    queryFn: () => getAdminUserAnalyticsApi(period),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useAdminBookingAnalytics(period: Period = '30d') {
+  return useQuery({
+    queryKey: adminKeys.bookingAnalytics(period),
+    queryFn: () => getAdminBookingAnalyticsApi(period),
     staleTime: 5 * 60_000,
   });
 }

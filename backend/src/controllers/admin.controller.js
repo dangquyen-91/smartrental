@@ -34,7 +34,7 @@ const getUserAnalytics = async (req, res, next) => {
 
 const getBookingAnalytics = async (req, res, next) => {
   try {
-    const data = await adminService.getBookingAnalytics(req.query.period);
+    const data = await adminService.getBookingAnalytics(req.query.period, req.query.granularity);
     return R.success(res, data);
   } catch (err) {
     next(err);
