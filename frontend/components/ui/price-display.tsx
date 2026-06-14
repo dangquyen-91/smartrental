@@ -33,7 +33,7 @@ export function PriceDisplay({
     maximumFractionDigits: 0,
   }).format(amount);
 
-  const [whole, suffix] = formatted.split(/\s+(.*)/s);
+  const [whole, suffix] = formatted.split(/\s+([\s\S]*)/);
 
   return (
     <span className={cn("font-bold", sizeMap[size], highlight ? "text-[#1a2e4a]" : "text-ink-black", className)}>

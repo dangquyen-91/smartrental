@@ -378,7 +378,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
   // Build set of property IDs that the tenant has a confirmed/active/completed booking for
   const rentedPropertyIds = new Set(
-    (myBookingsData?.data?.bookings ?? [])
+    (myBookingsData?.data ?? [])
       .filter((b: any) => ['confirmed', 'active', 'completed'].includes(b.status))
       .map((b: any) => b.property?.id ?? b.property)
   );

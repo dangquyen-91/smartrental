@@ -378,7 +378,7 @@ export default function HomePage() {
           <img
             ref={heroImgRef}
             src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d6a19a6c-fe0a-4c34-8af3-68d6a777b244"
-            className="w-[943px] h-[113px] mb-12 object-fill opacity-0"
+            className="w-[1050px] h-[126px] mb-12 object-fill opacity-0"
             alt=""
           />
           <WaveText
@@ -424,6 +424,16 @@ export default function HomePage() {
             Xem thêm
           </Link>
           </div>
+        </section>
+
+        {/* ── Banner ── */}
+        <section className="w-full" style={{ height: '360px' }}>
+          <img
+            src="/background/ChatGPT Image Jun 14, 2026, 07_19_56 PM.png"
+            alt="Smart choice, smart life"
+            className="w-full h-full object-cover object-center"
+            style={{ maxHeight: '360px' }}
+          />
         </section>
 
         {/* ── Stats ── */}

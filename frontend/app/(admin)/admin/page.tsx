@@ -326,7 +326,7 @@ function BookingTrend({ timeline }: {
 }) {
   const [groupFilter, setGroupFilter] = useState<TrendGranularity>('week');
 
-  const chartData = (() => {
+  const chartData: Array<{ label: string; completed: number; cancelled: number }> = (() => {
     if (timeline.length === 0) return [];
 
     if (groupFilter === 'day') {
@@ -341,14 +341,14 @@ function BookingTrend({ timeline }: {
     }
 
     if (groupFilter === 'week') {
-      const byWeek: Array<{ week: string; completed: number; cancelled: number }> = [];
+      const byWeek: Array<{ label: string; completed: number; cancelled: number }> = [];
       for (let i = 0; i < timeline.length; i += 7) {
         const chunk = timeline.slice(i, i + 7);
         if (!chunk.length) continue;
         const startDate = new Date(chunk[0]._id);
         const endDate = new Date(chunk[chunk.length - 1]._id);
         byWeek.push({
-          week: `${startDate.getDate()}/${startDate.getMonth() + 1}–${endDate.getDate()}/${endDate.getMonth() + 1}`,
+          label: `${startDate.getDate()}/${startDate.getMonth() + 1}–${endDate.getDate()}/${endDate.getMonth() + 1}`,
           completed: chunk.reduce((s, d) => s + (d.completed ?? 0), 0),
           cancelled: chunk.reduce((s, d) => s + (d.cancelled ?? 0), 0),
         });

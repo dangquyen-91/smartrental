@@ -368,7 +368,7 @@ function PropertyGrid({
             {!isFetching && <ChevronRight className="size-4" />}
           </button>
           <p className="mt-3 text-xs text-[#4a4733]">
-            Hiển thị {properties.length} / {pagination.total} bất động sản
+            Hiển thị {properties.length} / {pagination?.total ?? 0} bất động sản
           </p>
         </div>
       )}

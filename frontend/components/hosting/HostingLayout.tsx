@@ -6,7 +6,6 @@ import { useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { PublicFooter } from '@/components/layout/public-navbar';
 import { cn } from '@/lib/utils';
-import { gsap } from 'gsap';
 
 const NAV_ITEMS = [
   { label: 'Tổng quan', href: '/hosting', active: '/hosting' },
@@ -24,26 +23,19 @@ function isActive(pathname: string, item: typeof NAV_ITEMS[0]) {
 export default function HostingLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuth();
-  const navListRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!sidebarRef.current) return;
-    const links = sidebarRef.current.querySelectorAll('a');
-    const label = sidebarRef.current.querySelector('span');
-    const tl = gsap.timeline();
-    tl.fromTo(
-      label,
-      { opacity: 0, x: -12 },
-      { opacity: 1, x: 0, duration: 0.3, ease: 'power2.out' }
-    )
-      .fromTo(
-        links,
-        { opacity: 0, x: -16 },
-        { opacity: 1, x: 0, duration: 0.35, stagger: 0.07, ease: 'power2.out' },
-        '-=0.15'
-      );
-  }, [pathname]);
+    // Subtle entrance for the whole sidebar (runs once on mount, no flash on route change)
+    sidebarRef.current.animate(
+      [
+        { opacity: 0, transform: 'translateX(-8px)' },
+        { opacity: 1, transform: 'translateX(0)' },
+      ],
+      { duration: 250, easing: 'ease-out', fill: 'forwards' },
+    );
+  }, []);
 
   return (
     <div className="flex flex-col bg-white">
@@ -86,24 +78,23 @@ export default function HostingLayout({ children }: { children: React.ReactNode 
 
         {/* Main content with sidebar */}
         <div className="flex items-start self-stretch">
-          {/* Sidebar */}
-          <div ref={sidebarRef} className="flex flex-col shrink-0 items-center bg-white pb-[1px]">
+          {/* Sidebar — fixed width, always visible */}
+          <div ref={sidebarRef} className="flex flex-col shrink-0 items-start bg-white pb-[1px]">
             <Link
               href="/"
               className="flex items-center py-[21px] pl-4 pr-[117px] gap-2 border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD] hover:opacity-80 transition-opacity"
             />
             <div className="flex flex-col items-start py-4 pl-4 pr-[81px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
-              <span style={{ opacity: 0 }} className="text-[#929292] text-[13px] font-bold">QUẢN LÝ CHO THUÊ</span>
+              <span className="text-[#929292] text-[13px] font-bold">QUẢN LÝ CHO THUÊ</span>
             </div>
             <div className="flex flex-col items-center pt-3">
-              <div ref={navListRef} className="flex flex-col items-start px-2 gap-0.5">
+              <div className="flex flex-col items-start px-2 gap-0.5">
                 {NAV_ITEMS.map((item) => {
                   const active = isActive(pathname, item);
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
-                      style={{ opacity: 0 }}
                       className={cn(
                         'group relative flex items-center py-2.5 rounded-lg w-full transition-all duration-200',
                         active

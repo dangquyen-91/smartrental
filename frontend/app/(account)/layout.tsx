@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, Heart, CalendarCheck, FileText, Users, Wrench, Compass, User } from 'lucide-react';
+import { LogOut, Heart, CalendarCheck, FileText, Users, Wrench } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { PublicFooter } from '@/components/layout/public-navbar';
 import { cn } from '@/lib/utils';
@@ -105,22 +105,12 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       </div>
 
       {/* ── Body: sidebar + content ── */}
-      <div className="flex flex-1 self-stretch relative">
-        {/* Hover trigger pill — always visible to hint at the hidden sidebar */}
-        <div className="absolute left-0 top-0 z-20 w-0 group-hover:w-6 transition-[width] duration-200 ease-out overflow-visible">
-          <div className="flex items-center gap-0 py-[21px] pl-[15px] pr-0 gap-2">
-            <div className="flex flex-col items-center gap-0.5 cursor-pointer" style={{ paddingLeft: '1px' }}>
-              <div className="w-3 h-[2px] bg-[#6A6A6A] rounded-full" />
-              <div className="w-3 h-[2px] bg-[#6A6A6A] rounded-full" />
-              <div className="w-3 h-[2px] bg-[#6A6A6A] rounded-full" />
-            </div>
+      <div className="flex flex-1 self-stretch">
+        {/* Sidebar — fixed width, always visible */}
+        <aside className="w-[223px] shrink-0 flex flex-col items-start bg-white border-r border-[#DDDDDD]">
+          <div className="flex items-center py-[21px] pl-[15px] pr-[118px] gap-2 border-b border-solid border-b-[#DDDDDD] w-full">
+            <span className="text-[#929292] text-[11px] font-bold uppercase tracking-widest">Tài khoản</span>
           </div>
-        </div>
-
-        {/* Sidebar — collapsible on hover */}
-        <aside className="group relative w-0 hover:w-[223px] transition-[width] duration-200 ease-out overflow-hidden shrink-0 flex flex-col items-start bg-white border-r border-[#DDDDDD]">
-          {/* Expand trigger area */}
-          <div className="flex items-center py-[21px] pl-[15px] pr-[118px] gap-2 border-b border-solid border-b-[#DDDDDD]" />
 
           {/* Section label */}
           <div className="flex flex-col items-start py-4 pl-[15px] pr-[70px] border-b border-solid border-b-[#DDDDDD]">

@@ -96,6 +96,7 @@ export interface BookingAnalytics {
     completionRate: number;
     cancellationRate: number;
     avgDurationMonths: number | null;
+    cancellationByActor?: Record<string, number>;
   };
   revenueByPropertyType: Array<{
     _id: string;
