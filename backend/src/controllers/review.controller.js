@@ -85,6 +85,18 @@ const getReviewsAboutMe = async (req, res, next) => {
   }
 };
 
+// ─── GET /api/reviews/landlord/my-properties ─────────────────────────────────
+// Landlord — all reviews across all properties they own
+
+const getMyPropertiesReviews = async (req, res, next) => {
+  try {
+    const result = await reviewService.getMyPropertiesReviews(req.user.id, req.query);
+    return res.status(200).json({ success: true, message: 'Success', ...result });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ─── GET /api/reviews (admin) ─────────────────────────────────────────────────
 
 const getAllReviews = async (req, res, next) => {
@@ -113,6 +125,7 @@ export {
   getUserReviews,
   getBookingReviews,
   getMyReviews,
+  getMyPropertiesReviews,
   getReviewsAboutMe,
   getAllReviews,
   deleteReview,

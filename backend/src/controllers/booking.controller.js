@@ -114,11 +114,21 @@ const markBookingPayout = async (req, res, next) => {
   }
 };
 
+const getLandlordRevenueStats = async (req, res, next) => {
+  try {
+    const stats = await bookingService.getLandlordRevenueStats(req.user.id, req.query.period);
+    return R.success(res, stats);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export {
   createBooking,
   getAllBookings,
   getMyBookings,
   getLandlordBookings,
+  getLandlordRevenueStats,
   getBookingById,
   confirmBooking,
   rejectBooking,
