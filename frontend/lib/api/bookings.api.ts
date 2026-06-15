@@ -69,3 +69,42 @@ export async function completeBookingApi(id: string) {
   const res = await api.put<ApiResponse<Booking>>(`/bookings/${id}/complete`);
   return res.data;
 }
+
+export type RevenuePeriod = "3m" | "6m" | "1y";
+
+export interface RevenueByMonth {
+  month: string;
+  grossRevenue: number;
+  landlordPayout: number;
+  platformFee: number;
+  bookingCount: number;
+}
+
+export interface RevenueByProperty {
+  propertyId: string;
+  title: string;
+  thumbnail: string | null;
+  grossRevenue: number;
+  landlordPayout: number;
+  platformFee: number;
+  bookingCount: number;
+}
+
+export interface LandlordRevenueStats {
+  period: RevenuePeriod;
+  monthly: RevenueByMonth[];
+  byProperty: RevenueByProperty[];
+  totals: {
+    grossRevenue: number;
+    landlordPayout: number;
+    platformFee: number;
+    bookingCount: number;
+  };
+}
+
+export async function getLandlordRevenueStatsApi(period: RevenuePeriod = "3m") {
+  const res = await api.get<ApiResponse<LandlordRevenueStats>>(
+    `/bookings/landlord/revenue-stats?period=${period}`,
+  );
+  return res.data;
+}

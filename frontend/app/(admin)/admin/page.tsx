@@ -769,60 +769,61 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* ══ ROW 3: PENDING + QUICK ACTIONS ════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {hasPending && (
-          <div className="bg-white rounded-2xl border border-[#fed7aa] p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-8 h-8 rounded-lg bg-[#fff7ed] flex items-center justify-center">
-                <AlertCircle className="w-4 h-4 text-[#f59e0b]" />
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-[#222]">Cần xử lý ngay</h2>
-                <p className="text-xs text-[#9ca3af]">{TIME_FILTERS.find(f => f.value === timeFilter)?.label}</p>
-              </div>
+      {/* ══ ROW 3A: PENDING ACTIONS (Cần xử lý ngay) ═══════════════════════ */}
+      {hasPending && (
+        <div className="bg-white rounded-2xl border border-[#fed7aa] p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-8 h-8 rounded-lg bg-[#fff7ed] flex items-center justify-center">
+              <AlertCircle className="w-4 h-4 text-[#f59e0b]" />
             </div>
-            <div className="flex flex-wrap gap-3">
-              {(pending?.payouts ?? 0) > 0 && (
-                <Link
-                  href="/admin/transactions"
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#fff7ed] hover:bg-[#fed7aa]/30 transition-colors"
-                >
-                  <div className="w-8 h-8 rounded-full bg-[#f59e0b] text-white text-xs font-bold flex items-center justify-center shrink-0">
-                    {pending?.payouts}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[#222]">Chờ payout</p>
-                    <p className="text-xs text-[#9ca3af]">Chủ trọ &amp; provider</p>
-                  </div>
-                </Link>
-              )}
-              {(pending?.unassignedServiceOrders ?? 0) > 0 && (
-                <Link
-                  href="/admin/services"
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#fff0f3] hover:bg-[#ffd6de]/30 transition-colors"
-                >
-                  <div className="w-8 h-8 rounded-full bg-[#ff385c] text-white text-xs font-bold flex items-center justify-center shrink-0">
-                    {pending?.unassignedServiceOrders}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[#222]">Chưa assign</p>
-                    <p className="text-xs text-[#9ca3af]">Đơn dịch vụ</p>
-                  </div>
-                </Link>
-              )}
+            <div>
+              <h2 className="text-base font-bold text-[#222]">Cần xử lý ngay</h2>
+              <p className="text-xs text-[#9ca3af]">{TIME_FILTERS.find(f => f.value === timeFilter)?.label}</p>
             </div>
           </div>
-        )}
+          <div className="flex flex-wrap gap-3">
+            {(pending?.payouts ?? 0) > 0 && (
+              <Link
+                href="/admin/transactions"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#fff7ed] hover:bg-[#fed7aa]/30 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-[#f59e0b] text-white text-xs font-bold flex items-center justify-center shrink-0">
+                  {pending?.payouts}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[#222]">Chờ payout</p>
+                  <p className="text-xs text-[#9ca3af]">Chủ trọ &amp; provider</p>
+                </div>
+              </Link>
+            )}
+            {(pending?.unassignedServiceOrders ?? 0) > 0 && (
+              <Link
+                href="/admin/services"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#fff0f3] hover:bg-[#ffd6de]/30 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-[#ff385c] text-white text-xs font-bold flex items-center justify-center shrink-0">
+                  {pending?.unassignedServiceOrders}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[#222]">Chưa assign</p>
+                  <p className="text-xs text-[#9ca3af]">Đơn dịch vụ</p>
+                </div>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
-        <div className={cn('bg-white rounded-2xl border border-[#e2e5ea] p-6 shadow-sm', !hasPending && 'lg:col-span-3')}>
-          <h2 className="text-base font-bold text-[#222] mb-4">Thao tác nhanh</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <QuickActionCard label="Quản lý người dùng" desc="Kích hoạt / Vô hiệu hoá" href="/admin/users" icon={UserPlus} accent="#ff385c" />
-            <QuickActionCard label="Quản lý tin đăng" desc="Nổi bật & trạng thái" href="/admin/properties" icon={Building} accent="#ff385c" />
-            <QuickActionCard label="Giao dịch & Payout" desc="Xử lý payout" href="/admin/transactions" icon={Wallet} accent="#ff385c" />
-            <QuickActionCard label="Đánh giá & Phản hồi" desc="Duyệt & quản lý" href="/admin/reviews" icon={ClipboardList} accent="#ff385c" />
-          </div>
+      {/* ══ ROW 3B: QUICK ACTIONS (Thao tác nhanh) — full-width row ════════ */}
+      <div className="bg-white rounded-2xl border border-[#e2e5ea] p-6 shadow-sm">
+        <h2 className="text-base font-bold text-[#222] mb-4">Thao tác nhanh</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <QuickActionCard label="Quản lý người dùng" desc="Kích hoạt / Vô hiệu hoá" href="/admin/users" icon={UserPlus} accent="#ff385c" />
+          <QuickActionCard label="Quản lý tin đăng" desc="Nổi bật & trạng thái" href="/admin/properties" icon={Building} accent="#ff385c" />
+          <QuickActionCard label="Giao dịch & Payout" desc="Xử lý payout" href="/admin/transactions" icon={Wallet} accent="#ff385c" />
+          <QuickActionCard label="Đánh giá & Phản hồi" desc="Duyệt & quản lý" href="/admin/reviews" icon={ClipboardList} accent="#ff385c" />
+          <QuickActionCard label="Quản lý dịch vụ" desc="Duyệt & phân loại" href="/admin/services" icon={Award} accent="#ff385c" />
+          <QuickActionCard label="Báo cáo & Phân tích" desc="Xu hướng doanh thu" href="/admin#reports" icon={BarChart3} accent="#ff385c" />
         </div>
       </div>
 

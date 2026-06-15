@@ -4,6 +4,7 @@ import {
   getMyBookingsApi,
   getAllMyBookingsApi,
   getLandlordBookingsApi,
+  getLandlordRevenueStatsApi,
   getBookingApi,
   createBookingApi,
   confirmBookingApi,
@@ -12,6 +13,7 @@ import {
   activateBookingApi,
   completeBookingApi,
   type CreateBookingPayload,
+  type RevenuePeriod,
 } from "@/lib/api/bookings.api";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { type Booking } from "@/types";
@@ -20,6 +22,7 @@ export const bookingKeys = {
   mine: (status?: Booking["status"]) => ["bookings", "mine", status] as const,
   landlord: (status?: Booking["status"]) => ["bookings", "landlord", status] as const,
   detail: (id: string) => ["bookings", "detail", id] as const,
+  revenueStats: (period: RevenuePeriod) => ["bookings", "landlord", "revenue-stats", period] as const,
 };
 
 export function useMyBookings(status?: Booking["status"]) {
@@ -60,6 +63,15 @@ export function useBooking(id: string) {
     queryKey: bookingKeys.detail(id),
     queryFn: () => getBookingApi(id),
     enabled: !!id,
+  });
+}
+
+export function useLandlordRevenueStats(period: RevenuePeriod = "3m") {
+  return useQuery({
+    queryKey: bookingKeys.revenueStats(period),
+    queryFn: () => getLandlordRevenueStatsApi(period),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 }
 

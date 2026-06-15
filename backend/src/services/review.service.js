@@ -242,7 +242,7 @@ const getMyPropertiesReviews = async (landlordId, { page = 1, limit = 10 } = {})
   const [reviews, total, ratingAgg] = await Promise.all([
     Review.find(filter)
       .populate('reviewer', 'name avatar')
-      .populate('target', 'title address images')
+      .populate('target', 'title type status price area bedrooms bathrooms address images')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum),

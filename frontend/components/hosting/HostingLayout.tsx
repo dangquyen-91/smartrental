@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { LogOut, User, Star } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { PublicFooter } from '@/components/layout/public-navbar';
 import { cn } from '@/lib/utils';
@@ -10,6 +11,7 @@ import { cn } from '@/lib/utils';
 const NAV_ITEMS = [
   { label: 'Tổng quan', href: '/hosting', active: '/hosting' },
   { label: 'Tin đăng', href: '/hosting/listings', active: '/hosting/listings' },
+  { label: 'Đánh giá', href: '/hosting/reviews', active: '/hosting/reviews' },
   { label: 'Yêu cầu thuê', href: '/hosting/reservations', active: '/hosting/reservations' },
   { label: 'Hợp đồng', href: '/hosting/contracts', active: '/hosting/contracts' },
   { label: 'Dịch vụ', href: '/hosting/services', active: '/hosting/services' },
@@ -22,8 +24,11 @@ function isActive(pathname: string, item: typeof NAV_ITEMS[0]) {
 
 export default function HostingLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, logout } = useAuth();
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!sidebarRef.current) return;
@@ -36,6 +41,23 @@ export default function HostingLayout({ children }: { children: React.ReactNode 
       { duration: 250, easing: 'ease-out', fill: 'forwards' },
     );
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleLogout = () => {
+    setMenuOpen(false);
+    logout();
+    router.push('/');
+  };
 
   return (
     <div className="flex flex-col bg-white">
@@ -58,19 +80,58 @@ export default function HostingLayout({ children }: { children: React.ReactNode 
               <div className="flex flex-col shrink-0 items-center py-2 mr-1 rounded-[20px]">
                 <span className="text-[#222222] text-sm font-bold">Quản lý cho thuê</span>
               </div>
-              <div className="flex shrink-0 items-center py-[5px] px-[13px] mx-2 gap-[9px] rounded-[20px] border border-solid border-black">
-                <img
-                  src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/b5b3cd4d-f43c-48c2-83b2-c9748b667ce4"
-                  className="w-4 h-3 rounded-[20px] object-fill"
-                />
-                <Link
-                  href="/profile"
-                  className="flex flex-col shrink-0 items-start bg-[#222222] text-left py-1.5 px-[11px] rounded-[26843500px] border-0"
-                >
-                  <span className="text-white text-sm font-bold">
-                    {user?.name?.charAt(0)?.toUpperCase() ?? 'N'}
-                  </span>
-                </Link>
+
+              {/* Avatar dropdown */}
+              <div className="relative" ref={menuRef}>
+                <div className="flex shrink-0 items-center py-[5px] px-[13px] mx-2 gap-[9px] rounded-[20px] border border-solid border-black">
+                  <img
+                    src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/b5b3cd4d-f43c-48c2-83b2-c9748b667ce4"
+                    className="w-4 h-3 rounded-[20px] object-fill"
+                    alt=""
+                  />
+                  <button
+                    onClick={() => setMenuOpen((v) => !v)}
+                    aria-label="Mở menu tài khoản"
+                    aria-expanded={menuOpen}
+                    className="flex flex-col shrink-0 items-center bg-[#222222] text-left py-1.5 px-[11px] rounded-[26843500px] border-0 hover:opacity-90 transition-opacity"
+                  >
+                    <span className="text-white text-sm font-bold">
+                      {user?.name?.charAt(0)?.toUpperCase() ?? 'N'}
+                    </span>
+                  </button>
+                </div>
+
+                {menuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-60 bg-white border border-[#DDDDDD] rounded-xl shadow-lg py-2 z-50">
+                    {/* User info header */}
+                    <div className="px-4 py-3 border-b border-[#DDDDDD]">
+                      <p className="text-sm font-semibold text-[#222222] truncate">{user?.name}</p>
+                      <p className="text-xs text-[#6A6A6A] truncate">{user?.email}</p>
+                    </div>
+
+                    {/* Menu items */}
+                    <div className="py-1.5">
+                      <Link
+                        href="/profile"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-[#222222] hover:bg-[#f7f7f7] transition-colors"
+                      >
+                        <User className="w-4 h-4 text-[#6A6A6A]" />
+                        Hồ sơ cá nhân
+                      </Link>
+                    </div>
+
+                    <div className="border-t border-[#DDDDDD] py-1.5">
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-[#c13515] hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Đăng xuất
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -123,8 +184,19 @@ export default function HostingLayout({ children }: { children: React.ReactNode 
                           active
                             ? 'text-[#2683EB] scale-110'
                             : 'text-[#929292] group-hover:text-[#2683EB] group-hover:scale-105',
+                          item.href === '/hosting/reviews' ? 'hidden' : '',
                         )}
                       />
+                      {item.href === '/hosting/reviews' && (
+                        <Star
+                          className={cn(
+                            'w-4 h-4 mx-3 transition-all duration-200',
+                            active
+                              ? 'fill-[#2683EB] text-[#2683EB] scale-110'
+                              : 'text-[#929292] group-hover:text-[#2683EB] group-hover:scale-105',
+                          )}
+                        />
+                      )}
                       <span className={cn(
                         'text-[15px] transition-all duration-200',
                         active ? 'font-bold text-[#2683EB]' : 'text-[#6A6A6A] group-hover:text-[#222222]'

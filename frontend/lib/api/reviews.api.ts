@@ -65,3 +65,53 @@ export async function deleteReviewAdminApi(id: string) {
   const res = await api.delete<ApiResponse<{ review: Review }>>(`/reviews/${id}`);
   return res.data;
 }
+
+// ─── Landlord ──────────────────────────────────────────────────────────────────
+
+export interface LandlordReviewUser {
+  _id: string;
+  name: string;
+  avatar?: string;
+}
+
+export interface LandlordReviewTarget {
+  _id: string;
+  title: string;
+  type?: 'room' | 'apartment' | 'house' | 'studio';
+  status?: 'available' | 'rented' | 'maintenance';
+  price?: number;
+  area?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  address?: { city?: string; district?: string; ward?: string; street?: string };
+  images?: { url: string; isPrimary?: boolean }[];
+}
+
+export interface LandlordReview {
+  _id: string;
+  id?: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+  updatedAt?: string;
+  reviewer: LandlordReviewUser;
+  reviewerRole?: 'tenant' | 'landlord';
+  target: LandlordReviewTarget;
+  targetType: 'property' | 'landlord' | 'tenant';
+  booking?: string;
+}
+
+export interface LandlordPropertiesReviewsData {
+  reviews: LandlordReview[];
+  averageRating: number | null;
+  totalReviews: number;
+}
+
+export async function getMyPropertiesReviewsApi(page = 1, limit = 10) {
+  const res = await api.get<
+    { success: boolean; message: string } & LandlordPropertiesReviewsData & {
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }
+  >(`/reviews/landlord/my-properties?page=${page}&limit=${limit}`);
+  return res.data;
+}

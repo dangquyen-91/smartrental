@@ -5,6 +5,7 @@ import {
   getPropertyReviewsApi,
   getBookingReviewsApi,
   getMyReviewsApi,
+  getMyPropertiesReviewsApi,
   getAllReviewsAdminApi,
   deleteReviewAdminApi,
   type CreateReviewPayload,
@@ -17,6 +18,7 @@ export const reviewKeys = {
   booking:  (id: string)                  => ["reviews", "booking", id]         as const,
   mine:     (page?: number)               => ["reviews", "mine", page]          as const,
   admin:    (params: AdminReviewsParams)  => ["reviews", "admin", params]       as const,
+  myProperties: (page?: number, limit?: number) => ["reviews", "landlord", "my-properties", page, limit] as const,
 };
 
 export function usePropertyReviews(propertyId: string, page = 1) {
@@ -40,6 +42,16 @@ export function useMyReviews(page = 1) {
   return useQuery({
     queryKey: reviewKeys.mine(page),
     queryFn: () => getMyReviewsApi(page),
+  });
+}
+
+// ─── Landlord hooks ────────────────────────────────────────────────────────────
+
+export function useMyPropertiesReviews(page = 1, limit = 10) {
+  return useQuery({
+    queryKey: reviewKeys.myProperties(page, limit),
+    queryFn: () => getMyPropertiesReviewsApi(page, limit),
+    staleTime: 60_000,
   });
 }
 
