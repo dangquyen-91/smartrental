@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, Heart, CalendarCheck, FileText, Users, Wrench } from 'lucide-react';
+import { Heart, CalendarCheck, FileText, Users, Wrench, User, Settings, LayoutDashboard, ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import Image from 'next/image';
 import { PublicFooter } from '@/components/layout/public-navbar';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
+  { label: 'Hồ sơ cá nhân',      href: '/profile',   Icon: User },
   { label: 'Yêu thích',          href: '/wishlist',  Icon: Heart },
   { label: 'Đơn thuê',           href: '/trips',     Icon: CalendarCheck },
   { label: 'Hợp đồng',           href: '/contracts', Icon: FileText },
@@ -17,7 +19,7 @@ const NAV_ITEMS = [
 ];
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, user, hasHydrated, logout } = useAuth();
+  const { isAuthenticated, user, hasHydrated, logout, isAdmin, isLandlord } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -68,36 +70,93 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
           <div className="flex shrink-0 items-center">
             {/* Avatar dropdown */}
             <div className="relative" ref={menuRef}>
-              <div className="flex shrink-0 items-center py-[5px] px-[13px] mx-2 gap-[9px] rounded-[20px] border border-solid border-black">
-                <img
-                  src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/66c8ca5a-7553-49d9-be3c-ab10680e0f66"
-                  className="w-4 h-3 rounded-[20px] object-fill"
-                  alt=""
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                className="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-black/10 transition-colors"
+              >
+                {user?.avatar ? (
+                  <Image
+                    src={user.avatar}
+                    alt={user.name ?? 'Avatar'}
+                    width={32}
+                    height={32}
+                    className="w-8 h-8 rounded-full object-cover border border-[#ccc7ac]"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[#ffef3d] text-[#676000] flex items-center justify-center text-sm font-bold">
+                    {user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
+                  </div>
+                )}
+                <ChevronDown
+                  className={cn(
+                    'w-4 h-4 text-[#222222] transition-transform',
+                    menuOpen && 'rotate-180',
+                  )}
                 />
-                <button
-                  onClick={() => setMenuOpen((v) => !v)}
-                  className="flex flex-col shrink-0 items-center bg-[#222222] text-left py-1.5 px-[11px] rounded-[26843500px] border-0"
-                >
-                  <span className="text-white text-sm font-bold">
-                    {user?.name?.charAt(0)?.toUpperCase() ?? 'N'}
-                  </span>
-                </button>
-              </div>
+              </button>
 
               {menuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-[#DDDDDD] rounded-xl shadow-lg py-2 z-50">
-                  <div className="px-4 py-2 border-b border-[#DDDDDD]">
-                    <p className="text-sm font-semibold text-[#222222] truncate">{user?.name}</p>
-                    <p className="text-xs text-[#6A6A6A] truncate">{user?.email}</p>
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-[220px] bg-white rounded-xl shadow-lg border border-[#ccc7ac] z-50 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-[#ccc7ac]">
+                      <p className="text-sm font-semibold text-[#191c1d] truncate">{user?.name}</p>
+                      <p className="text-xs text-[#4a4733] truncate mt-0.5">{user?.email}</p>
+                    </div>
+
+                    <div className="py-1">
+                      <Link
+                        href="/profile"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#191c1d] hover:bg-[#f3f4f5] transition-colors"
+                      >
+                        <User className="w-4 h-4" />
+                        Tài khoản của tôi
+                      </Link>
+
+                      {isAdmin && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#676000] hover:bg-[#f3f4f5] transition-colors font-semibold"
+                        >
+                          <LayoutDashboard className="w-4 h-4" />
+                          Trang quản trị
+                        </Link>
+                      )}
+
+                      {isLandlord && (
+                        <Link
+                          href="/hosting"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#191c1d] hover:bg-[#f3f4f5] transition-colors"
+                        >
+                          <LayoutDashboard className="w-4 h-4" />
+                          Quản lý chỗ ở
+                        </Link>
+                      )}
+
+                      <Link
+                        href="/settings"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#191c1d] hover:bg-[#f3f4f5] transition-colors"
+                      >
+                        <Settings className="w-4 h-4" />
+                        Cài đặt
+                      </Link>
+                    </div>
+
+                    <div className="py-1 border-t border-[#ccc7ac]">
+                      <button
+                        onClick={() => { setMenuOpen(false); logout(); router.push('/'); }}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#ba1a1a] hover:bg-[#fff0f3] transition-colors w-full"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Đăng xuất
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => { setMenuOpen(false); logout(); router.push('/'); }}
-                    className="flex items-center w-full px-4 py-2.5 text-sm text-[#c13515] hover:bg-red-50 transition-colors gap-2"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Đăng xuất
-                  </button>
-                </div>
+                </>
               )}
             </div>
           </div>

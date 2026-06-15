@@ -193,18 +193,17 @@ function BookingCard({
           </div>
         )}
 
-        {isAwaiting && (
-          <span className="flex items-center gap-1.5 text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 w-fit mb-[7px]">
-            <CalendarCheck className="size-3.5 shrink-0" />
-            Đã xác nhận — chờ chủ nhà check-in
-          </span>
-        )}
-
-        <div className="flex items-start pt-3 pb-[1px] border-t border-solid border-t-[#DDDDDD] w-full">
+        <div className="flex items-center pt-3 pb-[1px] border-t border-solid border-t-[#DDDDDD] w-full">
           <div className="flex shrink-0 items-center mr-auto gap-[7px]">
             <span className="text-[#222222] text-sm font-bold">{formatVnd(booking.totalPrice)}</span>
             <span className={cn('text-xs', paymentCfg.className)}>· {paymentCfg.label}</span>
           </div>
+          {isAwaiting && (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 mr-2">
+              <CalendarCheck className="size-3.5 shrink-0" />
+              Đã xác nhận — chờ chủ nhà check-in
+            </span>
+          )}
           <div className="flex shrink-0 items-center gap-2">
             {canPay && (
               <button
