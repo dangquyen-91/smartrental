@@ -377,11 +377,10 @@ export default function HomePage() {
           <div className="mx-auto mb-12" style={{ maxWidth: '768px' }}>
           <img
             ref={heroImgRef}
-            src="/logo/logo_header.png"
-            width={732}
-            height={104}
-            alt="Smart Rental"
-            style={{ opacity: 0, maxWidth: '100%', height: 'auto', marginBottom: '48px' }}
+            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d6a19a6c-fe0a-4c34-8af3-68d6a777b244"
+            className="w-[1050px] h-[126px] mb-12 object-fill"
+            style={{ opacity: 0 }}
+            alt=""
           />
           <WaveText
             text="Tìm nhà trọ phù hợp,<br>dễ dàng và nhanh chóng"
