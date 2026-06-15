@@ -143,7 +143,7 @@ export function PublicNavbar({ activeLink }: PublicNavbarProps) {
             alt="SmartRental"
             width={80}
             height={12}
-            className="h-auto w-auto object-contain"
+            className="h-auto object-contain"
             priority
           />
         </Link>
@@ -234,7 +234,7 @@ export function PublicFooter() {
                 alt="SmartRental"
                 width={80}
                 height={15}
-                className="h-auto w-auto object-contain"
+                className="h-auto object-contain"
               />
             </div>
             <p className="text-black/80 max-w-sm font-medium leading-relaxed">

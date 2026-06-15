@@ -22,6 +22,7 @@ import { PropertyCard } from '@/components/shared/property-card';
 import { PropertyCardSkeleton } from '@/components/ui/skeleton';
 import { useProperties } from '@/hooks/use-properties';
 import { useAllMyBookings } from '@/hooks/use-bookings';
+import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import type { Property } from '@/types';
 import type { PropertyFilters } from '@/lib/api/properties.api';
@@ -247,7 +248,8 @@ function PropertyGrid({
   const prevIsFetching = useRef(false);
   const isFetchingRef = useRef(false);
 
-  const { data: myBookings } = useAllMyBookings();
+  const { isAuthenticated, hasHydrated } = useAuth();
+  const { data: myBookings } = useAllMyBookings(hasHydrated && isAuthenticated);
   const rentedPropertyIds = new Set(
     (myBookings?.data ?? [])
       .filter((b) => ['confirmed', 'active', 'completed'].includes(b.status))

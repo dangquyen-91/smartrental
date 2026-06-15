@@ -26,7 +26,9 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+    const backendUrl = process.env.BACKEND_URL || (process.env.NODE_ENV === 'production'
+      ? (() => { throw new Error('BACKEND_URL env var is required in production'); })()
+      : 'http://localhost:5000');
     return [
       {
         source: '/api/:path*',

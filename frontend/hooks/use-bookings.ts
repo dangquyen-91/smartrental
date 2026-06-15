@@ -30,18 +30,21 @@ export function useMyBookings(status?: Booking["status"]) {
     queryKey: bookingKeys.mine(status),
     queryFn: () => getMyBookingsApi(status),
     staleTime: 0,
+    retry: false,
     refetchInterval: 30_000,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   });
 }
 
-export function useAllMyBookings() {
+export function useAllMyBookings(enabled = true) {
   return useQuery({
     queryKey: bookingKeys.mine(),
     queryFn: getAllMyBookingsApi,
+    enabled,
     staleTime: 0,
-    refetchInterval: 30_000,
+    retry: false,
+    refetchInterval: enabled ? 30_000 : false,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   });
@@ -52,6 +55,7 @@ export function useLandlordBookings(status?: Booking["status"]) {
     queryKey: bookingKeys.landlord(status),
     queryFn: () => getLandlordBookingsApi(status),
     staleTime: 0,
+    retry: false,
     refetchInterval: 30_000,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,

@@ -329,8 +329,8 @@ function QuickInfo({ property }: { property: Property }) {
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data, isLoading, isError } = useProperty(id);
-  const { isAuthenticated, user } = useAuth();
-  const { data: myBookingsData } = useAllMyBookings();
+  const { isAuthenticated, hasHydrated, user } = useAuth();
+  const { data: myBookingsData } = useAllMyBookings(hasHydrated && isAuthenticated);
   const { data: savedIds = [] } = useWishlist();
   const { mutate: toggleWishlist } = useToggleWishlist(id);
   const [heartAnim, setHeartAnim] = useState(false);

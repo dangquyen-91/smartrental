@@ -53,6 +53,13 @@ api.interceptors.response.use(
 
     const { refreshToken, setTokens, clearAuth } = useAuthStore.getState();
 
+    if (!refreshToken) {
+      isRefreshing = false;
+      processQueue(error, null);
+      clearAuth();
+      return Promise.reject(error);
+    }
+
     try {
       const { data } = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh-token`,

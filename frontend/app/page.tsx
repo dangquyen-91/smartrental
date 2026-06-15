@@ -322,11 +322,11 @@ function EmptyState() {
 export default function HomePage() {
   const heroImgRef = useRef<HTMLImageElement>(null);
   const marqueeRef = useRef<HTMLDivElement>(null);
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, hasHydrated, user } = useAuth();
   const [activeCategory, setActiveCategory] = useState<Property['type'] | 'all'>('all');
   const [apiFilters, setApiFilters] = useState<PropertyFilters>({});
 
-  const { data: myBookings } = useAllMyBookings();
+  const { data: myBookings } = useAllMyBookings(hasHydrated && isAuthenticated);
   const rentedPropertyIds = new Set(
     (myBookings?.data ?? [])
       .filter((b) => ['confirmed', 'active', 'completed'].includes(b.status))
