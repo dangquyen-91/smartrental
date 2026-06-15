@@ -26,14 +26,15 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:5000/api/:path*',
+        destination: `${backendUrl}/api/:path*`,
       },
       {
         source: '/auth/:path*',
-        destination: 'http://localhost:5000/api/auth/:path*',
+        destination: `${backendUrl}/api/auth/:path*`,
       },
     ];
   },

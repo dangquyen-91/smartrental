@@ -7,6 +7,16 @@ RUN npm ci --omit=dev && npm cache clean --force
 # ─── Development ─────────────────────────────────────────────────────────────
 FROM node:22-alpine AS development
 WORKDIR /app
+# Chromium + deps cho puppeteer (dev)
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 COPY package*.json ./
 RUN npm ci
 COPY . .
@@ -17,6 +27,17 @@ CMD ["npm", "run", "dev"]
 FROM node:22-alpine AS production
 ENV NODE_ENV=production
 WORKDIR /app
+
+# Chromium + deps cho puppeteer (production)
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Copy only production deps from base
 COPY --from=base /app/node_modules ./node_modules
