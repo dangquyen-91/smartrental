@@ -74,8 +74,9 @@ export default function HostingLayout({ children }: { children: React.ReactNode 
           <div className="flex justify-between items-center self-stretch">
             <Link href="/">
               <img
-                src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/967d7281-d8d4-4d5a-9c6f-a5aa9bd652cb"
-                className="w-[182px] h-[26px] object-fill cursor-pointer"
+                src="/logo/logo_header.png"
+                alt="SmartRental"
+                className="w-[182px] h-[26px] object-contain cursor-pointer"
               />
             </Link>
             <div className="flex shrink-0 items-center">

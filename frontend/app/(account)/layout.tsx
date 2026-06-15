@@ -61,9 +61,9 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         <div className="flex justify-between items-center self-stretch">
           <Link href="/">
             <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/cc012ec2-2e37-440b-a5a8-14c2ae1bf1b0"
+              src="/logo/logo_header.png"
               alt="SmartRental"
-              className="w-[182px] h-[26px] object-fill cursor-pointer"
+              className="w-[182px] h-[26px] object-contain cursor-pointer"
             />
           </Link>
 
