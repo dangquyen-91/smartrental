@@ -50,8 +50,9 @@ function BankAccountModal({ userId, onSuccess }: { userId: string; onSuccess: ()
       const updatedUser = await updateBankAccountApi(userId, values);
       setUser(updatedUser);
       onSuccess();
-    } catch {
-      setError('Không thể lưu tài khoản ngân hàng, vui lòng thử lại.');
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(msg || 'Không thể lưu tài khoản ngân hàng, vui lòng thử lại.');
     }
   };
 
@@ -428,12 +429,16 @@ export default function NewListingPage() {
   const [submitError, setSubmitError] = useState('');
 
   const user = useAuthStore((s) => s.user);
+  const hasHydrated = useAuthStore((s) => s._hasHydrated);
   const [showBankModal, setShowBankModal] = useState(false);
 
+  // Chỉ kiểm tra lần đầu khi store hydrate xong — không re-trigger khi user thay đổi
+  // để tránh modal mở lại sau khi onSuccess đóng nó.
   useEffect(() => {
-    if (!user) return;
-    setShowBankModal(!user.bankAccount?.bankName);
-  }, [user]);
+    if (hasHydrated && user && !user.bankAccount?.bankName) {
+      setShowBankModal(true);
+    }
+  }, [hasHydrated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const {
     register,
