@@ -101,16 +101,23 @@ const updateBankAccount = async (id, data, requesterId, requesterRole) => {
   }
 
   const { bankName, accountNumber, accountName, branch } = data;
-  user.bankAccount = {
-    bankName:      bankName      ?? user.bankAccount?.bankName,
-    accountNumber: accountNumber ?? user.bankAccount?.accountNumber,
-    accountName:   accountName   ?? user.bankAccount?.accountName,
-    branch:        branch        ?? user.bankAccount?.branch,
-    verifiedAt:    null,
-  };
 
-  await user.save();
-  return user.toJSON();
+  const updatedUser = await User.findByIdAndUpdate(
+    id,
+    {
+      $set: {
+        'bankAccount.bankName':      bankName      ?? user.bankAccount?.bankName,
+        'bankAccount.accountNumber': accountNumber ?? user.bankAccount?.accountNumber,
+        'bankAccount.accountName':   accountName   ?? user.bankAccount?.accountName,
+        'bankAccount.branch':        branch        ?? user.bankAccount?.branch ?? null,
+        'bankAccount.verifiedAt':    null,
+      },
+    },
+    { new: true },
+  );
+
+  if (!updatedUser) throw new AppError('User not found', 404);
+  return updatedUser.toJSON();
 };
 
 const changePassword = async (id, currentPassword, newPassword, requesterId) => {

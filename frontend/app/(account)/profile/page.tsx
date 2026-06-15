@@ -39,7 +39,7 @@ const otpSchema = z.object({
 
 const bankSchema = z.object({
   bankName: z.string().min(2, 'Tên ngân hàng ít nhất 2 ký tự'),
-  accountNumber: z.string().min(6, 'Số tài khoản không hợp lệ'),
+  accountNumber: z.string().regex(/^[0-9]{6,20}$/, 'Số tài khoản phải là 6–20 chữ số'),
   accountName: z.string().min(2, 'Tên chủ tài khoản ít nhất 2 ký tự'),
   branch: z.string().optional(),
 });

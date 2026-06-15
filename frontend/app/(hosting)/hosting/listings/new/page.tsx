@@ -30,7 +30,7 @@ import type { Property } from '@/types';
 
 const bankSchema = z.object({
   bankName: z.string().min(2, 'Vui lòng nhập tên ngân hàng'),
-  accountNumber: z.string().min(6, 'Số tài khoản không hợp lệ'),
+  accountNumber: z.string().regex(/^[0-9]{6,20}$/, 'Số tài khoản phải là 6–20 chữ số'),
   accountName: z.string().min(2, 'Vui lòng nhập tên chủ tài khoản'),
 });
 type BankData = z.infer<typeof bankSchema>;
@@ -431,9 +431,8 @@ export default function NewListingPage() {
   const [showBankModal, setShowBankModal] = useState(false);
 
   useEffect(() => {
-    if (user && !user.bankAccount?.bankName) {
-      setShowBankModal(true);
-    }
+    if (!user) return;
+    setShowBankModal(!user.bankAccount?.bankName);
   }, [user]);
 
   const {
