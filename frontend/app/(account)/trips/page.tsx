@@ -325,8 +325,8 @@ function PaymentToast() {
     pollCountRef.current++;
     try {
       const data = await getBookingPaymentStatusApi(bookingId);
-      // PayOS trả về status: 'PAID' ngay cả khi webhook chưa cập nhật DB
-      if (data.data?.status === 'PAID' || data.data?.paymentStatus === 'paid') {
+      // Chỉ tin vào DB (paymentStatus: 'paid') — webhook phải cập nhật trước
+      if (data.data?.paymentStatus === 'paid') {
         setIsPolling(false);
         toast.success('Thanh toán thành công! Chờ chủ nhà xác nhận check-in.');
         qc.invalidateQueries({ queryKey: ['bookings'] });
@@ -344,20 +344,11 @@ function PaymentToast() {
     if (handled.current) return;
     const result = params.get('payment');
     const payosStatus = params.get('status'); // PAID, CANCELLED, etc.
-    
+
     if (result === 'success' || payosStatus === 'PAID') {
       handled.current = true;
-      
-      // PayOS đã xác nhận thanh toán thành công → cập nhật UI ngay
-      if (payosStatus === 'PAID') {
-        toast.success('Thanh toán thành công! Chờ chủ nhà xác nhận check-in.');
-        qc.invalidateQueries({ queryKey: ['bookings'] });
-        sessionStorage.removeItem('pendingPayment');
-        router.replace('/trips');
-        return;
-      }
-      
-      // Fallback: poll BE nếu không có status từ PayOS
+
+      // Dù PayOS redirect với status=PAID, vẫn phải poll đợi webhook cập nhật DB
       const pending = sessionStorage.getItem('pendingPayment');
       if (pending) {
         const { type, id } = JSON.parse(pending);
@@ -365,9 +356,11 @@ function PaymentToast() {
           setIsPolling(true);
           pollCountRef.current = 0;
           pollPaymentStatus(id);
+          return;
         }
       }
-      setTimeout(() => qc.invalidateQueries({ queryKey: ['bookings'] }), 300);
+      // Không có pendingPayment → chỉ refresh
+      qc.invalidateQueries({ queryKey: ['bookings'] });
       router.replace('/trips');
     } else if (result === 'cancel') {
       handled.current = true;

@@ -376,10 +376,10 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const ownerUser = typeof p.owner === 'object' ? p.owner : null;
   const address = [p.address?.street, p.address?.ward, p.address?.district, p.address?.city].filter(Boolean).join(', ');
 
-  // Build set of property IDs that the tenant has a confirmed/active/completed booking for
+  // Build set of property IDs that the tenant has a confirmed/active booking for
   const rentedPropertyIds = new Set(
     (myBookingsData?.data ?? [])
-      .filter((b: any) => ['confirmed', 'active', 'completed'].includes(b.status))
+      .filter((b: any) => ['confirmed', 'active'].includes(b.status))
       .map((b: any) => b.property?.id ?? b.property)
   );
   const effectiveStatus = rentedPropertyIds.has(id) ? 'rented' : p.status;

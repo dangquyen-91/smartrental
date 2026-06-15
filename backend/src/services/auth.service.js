@@ -55,7 +55,7 @@ const login = async (email, password) => {
   return {
     accessToken,
     refreshToken,
-    user: { id: user._id, name: user.name, email: user.email, role: user.role, authProvider: user.authProvider },
+    user: user.toJSON(),
   };
 };
 
