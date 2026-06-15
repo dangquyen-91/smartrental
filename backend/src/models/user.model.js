@@ -1,0 +1,72 @@
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+
+const userSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true },
+    password: { type: String, required: true, minlength: 6 },
+    phone: { type: String },
+    role: { type: String, enum: ['tenant', 'landlord', 'admin', 'provider'], default: 'tenant' },
+    avatar: { type: String },
+    bio: { type: String, maxlength: 300, default: null },
+    gender: { type: String, enum: ['male', 'female', 'other'], default: null },
+    dateOfBirth: { type: Date, default: null },
+    address: { type: String, default: null },
+    isActive: { type: Boolean, default: true },
+    isPhoneVerified: { type: Boolean, default: false },
+    phoneOtp: { type: String, default: null },
+    phoneOtpExpiry: { type: Date, default: null },
+    authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
+    refreshToken: { type: String, default: null },
+    nationalId: {
+      number:      { type: String, default: null, trim: true },  // Số CMND/CCCD
+      issuedDate:  { type: Date,   default: null },               // Ngày cấp
+      issuedPlace: { type: String, default: null, trim: true },   // Nơi cấp
+    },
+    bankAccount: {
+      bankName:      { type: String, default: null },
+      accountNumber: { type: String, default: null },
+      accountName:   { type: String, default: null },
+      branch:        { type: String, default: null },
+      verifiedAt:    { type: Date,   default: null },
+    },
+    savedProperties: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Property', default: [] }],
+  },
+  {
+    timestamps: true,
+    toJSON: {
+      transform: (_, ret) => ({
+        id: ret._id,
+        name: ret.name,
+        email: ret.email,
+        phone: ret.phone,
+        avatar: ret.avatar,
+        bio: ret.bio,
+        gender: ret.gender,
+        dateOfBirth: ret.dateOfBirth,
+        address: ret.address,
+        role: ret.role,
+        isActive: ret.isActive,
+        authProvider: ret.authProvider,
+        isPhoneVerified: ret.isPhoneVerified,
+        nationalId: ret.nationalId?.number ? ret.nationalId : null,
+        bankAccount: ret.bankAccount?.bankName ? ret.bankAccount : null,
+        savedProperties: (ret.savedProperties ?? []).map((id) => id.toString()),
+        createdAt: ret.createdAt,
+        updatedAt: ret.updatedAt,
+      }),
+    },
+  }
+);
+
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
+  this.password = await bcrypt.hash(this.password, 10);
+});
+
+userSchema.methods.matchPassword = function (enteredPassword) {
+  return bcrypt.compare(enteredPassword, this.password);
+};
+
+export default mongoose.model('User', userSchema);
