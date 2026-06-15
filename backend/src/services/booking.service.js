@@ -399,6 +399,97 @@ const markRefunded = async (bookingId) => {
   return booking;
 };
 
+// ─── Landlord Revenue Stats ──────────────────────────────────────────────────
+
+const VALID_REVENUE_PERIODS = ['3m', '6m', '1y'];
+
+const getLandlordRevenueStats = async (landlordId, period = '3m') => {
+  if (!VALID_REVENUE_PERIODS.includes(period)) {
+    throw new AppError('Invalid period. Use: 3m, 6m, 1y', 400);
+  }
+
+  const months = period === '1y' ? 12 : period === '6m' ? 6 : 3;
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - months);
+  startDate.setDate(1);
+  startDate.setHours(0, 0, 0, 0);
+
+  const landlordOid = new mongoose.Types.ObjectId(landlordId);
+  const matchBase = { landlord: landlordOid, paymentStatus: 'paid', paidDate: { $gte: startDate } };
+
+  const [monthly, byProperty] = await Promise.all([
+    Booking.aggregate([
+      { $match: matchBase },
+      {
+        $group: {
+          _id:            { $dateToString: { format: '%Y-%m', date: '$paidDate' } },
+          grossRevenue:   { $sum: '$totalPrice' },
+          landlordPayout: { $sum: '$landlordPayout' },
+          platformFee:    { $sum: '$platformFee' },
+          bookingCount:   { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+      {
+        $project: {
+          _id:            0,
+          month:          '$_id',
+          grossRevenue:   1,
+          landlordPayout: 1,
+          platformFee:    1,
+          bookingCount:   1,
+        },
+      },
+    ]),
+    Booking.aggregate([
+      { $match: matchBase },
+      {
+        $group: {
+          _id:            '$property',
+          grossRevenue:   { $sum: '$totalPrice' },
+          landlordPayout: { $sum: '$landlordPayout' },
+          bookingCount:   { $sum: 1 },
+        },
+      },
+      {
+        $lookup: {
+          from:         'properties',
+          localField:   '_id',
+          foreignField: '_id',
+          as:           'property',
+        },
+      },
+      { $unwind: '$property' },
+      {
+        $project: {
+          _id:            0,
+          propertyId:     '$_id',
+          title:          '$property.title',
+          type:           '$property.type',
+          address:        '$property.address',
+          grossRevenue:   1,
+          landlordPayout: 1,
+          bookingCount:   1,
+        },
+      },
+      { $sort: { landlordPayout: -1 } },
+    ]),
+  ]);
+
+  const summary = monthly.reduce(
+    (acc, row) => {
+      acc.grossRevenue   += row.grossRevenue   ?? 0;
+      acc.landlordPayout += row.landlordPayout ?? 0;
+      acc.platformFee    += row.platformFee    ?? 0;
+      acc.totalBookings  += row.bookingCount   ?? 0;
+      return acc;
+    },
+    { grossRevenue: 0, landlordPayout: 0, platformFee: 0, totalBookings: 0 },
+  );
+
+  return { period, monthly, byProperty, summary };
+};
+
 // ─── Mark Booking Payout (admin) ─────────────────────────────────────────────
 
 const markBookingPayout = async (bookingId) => {
@@ -430,6 +521,7 @@ export {
   getAllBookings,
   getMyBookings,
   getLandlordBookings,
+  getLandlordRevenueStats,
   getBookingById,
   confirmBooking,
   rejectBooking,

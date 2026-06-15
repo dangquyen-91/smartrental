@@ -221,6 +221,48 @@ const getMyReviews = async (reviewerId, { page = 1, limit = 10 } = {}) => {
   };
 };
 
+// ─── Get All Reviews Across Landlord's Properties ────────────────────────────
+
+const getMyPropertiesReviews = async (landlordId, { page = 1, limit = 10 } = {}) => {
+  const { pageNum, limitNum, skip } = buildPagination(page, limit);
+
+  const properties = await Property.find({ owner: landlordId, isActive: true }).select('_id');
+  const propertyIds = properties.map((p) => p._id);
+
+  if (!propertyIds.length) {
+    return {
+      reviews: [],
+      totalReviews: 0,
+      pagination: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 },
+    };
+  }
+
+  const filter = { target: { $in: propertyIds }, targetType: 'property', isDeleted: false };
+
+  const [reviews, total, ratingAgg] = await Promise.all([
+    Review.find(filter)
+      .populate('reviewer', 'name avatar')
+      .populate('target', 'title address images')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum),
+    Review.countDocuments(filter),
+    Review.aggregate([
+      { $match: filter },
+      { $group: { _id: null, average: { $avg: '$rating' }, count: { $sum: 1 } } },
+    ]),
+  ]);
+
+  const agg = ratingAgg[0];
+
+  return {
+    reviews,
+    averageRating: agg ? Math.round(agg.average * 10) / 10 : null,
+    totalReviews:  total,
+    pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
+  };
+};
+
 // ─── Delete Review (Admin — soft delete) ─────────────────────────────────────
 
 const deleteReview = async (reviewId, adminId) => {
@@ -296,6 +338,7 @@ export {
   getUserReviews,
   getBookingReviews,
   getMyReviews,
+  getMyPropertiesReviews,
   deleteReview,
   getAllReviews,
 };

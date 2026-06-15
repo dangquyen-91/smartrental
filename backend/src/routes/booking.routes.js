@@ -4,6 +4,7 @@ import {
   getAllBookings,
   getMyBookings,
   getLandlordBookings,
+  getLandlordRevenueStats,
   getBookingById,
   confirmBooking,
   rejectBooking,
@@ -36,6 +37,9 @@ router.get('/my', authorizeRoles('tenant'), getBookingsValidation, getMyBookings
 
 // Landlord: view bookings for their properties
 router.get('/landlord', authorizeRoles('landlord'), getBookingsValidation, getLandlordBookings);
+
+// Landlord: revenue stats aggregated by month and by property
+router.get('/landlord/revenue-stats', authorizeRoles('landlord'), getLandlordRevenueStats);
 
 // Admin: view all bookings
 router.get('/', authorizeRoles('admin'), getBookingsValidation, getAllBookings);
