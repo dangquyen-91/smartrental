@@ -176,8 +176,9 @@ export default function HostingLayout({ children }: { children: React.ReactNode 
               <span className="text-[#929292] text-[13px] font-bold">QUẢN LÝ CHO THUÊ</span>
             </div>
             <nav className="flex flex-col items-start px-[7px] pt-3 gap-0.5 w-full">
-              {NAV_ITEMS.map(({ label, href, Icon }) => {
-                const active = isActive(pathname, { label, href, active: href });
+              {NAV_ITEMS.map((item) => {
+                const { label, href, Icon } = item;
+                const active = isActive(pathname, item);
                 return (
                   <Link
                     key={href}
