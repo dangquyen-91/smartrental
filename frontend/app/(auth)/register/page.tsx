@@ -17,8 +17,6 @@ import type { User } from '@/types';
 import gsap from 'gsap';
 import { TextPlugin } from 'gsap/TextPlugin';
 
-gsap.registerPlugin(TextPlugin);
-
 /* ── Wave Text ── */
 function SplitText({ text }: { text: string }) {
   return (
@@ -231,6 +229,7 @@ export default function RegisterPage() {
   }, [activeTab]);
 
   useEffect(() => {
+    gsap.registerPlugin(TextPlugin);
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
       tl.fromTo(

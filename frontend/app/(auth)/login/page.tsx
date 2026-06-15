@@ -11,8 +11,6 @@ import type { User } from '@/types';
 import gsap from 'gsap';
 import { TextPlugin } from 'gsap/TextPlugin';
 
-gsap.registerPlugin(TextPlugin);
-
 function SplitText({ text }: { text: string }) {
   return (
     <>
@@ -37,6 +35,7 @@ function LoginForm() {
   const heroFeaturesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    gsap.registerPlugin(TextPlugin);
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
       tl.fromTo(
