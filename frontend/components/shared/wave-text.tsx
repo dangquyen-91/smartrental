@@ -50,8 +50,13 @@ export function WaveText({ text, className = '' }: WaveTextProps) {
   }, [text]);
 
   return (
-    <h1 className={className} ref={containerRef}>
-      {text}
-    </h1>
+    <h1
+      className={className}
+      ref={containerRef}
+      // dangerouslySetInnerHTML prevents React from managing children so it won't
+      // re-add the raw text node when re-rendering (which would cause double text)
+      dangerouslySetInnerHTML={{ __html: text.replace(/<br>/g, '<br/>') }}
+      suppressHydrationWarning
+    />
   );
 }
