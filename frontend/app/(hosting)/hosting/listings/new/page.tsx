@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { useCreateProperty } from '@/hooks/use-properties';
 import { uploadImagesApi, deleteUploadedImageApi } from '@/lib/api/upload.api';
 import { updateBankAccountApi } from '@/lib/api/users.api';
+import { getMeApi } from '@/lib/api/auth.api';
 import { useAuthStore } from '@/stores/auth.store';
 import { cn } from '@/lib/utils';
 import type { Property } from '@/types';
@@ -429,15 +430,22 @@ export default function NewListingPage() {
   const [submitError, setSubmitError] = useState('');
 
   const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
   const hasHydrated = useAuthStore((s) => s._hasHydrated);
   const [showBankModal, setShowBankModal] = useState(false);
 
-  // Chỉ kiểm tra lần đầu khi store hydrate xong — không re-trigger khi user thay đổi
-  // để tránh modal mở lại sau khi onSuccess đóng nó.
+  // Khi page load, luôn fetch fresh user từ API để tránh auth store bị stale
+  // (trường hợp DB đã có bankAccount nhưng store/localStorage vẫn giữ data cũ)
   useEffect(() => {
-    if (hasHydrated && user && !user.bankAccount?.bankName) {
-      setShowBankModal(true);
-    }
+    if (!hasHydrated || !user) return;
+    getMeApi()
+      .then((freshUser) => {
+        setUser(freshUser);
+        if (!freshUser.bankAccount?.bankName) setShowBankModal(true);
+      })
+      .catch(() => {
+        if (!user.bankAccount?.bankName) setShowBankModal(true);
+      });
   }, [hasHydrated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const {
