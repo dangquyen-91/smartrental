@@ -86,7 +86,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             alt="SmartRental"
             width={80}
             height={12}
-            className="h-auto w-auto object-contain"
+            className="h-auto object-contain"
           />
         </Link>
 
