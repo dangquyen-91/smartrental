@@ -155,7 +155,7 @@ export default function AppNavbar({ center }: AppNavbarProps) {
               </Link>
               <Link
                 href="/register"
-                className="px-4 py-2 text-sm font-semibold text-white bg-[#222222] hover:bg-[#3a3a3a] rounded-[20px] transition-colors"
+                className="px-4 py-2 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg rounded-[20px] transition-all"
               >
                 Đăng ký
               </Link>

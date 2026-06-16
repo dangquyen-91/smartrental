@@ -143,9 +143,9 @@ function ServiceOrderCard({
               <button
                 onClick={() => onPay(order.id)}
                 disabled={isPaying}
-                className="flex shrink-0 items-center bg-[#2683EB] text-left py-1.5 px-3 gap-1.5 rounded-lg border-0 disabled:opacity-60"
+                className="flex shrink-0 items-center bg-[#ffef3d] hover:shadow-lg transition-all text-left py-1.5 px-3 gap-1.5 rounded-lg border-0 disabled:opacity-60"
               >
-                <span className="text-white text-xs font-bold">Thanh toán</span>
+                <span className="text-[#1f1c00] text-xs font-bold">Thanh toán</span>
               </button>
             )}
             {order.status === 'pending' && (
@@ -321,9 +321,9 @@ export default function HostingServicesPage() {
         <span className="text-[#222222] text-[25px] font-bold">Dịch vụ của tôi</span>
         <Link
           href="/hosting/services/request"
-          className="flex flex-col shrink-0 items-start bg-[#2683EB] text-left py-2.5 px-5 rounded-lg border-0"
+          className="flex flex-col shrink-0 items-start bg-[#ffef3d] hover:shadow-lg transition-all text-left py-2.5 px-5 rounded-lg border-0"
         >
-          <span className="text-white text-sm font-bold">+ Yêu cầu dịch vụ</span>
+          <span className="text-[#1f1c00] text-sm font-bold">+ Yêu cầu dịch vụ</span>
         </Link>
       </div>
 
@@ -341,7 +341,7 @@ export default function HostingServicesPage() {
               key={entry.type}
               type="button"
               onClick={() => router.push(`/hosting/services/request?type=${entry.type}`)}
-              className="flex flex-1 flex-col items-center text-left py-4 gap-[7px] rounded-xl border border-solid border-[#DDDDDD] last:mr-0 hover:border-[#2683EB] hover:shadow-[0_0_0_1px_#2683EB] transition-all cursor-pointer"
+              className="flex flex-1 flex-col items-center text-left py-4 gap-[7px] rounded-xl border border-solid border-[#DDDDDD] last:mr-0 hover:border-[#ffef3d] hover:shadow-[0_0_0_1px_#ffef3d] transition-all cursor-pointer"
             >
               <span className="text-[#222222] text-3xl">{SERVICE_META[entry.type].emoji}</span>
               <span className="text-[#6A6A6A] text-xs font-bold">{SERVICE_META[entry.type].label}</span>

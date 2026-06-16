@@ -149,7 +149,7 @@ export function PublicNavbar({ activeLink }: PublicNavbarProps) {
         </Link>
 
         <div className="hidden md:flex gap-6 items-center">
-          <Link href="/" className={linkCls(activeLink === 'search')}>
+          <Link href="/properties" className={linkCls(activeLink === 'search')}>
             Tìm kiếm
           </Link>
           <Link href="/about" className={linkCls(activeLink === 'about')}>

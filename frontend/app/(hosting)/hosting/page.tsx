@@ -108,13 +108,13 @@ export default function HostingPage() {
         </div>
         <Link
           href="/hosting/listings/new"
-          className="flex shrink-0 items-center bg-[#2683EB] text-left py-2.5 px-4 gap-2 rounded-lg border-0"
+          className="flex shrink-0 items-center bg-[#ffef3d] hover:shadow-lg transition-all text-left py-2.5 px-4 gap-2 rounded-lg border-0"
         >
           <img
             src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/76cd3957-c0df-44d3-87a2-4e397b09f0d7"
             className="w-4 h-4 rounded-lg object-fill"
           />
-          <span className="text-white text-sm font-bold">Đăng tin</span>
+          <span className="text-[#1f1c00] text-sm font-bold">Đăng tin</span>
         </Link>
       </div>
 
@@ -191,7 +191,7 @@ export default function HostingPage() {
             <select
               value={revenuePeriod}
               onChange={(e) => setRevenuePeriod(e.target.value as RevenuePeriod)}
-              className="text-[11px] text-[#6A6A6A] bg-transparent border border-solid border-[#DDDDDD] rounded-md px-1.5 py-0.5 cursor-pointer hover:border-[#2683EB] focus:outline-none focus:border-[#2683EB]"
+              className="text-[11px] text-[#6A6A6A] bg-transparent border border-solid border-[#DDDDDD] rounded-md px-1.5 py-0.5 cursor-pointer hover:border-[#ffef3d] focus:outline-none focus:border-[#ffef3d]"
             >
               {REVENUE_PERIOD_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>{o.label}</option>
@@ -331,7 +331,7 @@ export default function HostingPage() {
 
       {/* Quick links */}
       <div className="grid grid-cols-2 gap-4">
-        <Link href="/hosting/listings/new" className="flex items-center bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD] hover:border-[#2683EB] transition-colors">
+        <Link href="/hosting/listings/new" className="flex items-center bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD] hover:border-[#ffef3d] transition-colors">
           <div className="flex items-center justify-center bg-black w-10 h-10 rounded-[10px] mr-4">
             <img
               src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/6f2ef548-2935-44f3-bebe-1d685810286d"
@@ -348,7 +348,7 @@ export default function HostingPage() {
           />
         </Link>
 
-        <Link href="/hosting/reservations" className="flex items-center bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD] hover:border-[#2683EB] transition-colors">
+        <Link href="/hosting/reservations" className="flex items-center bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD] hover:border-[#ffef3d] transition-colors">
           <div className="flex items-center justify-center bg-black w-10 h-10 rounded-[10px] mr-4">
             <img
               src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/495abffe-7056-4f67-8362-507572babe5e"
@@ -547,17 +547,17 @@ function PendingBookingRow({
         <button
           onClick={onConfirm}
           disabled={busy}
-          className="flex shrink-0 items-center bg-[#2683EB] text-left py-[7px] px-3 gap-1.5 rounded-lg border-0 hover:bg-blue-600 transition-colors disabled:opacity-50"
+          className="flex shrink-0 items-center bg-[#ffef3d] text-left py-[7px] px-3 gap-1.5 rounded-lg border-0 hover:shadow-lg transition-all disabled:opacity-50"
         >
           {confirming ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#1f1c00]" />
           ) : (
             <img
               src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/41826c94-9585-444c-ac7c-90717780594b"
               className="w-3.5 h-3.5 rounded-lg object-fill"
             />
           )}
-          <span className="text-white text-[13px] font-bold">
+          <span className="text-[#1f1c00] text-[13px] font-bold">
             {confirming ? 'Đang xử lý...' : 'Xác nhận'}
           </span>
         </button>

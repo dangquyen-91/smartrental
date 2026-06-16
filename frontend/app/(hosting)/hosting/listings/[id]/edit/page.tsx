@@ -664,7 +664,7 @@ export default function EditListingPage({
           <button
             type="submit"
             disabled={isPending || images.some((i) => i.uploading)}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-[#2683EB] hover:bg-blue-600 disabled:opacity-50 rounded-lg transition-all active:scale-95"
+            className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-50 rounded-lg transition-all active:scale-95"
           >
             {isPending
               ? <><Loader2 className="size-4 animate-spin" />Đang lưu...</>

@@ -126,7 +126,7 @@ function BankAccountModal({ userId, onSuccess }: { userId: string; onSuccess: ()
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 py-2.5 text-sm font-semibold text-white bg-[#2683EB] hover:bg-blue-600 rounded-lg transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg rounded-lg transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : 'Lưu & tiếp tục'}
             </button>
@@ -720,7 +720,7 @@ export default function NewListingPage() {
           <button
             type="submit"
             disabled={isPending || images.some((i) => i.uploading)}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-[#2683EB] hover:bg-blue-600 disabled:opacity-50 rounded-lg transition-all active:scale-95"
+            className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-50 rounded-lg transition-all active:scale-95"
           >
             {isPending ? <><Loader2 className="size-4 animate-spin" />Đang đăng...</> : 'Đăng tin'}
           </button>

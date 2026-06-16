@@ -528,7 +528,7 @@ function SecuritySection({
               <button
                 onClick={phoneForm.handleSubmit(submitPhone)}
                 disabled={phoneForm.formState.isSubmitting}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 rounded-lg transition-all"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-50 rounded-lg transition-all"
               >
                 {phoneForm.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
                 {isLandlord ? 'Gửi mã OTP' : 'Lưu'}
@@ -569,7 +569,7 @@ function SecuritySection({
                 <button
                   onClick={otpForm.handleSubmit(submitOtp)}
                   disabled={otpForm.formState.isSubmitting}
-                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 rounded-lg transition-all"
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-50 rounded-lg transition-all"
                 >
                   {otpForm.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
                   Xác nhận
@@ -716,7 +716,7 @@ function BankSection({
             <button
               onClick={form.handleSubmit(onSubmit)}
               disabled={form.formState.isSubmitting}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 rounded-lg transition-all"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-50 rounded-lg transition-all"
             >
               {form.formState.isSubmitting && <Loader2 className="size-4 animate-spin" />}
               Lưu thay đổi
@@ -773,9 +773,9 @@ function BankSection({
           </div>
           <button
             onClick={() => setEditing(true)}
-            className="flex flex-col items-start bg-black text-left py-[7px] px-4 rounded-lg border-0"
+            className="flex flex-col items-start bg-[#ffef3d] text-left py-[7px] px-4 rounded-lg border-0"
           >
-            <span className="text-white text-sm font-bold">
+            <span className="text-[#1f1c00] text-sm font-bold">
               Thêm tài khoản ngân hàng
             </span>
           </button>
@@ -890,7 +890,7 @@ function NationalIdSection({
             <button
               onClick={form.handleSubmit(onSubmit)}
               disabled={form.formState.isSubmitting}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 rounded-lg transition-all"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-50 rounded-lg transition-all"
             >
               {form.formState.isSubmitting && <Loader2 className="size-4 animate-spin" />}
               Lưu thay đổi
@@ -947,9 +947,9 @@ function NationalIdSection({
           </div>
           <button
             onClick={() => setEditing(true)}
-            className="flex flex-col items-start bg-black text-left py-[7px] px-4 rounded-lg border-0"
+            className="flex flex-col items-start bg-[#ffef3d] text-left py-[7px] px-4 rounded-lg border-0"
           >
-            <span className="text-white text-sm font-bold">
+            <span className="text-[#1f1c00] text-sm font-bold">
               Thêm CMND/CCCD
             </span>
           </button>

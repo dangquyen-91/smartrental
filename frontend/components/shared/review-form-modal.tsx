@@ -110,8 +110,8 @@ export function ReviewFormModal({ bookingId, propertyTitle, onClose }: ReviewFor
                 onClick={handleSubmit}
                 disabled={rating === 0 || isPending}
                 className={cn(
-                  "w-full py-2.5 rounded-[10px] text-sm font-semibold transition-colors",
-                  "bg-[#222222] text-white hover:bg-[#333333]",
+                  "w-full py-2.5 rounded-[10px] text-sm font-semibold transition-all",
+                  "bg-[#ffef3d] text-[#1f1c00] hover:shadow-lg",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                   "flex items-center justify-center gap-2",
                 )}

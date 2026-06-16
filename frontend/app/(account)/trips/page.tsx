@@ -209,12 +209,12 @@ function BookingCard({
               <button
                 onClick={() => onPay(booking.id)}
                 disabled={isPayingThis}
-                className="flex shrink-0 items-center bg-[#FF385C] text-left py-1.5 px-3 gap-1.5 rounded-lg border-0 disabled:opacity-60"
+                className="flex shrink-0 items-center bg-[#ffef3d] text-left py-1.5 px-3 gap-1.5 rounded-lg border-0 disabled:opacity-60 hover:shadow-lg transition-all"
               >
                 {isPayingThis
-                  ? <Loader2 className="size-3.5 animate-spin text-white" />
+                  ? <Loader2 className="size-3.5 animate-spin text-[#1f1c00]" />
                   : <img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/1faf59bd-5913-4ace-9519-0cc4a813f6de" className="w-3.5 h-3.5 object-fill" alt="" />}
-                <span className="text-white text-xs font-bold">Thanh toán</span>
+                <span className="text-[#1f1c00] text-xs font-bold">Thanh toán</span>
               </button>
             )}
             {canReview && (
@@ -295,7 +295,7 @@ function EmptyState({ tabId }: { tabId: TabId }) {
       <h3 className="text-base font-semibold text-[#222222] mb-1">{message}</h3>
       <p className="text-sm text-[#6A6A6A] mb-6">{sub}</p>
       {showCTA && (
-        <Link href="/" className="px-5 py-2.5 bg-[#FF385C] text-white font-semibold rounded-lg text-sm hover:bg-pink-600 transition-colors">
+        <Link href="/" className="px-5 py-2.5 bg-[#ffef3d] text-[#1f1c00] font-semibold rounded-lg text-sm hover:shadow-lg transition-all">
           Tìm phòng ngay
         </Link>
       )}

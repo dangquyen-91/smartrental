@@ -318,7 +318,7 @@ function ProviderOrderCard({
                 <button
                   onClick={() => onAction(order)}
                   disabled={isActioning}
-                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#222222] hover:bg-[#3f3f3f] disabled:opacity-60 rounded-lg transition-all active:scale-95"
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-60 rounded-lg transition-all active:scale-95"
                 >
                   {isActioning ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
                   Bắt đầu
@@ -329,7 +329,7 @@ function ProviderOrderCard({
               <button
                 onClick={() => onAction(order)}
                 disabled={isActioning}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-60 rounded-lg transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-60 rounded-lg transition-all active:scale-95"
               >
                 {isActioning ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
                 Hoàn thành
@@ -443,13 +443,13 @@ export default function ProviderServicesPage() {
           title: 'Bắt đầu thực hiện?',
           description: `Xác nhận bạn đã đến nơi và bắt đầu ${SERVICE_META[pendingAction.order.type].label.toLowerCase()}.`,
           confirmLabel: 'Bắt đầu',
-          confirmClass: 'bg-[#222222] hover:bg-[#3f3f3f] disabled:opacity-60',
+          confirmClass: 'bg-[#ffef3d] text-[#1f1c00] hover:shadow-lg disabled:opacity-60',
         }
       : {
           title: 'Đánh dấu hoàn thành?',
           description: 'Xác nhận bạn đã hoàn tất công việc và khách hàng đã nghiệm thu.',
           confirmLabel: 'Hoàn thành',
-          confirmClass: 'bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-60',
+          confirmClass: 'bg-[#ffef3d] text-[#1f1c00] hover:shadow-lg disabled:opacity-60',
         }
     : null;
 

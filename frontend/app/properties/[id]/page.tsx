@@ -12,6 +12,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PublicNavbar, PublicFooter } from '@/components/layout/public-navbar';
 import { PriceDisplay } from '@/components/ui/price-display';
 import { PropertyReviewSection } from '@/components/shared/review-list';
 import { useProperty } from '@/hooks/use-properties';
@@ -213,7 +214,7 @@ function BookingPanel({ property, effectiveStatus, contactRevealed }: { property
           <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3"><Check className="w-6 h-6 text-emerald-600" /></div>
           <h3 className="text-base font-semibold text-[#222222] mb-1">Đã gửi yêu cầu đặt phòng!</h3>
           <p className="text-sm text-[#6A6A6A] mb-4">Chủ nhà sẽ xác nhận trong vòng 24h.</p>
-          <Link href="/trips" className="inline-block w-full text-center py-3 bg-black hover:bg-gray-800 text-white font-semibold rounded-xl transition-colors">Xem đơn thuê của tôi</Link>
+          <Link href="/trips" className="inline-block w-full text-center py-3 bg-[#ffef3d] hover:shadow-lg text-[#1f1c00] font-semibold rounded-xl transition-all">Xem đơn thuê của tôi</Link>
         </div>
       </div>
     );
@@ -278,11 +279,11 @@ function BookingPanel({ property, effectiveStatus, contactRevealed }: { property
 
             {error && <p className="text-xs text-red-500 w-full">Không thể đặt phòng. Vui lòng thử lại.</p>}
 
-            {/* Black CTA button */}
+            {/* Brand CTA button */}
             <button
               type="submit"
               disabled={isPending}
-              className="w-full py-3.5 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-60 active:scale-[0.98]"
+              className="w-full py-3.5 bg-[#ffef3d] text-[#1f1c00] font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-60 active:scale-[0.98]"
             >
               {isPending ? 'Đang gửi...' : isAuthenticated ? 'Đặt phòng' : 'Đăng nhập để đặt phòng'}
             </button>
@@ -366,7 +367,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       <div className="min-h-screen bg-white flex flex-col items-center justify-center">
         <h2 className="text-xl font-semibold text-[#222222] mb-2">Không tìm thấy bất động sản</h2>
         <p className="text-[#6A6A6A] text-sm mb-6">Tin đăng này có thể đã bị xoá hoặc không tồn tại.</p>
-        <Link href="/" className="px-5 py-2.5 bg-black text-white font-semibold rounded-xl text-sm hover:bg-gray-800 transition-colors">Về trang chủ</Link>
+        <Link href="/" className="px-5 py-2.5 bg-[#ffef3d] text-[#1f1c00] font-semibold rounded-xl text-sm hover:shadow-lg transition-all">Về trang chủ</Link>
       </div>
     );
   }
@@ -387,24 +388,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Navbar */}
-      <div className="bg-cover bg-center py-6 px-6 md:px-20" style={{ backgroundImage: 'url(https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/30ac8eae-07ac-4021-b386-ee5d8a4d8a53)' }}>
-        <div className="flex justify-between items-center max-w-[1280px] mx-auto">
-          <Link href="/"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/a949daa0-a417-4cbf-91d7-3ac6756bb215" className="w-[160px] h-auto object-fill cursor-pointer" /></Link>
-          <div className="flex shrink-0 items-center gap-2">
-            {isAuthenticated ? (
-              <Link href="/profile" className="flex items-center justify-center w-10 h-10 bg-[#222222] text-white font-bold rounded-full text-sm hover:bg-gray-800 transition-colors">
-                {user?.name?.charAt(0)?.toUpperCase() ?? 'N'}
-              </Link>
-            ) : (
-              <>
-                <Link href="/login" className="py-2 px-4 text-[#222222] text-sm font-semibold hover:opacity-80 transition-opacity">Đăng nhập</Link>
-                <Link href="/register" className="py-2 px-4 bg-[#222222] text-white text-sm font-semibold rounded-full hover:bg-gray-800 transition-colors">Đăng ký</Link>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+      <PublicNavbar activeLink="search" />
 
       <div className="max-w-[1280px] mx-auto px-6 w-full">
         {/* Back + Actions */}

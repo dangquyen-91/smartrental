@@ -226,7 +226,7 @@ function ProfileTab() {
           </div>
           <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
             <input type="checkbox" {...register('looking')} className="sr-only peer" />
-            <div className="w-10 h-5 bg-[#dddddd] rounded-full peer peer-checked:bg-[#ff385c] transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5" />
+            <div className="w-10 h-5 bg-[#dddddd] rounded-full peer peer-checked:bg-[#ffef3d] transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5" />
           </label>
         </div>
 
@@ -366,7 +366,7 @@ function ProfileTab() {
           <button
             type="submit"
             disabled={upsert.isPending || (!isDirty && !!profile)}
-            className="flex items-center gap-2 bg-[#ff385c] text-white text-sm font-medium px-6 py-2.5 rounded-lg hover:bg-[#e00b41] disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 bg-[#ffef3d] text-[#1f1c00] text-sm font-medium px-6 py-2.5 rounded-lg hover:shadow-lg disabled:opacity-50 transition-all"
           >
             {upsert.isPending && <Loader2 size={15} className="animate-spin" />}
             {profile ? 'Cập nhật hồ sơ' : 'Tạo hồ sơ'}
@@ -589,7 +589,7 @@ function MatchCard({
               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default'
               : isPending
               ? 'bg-amber-50 text-amber-700 border border-amber-200 cursor-default'
-              : 'bg-[#ff385c] text-white hover:bg-[#e00b41] disabled:opacity-60'
+              : 'bg-[#ffef3d] text-[#1f1c00] hover:shadow-lg disabled:opacity-60'
           )}
         >
           {isAccepted ? <Check size={13} /> : isPending ? <Loader2 size={13} /> : <Send size={13} />}
@@ -865,7 +865,7 @@ function InviteModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold bg-[#ff385c] text-white py-2.5 rounded-lg hover:bg-[#e00b41] disabled:opacity-60 transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold bg-[#ffef3d] text-[#1f1c00] py-2.5 rounded-lg hover:shadow-lg disabled:opacity-60 transition-all"
             >
               {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
               Gửi lời mời
@@ -986,7 +986,7 @@ function RequestCard({
           <button
             onClick={() => onRespond('accepted')}
             disabled={isResponding}
-            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold bg-[#222222] text-white py-2 rounded-lg hover:bg-black disabled:opacity-50 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold bg-[#ffef3d] text-[#1f1c00] py-2 rounded-lg hover:shadow-lg disabled:opacity-50 transition-all"
           >
             {isResponding ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
             Chấp nhận

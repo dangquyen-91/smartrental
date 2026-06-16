@@ -369,7 +369,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex flex-col">
-      <PublicNavbar activeLink="search" />
+      <PublicNavbar />
 
       <main className="flex-1">
         {/* ── Hero ── */}
@@ -533,7 +533,7 @@ export default function HomePage() {
             <div className="flex flex-col md:flex-row items-center justify-center gap-4">
               <Link
                 href="/register"
-                className="w-full md:w-auto px-10 py-4 bg-black text-white text-sm font-semibold rounded-full hover:bg-[#4a4733] shadow-lg transition-all active:scale-95"
+                className="w-full md:w-auto px-10 py-4 bg-[#ffef3d] text-[#1f1c00] text-sm font-semibold rounded-full hover:shadow-lg transition-all active:scale-95"
               >
                 Tạo tài khoản miễn phí
               </Link>
@@ -556,7 +556,7 @@ export default function HomePage() {
               </div>
               <Link
                 href={isAuthenticated ? '/hosting' : '/register'}
-                className="shrink-0 px-8 py-4 bg-black text-white text-sm font-semibold rounded-full hover:shadow-xl transition-all active:scale-95"
+                className="shrink-0 px-8 py-4 bg-[#ffef3d] text-[#1f1c00] text-sm font-semibold rounded-full hover:shadow-xl transition-all active:scale-95"
               >
                 Đăng tin cho thuê
               </Link>

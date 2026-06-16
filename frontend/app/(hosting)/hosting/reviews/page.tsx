@@ -522,8 +522,8 @@ export default function LandlordReviewsPage() {
             className={
               'shrink-0 px-4 py-1.5 text-[13px] font-medium rounded-full border transition-colors ' +
               (ratingFilter === f.key
-                ? 'bg-[#2683EB] text-white border-[#2683EB]'
-                : 'bg-white text-[#222222] border-[#DDDDDD] hover:border-[#2683EB]')
+                ? 'bg-[#ffef3d] text-[#1f1c00] border-[#ffef3d]'
+                : 'bg-white text-[#222222] border-[#DDDDDD] hover:border-[#ffef3d]')
             }
           >
             {f.label}
@@ -569,7 +569,7 @@ export default function LandlordReviewsPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1 || isFetching}
-            className="size-9 flex items-center justify-center rounded-full border border-solid border-[#DDDDDD] text-[#222222] hover:border-[#2683EB] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="size-9 flex items-center justify-center rounded-full border border-solid border-[#DDDDDD] text-[#222222] hover:border-[#ffef3d] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             aria-label="Trang trước"
           >
             <ChevronLeft className="size-4" />
@@ -593,8 +593,8 @@ export default function LandlordReviewsPage() {
                   className={
                     'min-w-9 h-9 px-3 flex items-center justify-center rounded-full text-sm font-medium border transition-colors ' +
                     (p === page
-                      ? 'bg-[#2683EB] text-white border-[#2683EB]'
-                      : 'bg-white text-[#222222] border-[#DDDDDD] hover:border-[#2683EB]')
+                      ? 'bg-[#ffef3d] text-[#1f1c00] border-[#ffef3d]'
+                      : 'bg-white text-[#222222] border-[#DDDDDD] hover:border-[#ffef3d]')
                   }
                 >
                   {isFetching && p === page ? <Loader2 className="size-3.5 animate-spin" /> : p}
@@ -605,7 +605,7 @@ export default function LandlordReviewsPage() {
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages || isFetching}
-            className="size-9 flex items-center justify-center rounded-full border border-solid border-[#DDDDDD] text-[#222222] hover:border-[#2683EB] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="size-9 flex items-center justify-center rounded-full border border-solid border-[#DDDDDD] text-[#222222] hover:border-[#ffef3d] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             aria-label="Trang sau"
           >
             <ChevronRight className="size-4" />

@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Heart, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type Property } from "@/types";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { Badge } from "@/components/ui/badge";
 import { useWishlist, useToggleWishlist } from "@/hooks/use-wishlist";
+import { useAuth } from "@/hooks/use-auth";
 
 const typeLabel: Record<Property["type"], string> = {
   room: "Phòng trọ",
@@ -24,9 +27,22 @@ interface PropertyCardProps {
 
 export function PropertyCard({ property, className, rentedPropertyIds }: PropertyCardProps) {
   const [imgIndex, setImgIndex] = useState(0);
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const { data: wishlistIds } = useWishlist();
   const { mutate: toggleWishlist, isPending } = useToggleWishlist(property.id);
   const wishlisted = wishlistIds?.includes(property.id) ?? false;
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      toast('Đăng nhập để lưu tin đăng yêu thích', {
+        action: { label: 'Đăng nhập', onClick: () => router.push('/login') },
+      });
+      return;
+    }
+    toggleWishlist();
+  };
 
   const isRented = rentedPropertyIds?.has(property.id) ?? false;
   const effectiveStatus = isRented ? 'rented' : property.status;
@@ -47,9 +63,9 @@ export function PropertyCard({ property, className, rentedPropertyIds }: Propert
   };
 
   return (
-    <Link href={`/properties/${property.id}`} className={cn("group block rounded-2xl border border-[#e0e0e0] bg-white overflow-hidden shadow-sm hover:shadow-xl hover:border-[#c0c0c0] hover:-translate-y-1 transition-all duration-300", className)}>
+    <Link href={`/properties/${property.id}`} className={cn("group flex h-full flex-col rounded-2xl border border-[#e0e0e0] bg-white overflow-hidden shadow-sm hover:shadow-xl hover:border-[#c0c0c0] hover:-translate-y-1 transition-all duration-300", className)}>
       {/* Image container */}
-      <div className="relative aspect-4/3 overflow-hidden bg-soft-cloud">
+      <div className="relative aspect-4/3 shrink-0 overflow-hidden bg-soft-cloud">
         <img
           src={images[imgIndex]}
           alt={property.title}
@@ -80,10 +96,7 @@ export function PropertyCard({ property, className, rentedPropertyIds }: Propert
 
         {/* Wishlist button — glassmorphism */}
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            toggleWishlist();
-          }}
+          onClick={handleToggleWishlist}
           disabled={isPending}
           className="absolute top-3 right-3 flex size-8 items-center justify-center rounded-full bg-black/20 backdrop-blur-md border border-white/20 transition-transform active:scale-95 hover:bg-black/30 disabled:opacity-70"
           aria-label="Thêm vào yêu thích"
@@ -91,7 +104,7 @@ export function PropertyCard({ property, className, rentedPropertyIds }: Propert
           <Heart
             className={cn(
               "size-4 transition-all",
-              wishlisted ? "fill-white stroke-white" : "fill-none stroke-white"
+              wishlisted ? "fill-red-500 stroke-red-500" : "fill-none stroke-white"
             )}
           />
         </button>
@@ -129,7 +142,7 @@ export function PropertyCard({ property, className, rentedPropertyIds }: Propert
       </div>
 
       {/* Body — breathing room + grouped info */}
-      <div className="p-4 flex flex-col gap-3">
+      <div className="flex flex-1 flex-col gap-3 p-4">
         {/* Title */}
         <p className="text-sm font-semibold text-ink-black line-clamp-2 leading-snug">
           {property.title}
@@ -144,8 +157,8 @@ export function PropertyCard({ property, className, rentedPropertyIds }: Propert
           </span>
         </div>
 
-        {/* Price — prominent, navy accent */}
-        <div>
+        {/* Price — prominent, navy accent, anchored to bottom */}
+        <div className="mt-auto">
           <PriceDisplay amount={property.price} period="month" size="lg" highlight />
         </div>
       </div>
