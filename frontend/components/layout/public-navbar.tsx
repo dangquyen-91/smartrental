@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { LogOut, User, Settings, LayoutDashboard, ChevronDown } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 
@@ -62,15 +62,6 @@ function UserMenu({
             Quản lý chỗ ở
           </Link>
         )}
-
-        <Link
-          href="/settings"
-          onClick={onClose}
-          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#191c1d] hover:bg-[#f3f4f5] transition-colors"
-        >
-          <Settings className="w-4 h-4" />
-          Cài đặt
-        </Link>
       </div>
 
       <div className="py-1 border-t border-[#ccc7ac]">
@@ -141,9 +132,9 @@ export function PublicNavbar({ activeLink }: PublicNavbarProps) {
           <Image
             src="/logo/SmartRental_02.png"
             alt="SmartRental"
-            width={80}
-            height={12}
-            className="h-auto object-contain"
+            width={160}
+            height={160}
+            className="h-12 w-auto object-contain"
             priority
           />
         </Link>
@@ -232,9 +223,9 @@ export function PublicFooter() {
               <Image
                 src="/logo/SmartRental_02.png"
                 alt="SmartRental"
-                width={80}
-                height={15}
-                className="h-auto object-contain"
+                width={160}
+                height={160}
+                className="h-12 w-auto object-contain"
               />
             </div>
             <p className="text-black/80 max-w-sm font-medium leading-relaxed">

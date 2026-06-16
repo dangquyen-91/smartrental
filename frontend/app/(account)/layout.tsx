@@ -36,11 +36,11 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   }
 
   return (
-    <div className="flex flex-col bg-white min-h-screen">
+    <div className="flex flex-col bg-white">
       <PublicNavbar />
 
       {/* ── Body: sidebar + content ── */}
-      <div className="flex flex-1 self-stretch">
+      <div className="flex self-stretch">
         {/* Sidebar — fixed width, always visible */}
         <aside className="w-[223px] shrink-0 flex flex-col items-start bg-white border-r border-[#DDDDDD]">
           <div className="flex items-center py-[21px] pl-[15px] pr-[118px] gap-2 border-b border-solid border-b-[#DDDDDD] w-full">
@@ -84,7 +84,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 bg-[#F6F8FB] p-8">
+        <main className="flex-1 bg-[#F6F8FB] p-8 min-h-[calc(100vh-80px)]">
           <div className="max-w-[1217px]">{children}</div>
         </main>
       </div>

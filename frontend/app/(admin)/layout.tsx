@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LogOut, ChevronDown, Search, Bell, HelpCircle,
   LayoutDashboard, Users, Building2, CreditCard, Wrench, Star,
-  ChevronLeft, ChevronRight, Home, Settings,
+  ChevronLeft, ChevronRight, Home,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
@@ -21,7 +21,6 @@ const NAV_ITEMS = [
   { label: 'Dịch vụ',     href: '/admin/services',      icon: Wrench },
   { label: 'Giao dịch',   href: '/admin/transactions',  icon: CreditCard },
   { label: 'Đánh giá',   href: '/admin/reviews',       icon: Star },
-  { label: 'Cài đặt',     href: '/admin/settings',      icon: Settings },
 ];
 
 const SIDEBAR_FULL_W = 224;
@@ -84,9 +83,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Image
             src="/logo/SmartRental_02.png"
             alt="SmartRental"
-            width={80}
-            height={12}
-            className="h-auto object-contain"
+            width={160}
+            height={160}
+            className="h-10 w-auto object-contain"
           />
         </Link>
 

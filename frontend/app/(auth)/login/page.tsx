@@ -112,7 +112,7 @@ function LoginForm() {
       {/* ── Header ── */}
       <header className="sticky top-0 z-50 flex items-center justify-between px-[40px] h-16 border-b" style={{ backgroundColor: 'rgba(248,249,250,0.8)', backdropFilter: 'blur(12px)', borderColor: 'rgba(204,199,172,0.3)' }}>
         <Link href="/" className="cursor-pointer">
-          <img src="/logo/logo_header.png" alt="Smart Rental" className="h-4 w-auto object-contain" />
+          <img src="/logo/SmartRental_02.png" alt="Smart Rental" className="h-10 w-auto object-contain" />
         </Link>
         <div className="hidden md:flex gap-6">
           <a className="text-sm font-medium text-[#4a4733] hover:text-[#676000] transition-colors cursor-pointer" href="#">Tải ứng dụng</a>

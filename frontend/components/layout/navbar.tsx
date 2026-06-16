@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, Bell, User, Settings, LogOut, ChevronDown, LayoutDashboard } from 'lucide-react';
+import { Menu, Bell, User, LogOut, ChevronDown, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useAuthStore } from '@/stores/auth.store';
 import { logoutApi } from '@/lib/api/auth.api';
@@ -117,14 +117,6 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                   >
                     <User className="w-4 h-4 text-[#6a6a6a]" />
                     Hồ sơ cá nhân
-                  </Link>
-                  <Link
-                    href="/profile/settings"
-                    onClick={() => setDropdownOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-[#222222] hover:bg-[#f7f7f7] transition-colors"
-                  >
-                    <Settings className="w-4 h-4 text-[#6a6a6a]" />
-                    Cài đặt
                   </Link>
                 </div>
 

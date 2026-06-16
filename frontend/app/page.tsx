@@ -378,7 +378,7 @@ export default function HomePage() {
           <img
             ref={heroImgRef}
             src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d6a19a6c-fe0a-4c34-8af3-68d6a777b244"
-            className="w-[1050px] h-[126px] mb-12 object-fill opacity-0"
+            className="w-[943.67px] h-[113.01px] mb-12 object-fill opacity-0"
             alt=""
           />
           <WaveText

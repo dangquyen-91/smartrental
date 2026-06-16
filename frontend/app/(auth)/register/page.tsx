@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import type { UseFormRegister, FieldErrors } from 'react-hook-form';
+import type { UseFormRegister, FieldErrors, Resolver } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -31,6 +31,17 @@ function SplitText({ text }: { text: string }) {
 }
 
 /* ── Zod Schemas ── */
+const acceptTermsError = 'Xin vui lòng đồng ý với điều khoản dịch vụ';
+
+const acceptTermsField = z.unknown().superRefine((v, ctx) => {
+  if (v !== true) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: acceptTermsError,
+    });
+  }
+});
+
 const landlordSchema = z
   .object({
     name: z.string().min(2, 'Tên ít nhất 2 ký tự'),
@@ -38,6 +49,7 @@ const landlordSchema = z
     phone: z.string().refine((v) => /^(0|\+84)\d{9}$/.test(v), 'Số điện thoại không hợp lệ'),
     password: z.string().min(6, 'Mật khẩu ít nhất 6 ký tự'),
     confirmPassword: z.string(),
+    acceptTerms: acceptTermsField,
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: 'Mật khẩu xác nhận không khớp',
@@ -55,6 +67,7 @@ const tenantSchema = z
       .or(z.literal('')),
     password: z.string().min(6, 'Mật khẩu ít nhất 6 ký tự'),
     confirmPassword: z.string(),
+    acceptTerms: acceptTermsField,
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: 'Mật khẩu xác nhận không khớp',
@@ -264,8 +277,12 @@ export default function RegisterPage() {
     );
   }, [tabKey.current]);
 
-  const landlordForm = useForm<LandlordData>({ resolver: zodResolver(landlordSchema) });
-  const tenantForm = useForm<TenantData>({ resolver: zodResolver(tenantSchema) });
+  const landlordForm = useForm<LandlordData, any, LandlordData>({
+    resolver: zodResolver(landlordSchema) as Resolver<LandlordData, any, LandlordData>,
+  });
+  const tenantForm = useForm<TenantData, any, TenantData>({
+    resolver: zodResolver(tenantSchema) as Resolver<TenantData, any, TenantData>,
+  });
   const phoneForm = useForm<PhoneData>({ resolver: zodResolver(phoneSchema) });
   const otpForm = useForm<OtpData>({ resolver: zodResolver(otpSchema) });
 
@@ -332,6 +349,8 @@ export default function RegisterPage() {
     setActiveTab(tab);
     setRole(tab === 'tenant' ? 'tenant' : 'landlord');
     setError('');
+    tenantForm.resetField('acceptTerms');
+    landlordForm.resetField('acceptTerms');
   };
 
   const stepDotIndex = step === 'otp' ? 1 : 0;
@@ -345,7 +364,7 @@ export default function RegisterPage() {
         borderColor: 'rgba(204,199,172,0.3)',
       }}>
         <Link href="/" className="cursor-pointer">
-          <img src="/logo/logo_header.png" alt="Smart Rental" className="h-4 w-auto object-contain" />
+          <img src="/logo/SmartRental_02.png" alt="Smart Rental" className="h-10 w-auto object-contain" />
         </Link>
         <div className="hidden md:flex gap-6">
           <a className="text-sm font-semibold transition-colors cursor-pointer" style={{ color: '#4a4733' }}
@@ -574,7 +593,7 @@ function LandlordForm({
   onSubmit,
   onError,
 }: {
-  form: ReturnType<typeof useForm<LandlordData>>;
+  form: ReturnType<typeof useForm<LandlordData, any, LandlordData>>;
   error: string;
   onSubmit: (values: LandlordData) => Promise<void>;
   onError: (msg: string) => void;
@@ -640,7 +659,12 @@ function LandlordForm({
         {errors.confirmPassword && <p className="text-xs font-medium" style={{ color: '#c13515' }}>{errors.confirmPassword.message}</p>}
       </div>
 
-      <TermsCheckbox />
+      <TermsCheckbox
+        value={!!form.watch('acceptTerms')}
+        onChange={(v) => form.setValue('acceptTerms', v as true, { shouldValidate: true })}
+        onBlur={() => form.trigger('acceptTerms')}
+        error={errors.acceptTerms?.message}
+      />
 
       {error && <ErrorBox message={error} />}
 
@@ -663,7 +687,7 @@ function TenantForm({
   onSubmit,
   onError,
 }: {
-  form: ReturnType<typeof useForm<TenantData>>;
+  form: ReturnType<typeof useForm<TenantData, any, TenantData>>;
   error: string;
   onSubmit: (values: TenantData) => Promise<void>;
   onError: (msg: string) => void;
@@ -712,7 +736,12 @@ function TenantForm({
         {errors.confirmPassword && <p className="text-xs font-medium" style={{ color: '#c13515' }}>{errors.confirmPassword.message}</p>}
       </div>
 
-      <TermsCheckbox />
+      <TermsCheckbox
+        value={!!form.watch('acceptTerms')}
+        onChange={(v) => form.setValue('acceptTerms', v as true, { shouldValidate: true })}
+        onBlur={() => form.trigger('acceptTerms')}
+        error={errors.acceptTerms?.message}
+      />
 
       {error && <ErrorBox message={error} />}
 
@@ -729,20 +758,43 @@ function TenantForm({
 }
 
 /* ── Terms Checkbox ── */
-function TermsCheckbox() {
+function TermsCheckbox({
+  value,
+  onChange,
+  error,
+  onBlur,
+}: {
+  value: boolean;
+  onChange: (v: boolean) => void;
+  error?: string;
+  onBlur?: () => void;
+}) {
   return (
-    <div className="flex items-start gap-3">
-      <input
-        id="terms"
-        type="checkbox"
-        className="mt-1 w-5 h-5 rounded cursor-pointer accent-[#676000]"
-      />
-      <label htmlFor="terms" className="text-base leading-tight cursor-pointer" style={{ color: '#4a4733' }}>
-        Tôi đồng ý với{' '}
-        <Link href="/terms" className="font-semibold underline decoration-[#f6e633] hover:text-[#676000] transition-colors cursor-pointer">Điều khoản bảo mật</Link>
-        {' '}và{' '}
-        <Link href="/privacy" className="font-semibold underline decoration-[#f6e633] hover:text-[#676000] transition-colors cursor-pointer">Chính sách của Smart Rental</Link>.
-      </label>
+    <div className="space-y-1.5">
+      <div className="flex items-start gap-3">
+        <input
+          id="terms"
+          type="checkbox"
+          checked={value}
+          onChange={(e) => onChange(e.target.checked)}
+          onBlur={onBlur}
+          aria-invalid={error ? 'true' : 'false'}
+          aria-describedby={error ? 'terms-error' : undefined}
+          className="mt-1 w-5 h-5 rounded cursor-pointer accent-[#676000] shrink-0"
+          style={error ? { outline: '2px solid #c13515', outlineOffset: 2 } : undefined}
+        />
+        <label htmlFor="terms" className="text-base leading-tight cursor-pointer" style={{ color: '#4a4733' }}>
+          Tôi đồng ý với{' '}
+          <Link href="/terms" className="font-semibold underline decoration-[#f6e633] hover:text-[#676000] transition-colors cursor-pointer">Điều khoản bảo mật</Link>
+          {' '}và{' '}
+          <Link href="/privacy" className="font-semibold underline decoration-[#f6e633] hover:text-[#676000] transition-colors cursor-pointer">Chính sách của Smart Rental</Link>.
+        </label>
+      </div>
+      {error && (
+        <p id="terms-error" className="text-xs font-medium pl-8" style={{ color: '#c13515' }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }
