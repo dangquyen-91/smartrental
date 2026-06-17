@@ -385,6 +385,11 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   );
   const effectiveStatus = rentedPropertyIds.has(id) ? 'rented' : p.status;
   const statusLabel = effectiveStatus === 'available' ? 'Còn trống' : effectiveStatus === 'rented' ? 'Đã thuê' : 'Bảo trì';
+  const statusCls = effectiveStatus === 'available'
+    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+    : effectiveStatus === 'rented'
+    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+    : 'bg-amber-50 text-amber-700 border border-amber-200';
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -423,7 +428,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           </div>
           <span className="text-gray-300">·</span>
           <span className="text-[#6A6A6A] text-sm">{TYPE_LABEL[p.type]}</span>
-          <span className="bg-[#FFF546] text-black text-xs font-bold px-2.5 py-0.5 rounded-full">{statusLabel}</span>
+          <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${statusCls}`}>{statusLabel}</span>
         </div>
 
         {/* Gallery */}

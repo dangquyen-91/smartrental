@@ -457,13 +457,6 @@ export default function LandlordReviewsPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       {/* Header */}
       <div className="mb-6">
-        <Link
-          href="/hosting"
-          className="inline-flex items-center gap-1 text-[#2683EB] text-sm font-medium hover:underline mb-3"
-        >
-          <ChevronLeft className="size-4" />
-          Về trang quản lý
-        </Link>
         <h1 className="text-[#222222] text-2xl sm:text-[28px] font-bold leading-tight">
           Đánh giá từ người thuê
         </h1>

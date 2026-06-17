@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -289,8 +289,8 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex justify-between items-center self-stretch py-3.5 mb-[1px] border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7]">
                     <span className="text-[#6A6A6A] text-sm">Trạng thái</span>
-                    <span className={cn('text-sm font-bold', user.isActive ? 'text-emerald-600' : 'text-[#929292]')}>
-                      {user.isActive ? 'Đang hoạt động' : 'Đã vô hiệu hoá'}
+                    <span className={cn('text-sm font-bold', user.isActive === false ? 'text-[#929292]' : 'text-emerald-600')}>
+                      {user.isActive === false ? 'Đã vô hiệu hoá' : 'Đang hoạt động'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center self-stretch py-3.5">
@@ -325,8 +325,11 @@ function AvatarSection({
   onUpdate: (u: UserType) => void;
 }) {
   const [uploading, setUploading] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const role = ROLE_META[user.role] ?? { label: user.role, style: 'bg-[#f7f7f7] text-[#6a6a6a]' };
+
+  useEffect(() => { setImgError(false); }, [user.avatar]);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -352,8 +355,13 @@ function AvatarSection({
           className="w-24 h-24 rounded-full bg-[#00000066] overflow-hidden cursor-pointer relative group"
           onClick={() => fileRef.current?.click()}
         >
-          {user.avatar ? (
-            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+          {user.avatar && !imgError ? (
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="w-full h-full object-cover"
+              onError={() => setImgError(true)}
+            />
           ) : (
             <div className="w-full h-full bg-[#ff385c] flex items-center justify-center text-white text-3xl font-bold">
               {user.name?.charAt(0)?.toUpperCase() ?? 'U'}
@@ -392,7 +400,7 @@ function AvatarSection({
         <span className={cn('text-sm font-bold px-3 py-1 rounded-full', role.style)}>
           {role.label}
         </span>
-        {!user.isActive && (
+        {user.isActive === false && (
           <span className="text-sm font-bold px-2.5 py-1 rounded-full bg-red-50 text-[#FF5E00] border border-[#FF5E00]">
             Vô hiệu hoá
           </span>

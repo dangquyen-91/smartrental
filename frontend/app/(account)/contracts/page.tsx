@@ -6,6 +6,7 @@ import {
   Home,
   Download,
   Loader2,
+  PenLine,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMyContracts, useSignContract } from '@/hooks/use-contracts';
@@ -171,11 +172,7 @@ function ContractCard({
               {isSigningThis ? (
                 <Loader2 className="size-3.5 animate-spin text-[#1f1c00]" />
               ) : (
-                <img
-                  src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7dfe4f36-bc25-408c-a882-7c0889c04cec"
-                  className="w-3.5 h-3.5 object-fill"
-                  alt=""
-                />
+                <PenLine className="size-3.5 text-[#1f1c00]" />
               )}
               <span className="text-[#1f1c00] text-xs font-bold">Ký hợp đồng</span>
             </button>

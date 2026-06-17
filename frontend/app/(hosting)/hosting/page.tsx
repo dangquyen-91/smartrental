@@ -3,8 +3,9 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Star,
-  MapPin, Pencil, Check, X, Loader2,
+  MapPin, Pencil, Check, X, Loader2, Plus, ArrowRight,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { useMyProperties } from '@/hooks/use-properties';
 import { useLandlordBookings, useConfirmBooking, useRejectBooking, useLandlordRevenueStats } from '@/hooks/use-bookings';
@@ -30,9 +31,9 @@ const REVENUE_PERIOD_OPTIONS: { value: RevenuePeriod; label: string }[] = [
 ];
 
 const STATUS_CONFIG: Record<Property['status'], { label: string; cls: string }> = {
-  available:   { label: 'Còn trống',     cls: 'bg-[#FFF546] text-black' },
-  rented:      { label: 'Đang cho thuê', cls: 'bg-blue-50 text-blue-700' },
-  maintenance: { label: 'Bảo trì',       cls: 'bg-amber-50 text-amber-700' },
+  available:   { label: 'Còn trống',     cls: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+  rented:      { label: 'Đang cho thuê', cls: 'bg-blue-50 text-blue-700 border border-blue-200' },
+  maintenance: { label: 'Bảo trì',       cls: 'bg-amber-50 text-amber-700 border border-amber-200' },
 };
 
 const TYPE_LABEL: Record<Property['type'], string> = {
@@ -110,10 +111,7 @@ export default function HostingPage() {
           href="/hosting/listings/new"
           className="flex shrink-0 items-center bg-[#ffef3d] hover:shadow-lg transition-all text-left py-2.5 px-4 gap-2 rounded-lg border-0"
         >
-          <img
-            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/76cd3957-c0df-44d3-87a2-4e397b09f0d7"
-            className="w-4 h-4 rounded-lg object-fill"
-          />
+          <Plus className="size-4 text-[#1f1c00]" />
           <span className="text-[#1f1c00] text-sm font-bold">Đăng tin</span>
         </Link>
       </div>
@@ -251,12 +249,9 @@ export default function HostingPage() {
             Tin đăng của bạn
           </h2>
           {properties.length > 0 && (
-            <Link href="/hosting/listings" className="flex items-center gap-1.5">
-              <span className="text-[#2683EB] text-xs font-bold">Quản lý</span>
-              <img
-                src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/dab1d7c7-395b-40e0-be15-7e92fcc9ce3a"
-                className="w-3 h-3 object-fill"
-              />
+            <Link href="/hosting/listings" className="flex items-center gap-1 text-xs font-semibold text-[#222222] hover:text-[#676000] transition-colors">
+              Quản lý
+              <ArrowRight className="size-3.5" />
             </Link>
           )}
         </div>
@@ -275,7 +270,7 @@ export default function HostingPage() {
         ) : recentListings.length === 0 ? (
           <div className="bg-white py-8 px-4 rounded-[14px] border border-solid border-[#DDDDDD] text-center">
             <p className="text-[#6A6A6A] text-sm">Chưa có tin đăng nào</p>
-            <Link href="/hosting/listings/new" className="text-[#2683EB] text-sm font-semibold hover:underline mt-2 inline-block">
+            <Link href="/hosting/listings/new" className="text-[#222222] text-sm font-semibold hover:underline mt-2 inline-block">
               Đăng tin ngay
             </Link>
           </div>
@@ -295,12 +290,9 @@ export default function HostingPage() {
             Đánh giá mới nhất
           </h2>
           {reviewsData && reviewsData.totalReviews > 0 && (
-            <Link href="/hosting/reviews" className="flex items-center gap-1.5">
-              <span className="text-[#2683EB] text-xs font-bold">Xem tất cả</span>
-              <img
-                src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/dab1d7c7-395b-40e0-be15-7e92fcc9ce3a"
-                className="w-3 h-3 object-fill"
-              />
+            <Link href="/hosting/reviews" className="flex items-center gap-1 text-xs font-semibold text-[#222222] hover:text-[#676000] transition-colors">
+              Xem tất cả
+              <ArrowRight className="size-3.5" />
             </Link>
           )}
         </div>
@@ -392,8 +384,8 @@ function ListingRow({ property: p }: { property: Property }) {
           <span className="text-[#222222] text-sm font-bold">
             {p.title}
           </span>
-          <div className="flex flex-col shrink-0 items-start bg-[#FFF546] py-[1px] px-2 rounded-[26843500px]">
-            <span className="text-black text-xs">{sc.label}</span>
+          <div className={cn('flex shrink-0 items-center py-0.5 px-2.5 rounded-full text-xs font-medium', sc.cls)}>
+            {sc.label}
           </div>
         </div>
         <div className="flex items-center self-stretch gap-1">

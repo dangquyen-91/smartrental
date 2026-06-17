@@ -415,7 +415,7 @@ function ReservationCard({
               <button
                 onClick={() => onComplete(booking.id)}
                 disabled={isCompleting}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-ink-black hover:bg-charcoal disabled:opacity-60 rounded-lg transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-60 rounded-lg transition-all active:scale-95"
               >
                 {isCompleting ? (
                   <Loader2 className="size-3.5 animate-spin" />

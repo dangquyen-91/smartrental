@@ -227,11 +227,7 @@ function ContractCard({
               {isSigningThis ? (
                 <Loader2 className="size-3.5 animate-spin text-[#1f1c00]" />
               ) : (
-                <img
-                  src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7dfe4f36-bc25-408c-a882-7c0889c04cec"
-                  className="w-3.5 h-3.5 object-fill"
-                  alt=""
-                />
+                <PenLine className="size-3.5 text-[#1f1c00]" />
               )}
               <span className="text-[#1f1c00] text-xs font-bold">Ký hợp đồng</span>
             </button>
@@ -509,11 +505,7 @@ export default function HostingContractsPage() {
           onClick={() => setShowGenerateModal(true)}
           className="flex shrink-0 items-center bg-[#ffef3d] hover:shadow-lg transition-all text-left py-2 px-4 gap-2 rounded-lg border-0"
         >
-          <img
-            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/66e90a74-9b83-4c04-8d5c-235a3bff0c2e"
-            className="w-4 h-4 object-fill"
-            alt=""
-          />
+          <Plus className="size-4 text-[#1f1c00]" />
           <span className="text-[#1f1c00] text-sm font-bold">Tạo hợp đồng</span>
         </button>
       </div>
