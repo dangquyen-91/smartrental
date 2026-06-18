@@ -561,38 +561,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="bg-[#FFF546] py-10 px-6 md:px-20 mt-auto">
-        <div className="max-w-[1280px] mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8 border-b border-black/10">
-            <div>
-              <img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/fc449148-484f-423d-b331-e6325dd4b7b7" className="w-[160px] h-auto mb-3" />
-              <p className="text-black text-sm">Nền tảng thuê nhà thông minh cho thị trường Việt Nam.</p>
-            </div>
-            <div>
-              <h4 className="text-black text-sm font-bold mb-3">Hỗ trợ</h4>
-              <div className="flex flex-col gap-2 text-black/60 text-sm">
-                <span className="hover:text-black cursor-pointer transition-colors">Trung tâm trợ giúp</span>
-                <span className="hover:text-black cursor-pointer transition-colors">Liên hệ</span>
-                <span className="hover:text-black cursor-pointer transition-colors">Chính sách bảo mật</span>
-                <span className="hover:text-black cursor-pointer transition-colors">Điều khoản sử dụng</span>
-              </div>
-            </div>
-            <div>
-              <h4 className="text-black text-sm font-bold mb-3">Dành cho chủ nhà</h4>
-              <div className="flex flex-col gap-2 text-black/60 text-sm">
-                <span className="hover:text-black cursor-pointer transition-colors">Đăng tin cho thuê</span>
-                <span className="hover:text-black cursor-pointer transition-colors">Quản lý đặt phòng</span>
-                <span className="hover:text-black cursor-pointer transition-colors">Hợp đồng điện tử</span>
-                <span className="hover:text-black cursor-pointer transition-colors">Gói dịch vụ</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-between items-start pt-6">
-            <span className="text-black/40 text-xs">© 2026 Smart Rental. Nền tảng thuê nhà thông minh.</span>
-          </div>
-        </div>
-      </div>
+      <PublicFooter />
     </div>
   );
 }

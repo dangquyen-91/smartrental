@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/use-auth';
 import {
   upsertRoommateProfileApi,
   getMyRoommateProfileApi,
@@ -35,9 +36,11 @@ export function useRoommateUserProfile(userId: string, enabled = false) {
 }
 
 export function useMyRoommateProfile() {
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: roommateKeys.profile(),
-    queryFn: getMyRoommateProfileApi,  // returns RoommateProfile | undefined directly
+    queryFn: getMyRoommateProfileApi,
+    enabled: isAuthenticated,
     retry: false,
     staleTime: 60_000,
   });
@@ -71,9 +74,11 @@ export function useDeleteRoommateProfile() {
 }
 
 export function useRoommateMatches(page = 1) {
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: roommateKeys.matches(page),
     queryFn: () => getRoommateMatchesApi({ page, limit: 12 }),
+    enabled: isAuthenticated,
     staleTime: 60_000,
   });
 }
@@ -131,9 +136,11 @@ export function useCancelRoommateRequest() {
 }
 
 export function useMyRoommateRequests(type: 'sent' | 'received' = 'received', status?: RoommateRequest['status']) {
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: roommateKeys.requests(type, status),
     queryFn: () => getMyRoommateRequestsApi({ type, status }),
+    enabled: isAuthenticated,
     staleTime: 30_000,
   });
 }
