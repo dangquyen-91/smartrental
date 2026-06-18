@@ -129,6 +129,8 @@ export interface Booking {
   platformFee?: number;
   landlordPayout?: number;
   payoutStatus?: 'pending' | 'paid' | null;
+  note?: string | null;
+  rejectionReason?: string | null;
   cancelledBy?: 'tenant' | 'landlord' | 'admin' | null;
   cancelReason?: string | null;
   createdAt: string;

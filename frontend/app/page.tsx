@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Building2,
   Home,
@@ -19,6 +20,36 @@ import { WaveText } from '@/components/shared/wave-text';
 import type { Property } from '@/types';
 import type { PropertyFilters } from '@/lib/api/properties.api';
 import { gsap } from 'gsap';
+
+// ─── Auth-aware Link ────────────────────────────────────────────────────────
+// Nếu chưa đăng nhập, click sẽ chuyển sang /login thay vì href gốc.
+function AuthLink({
+  href,
+  requireAuth,
+  className,
+  children,
+}: {
+  href: string;
+  requireAuth: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (requireAuth && !isAuthenticated) {
+      e.preventDefault();
+      router.push('/login');
+    }
+  };
+
+  return (
+    <Link href={href} onClick={handleClick} className={className}>
+      {children}
+    </Link>
+  );
+}
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -375,15 +406,16 @@ export default function HomePage() {
         {/* ── Hero ── */}
         <section className="hero-gradient pt-16 pb-32 px-4 md:px-10 text-center relative overflow-hidden">
           <div className="mx-auto mb-12" style={{ maxWidth: '768px' }}>
-          <img
-            ref={heroImgRef}
-            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d6a19a6c-fe0a-4c34-8af3-68d6a777b244"
-            className="w-[943.67px] h-[113.01px] mb-12 object-fill opacity-0"
-            alt=""
-          />
+            <img
+              ref={heroImgRef}
+              src="/background/Smart Rental_Home page.png"
+              alt="Smart Rental"
+              className="w-full max-w-6xl mx-auto mb-12 object-contain"
+              style={{ aspectRatio: 'auto' }}
+            />
           <WaveText
             text="Tìm nhà trọ phù hợp,<br>dễ dàng và nhanh chóng"
-              className="text-4xl md:text-5xl font-bold text-[#191c1d] leading-tight mb-6"
+              className="text-2xl md:text-3xl font-bold text-[#191c1d] leading-tight mb-6"
             />
             <p className="text-lg text-[#4a4733]">
               Hàng nghìn phòng trọ, căn hộ, nhà nguyên căn đang chờ bạn khám phá.
@@ -531,18 +563,20 @@ export default function HomePage() {
               Tạo tài khoản miễn phí để lưu tin yêu thích, đặt phòng và nhận thông báo mới nhất.
             </p>
             <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-              <Link
+              <AuthLink
                 href="/register"
+                requireAuth
                 className="w-full md:w-auto px-10 py-4 bg-[#ffef3d] text-[#1f1c00] text-sm font-semibold rounded-full hover:shadow-lg transition-all active:scale-95"
               >
                 Tạo tài khoản miễn phí
-              </Link>
-              <Link
+              </AuthLink>
+              <AuthLink
                 href="/login"
+                requireAuth
                 className="w-full md:w-auto px-10 py-4 border border-[#7b7861] text-[#191c1d] text-sm font-semibold rounded-full hover:bg-[#f3f4f5] transition-all active:scale-95"
               >
                 Đăng nhập
-              </Link>
+              </AuthLink>
             </div>
 
             <div className="mt-24 p-8 md:p-12 bg-[#f3f4f5] rounded-[40px] flex flex-col md:flex-row items-center justify-between text-left gap-8">
@@ -554,12 +588,13 @@ export default function HomePage() {
                   Tất cả chỉ trong một dashboard!
                 </p>
               </div>
-              <Link
-                href={isAuthenticated ? '/hosting' : '/register'}
+              <AuthLink
+                href={isAuthenticated ? '/hosting' : '/hosting'}
+                requireAuth
                 className="shrink-0 px-8 py-4 bg-[#ffef3d] text-[#1f1c00] text-sm font-semibold rounded-full hover:shadow-xl transition-all active:scale-95"
               >
                 Đăng tin cho thuê
-              </Link>
+              </AuthLink>
             </div>
           </div>
         </section>

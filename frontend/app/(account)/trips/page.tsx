@@ -158,6 +158,26 @@ function BookingCard({
           </div>
         )}
 
+        {/* Lý do chủ nhà hủy / từ chối */}
+        {booking.status === 'rejected' && booking.rejectionReason && (
+          <div className="flex flex-col w-full mb-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+            <span className="text-[11px] font-semibold text-[#c13515] mb-0.5">
+              Lý do chủ nhà từ chối
+            </span>
+            <span className="text-xs text-[#3F3F3F] break-words">{booking.rejectionReason}</span>
+          </div>
+        )}
+        {booking.status === 'cancelled' &&
+          booking.cancelledBy === 'landlord' &&
+          booking.cancelReason && (
+            <div className="flex flex-col w-full mb-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+              <span className="text-[11px] font-semibold text-[#c13515] mb-0.5">
+                Lý do chủ nhà huỷ
+              </span>
+              <span className="text-xs text-[#3F3F3F] break-words">{booking.cancelReason}</span>
+            </div>
+          )}
+
         <div className="flex items-center mb-[7px] w-full">
           <div className="flex shrink-0 items-center mr-4 gap-1.5">
             <CalendarDays className="size-3.5 text-[#929292] shrink-0" />

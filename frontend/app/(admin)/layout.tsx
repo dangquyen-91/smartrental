@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LogOut, ChevronDown, Search, Bell, HelpCircle,
+  LogOut, ChevronDown, Search,
   LayoutDashboard, Users, Building2, CreditCard, Wrench, Star,
   ChevronLeft, ChevronRight, Home,
 } from 'lucide-react';
@@ -149,23 +149,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Home className="w-4 h-4" />
           </Link>
 
-          {/* Notifications */}
-          <button
-            className="flex items-center justify-center w-9 h-9 rounded-[20px] hover:bg-[#f4f5f7] transition-colors text-[#6a6a6a] relative shrink-0"
-            title="Thông báo"
-          >
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#ff385c] rounded-full" />
-          </button>
-
-          {/* Support */}
-          <button
-            className="flex items-center justify-center w-9 h-9 rounded-[20px] hover:bg-[#f4f5f7] transition-colors text-[#6a6a6a] shrink-0"
-            title="Hỗ trợ"
-          >
-            <HelpCircle className="w-4 h-4" />
-          </button>
-
           {/* Divider */}
           <div className="w-px h-6 bg-[#e2e5ea] mx-1" />
 
@@ -225,7 +208,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -SIDEBAR_MOTION_W, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="hidden lg:flex flex-col shrink-0 bg-[#1a1a2e] overflow-hidden"
+              className="hidden lg:flex flex-col shrink-0 bg-[#1a1a2e] overflow-hidden border-r border-black/5"
               style={{ width: SIDEBAR_FULL_W }}
             >
               {/* Section label */}
@@ -281,7 +264,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -SIDEBAR_COLLAPSED_W, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="hidden lg:flex flex-col shrink-0 bg-[#1a1a2e] overflow-hidden"
+              className="hidden lg:flex flex-col shrink-0 bg-[#1a1a2e] overflow-hidden border-r border-black/5"
               style={{ width: SIDEBAR_COLLAPSED_W }}
             >
               {/* Spacer for label row height */}
@@ -321,8 +304,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </AnimatePresence>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto">
-          {children}
+        <main className="flex-1 overflow-y-auto bg-[#f4f5f7]">
+          <div className="px-6 py-6 lg:px-8 lg:py-8">
+            {children}
+          </div>
         </main>
       </div>
 

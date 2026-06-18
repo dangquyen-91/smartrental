@@ -30,8 +30,11 @@ const STATUS_COLOR: Record<string, string> = {
 const getPrimaryImage = (images: PropertyImage[]) =>
   images.find((img) => img.isPrimary)?.url ?? images[0]?.url;
 
-const getOwnerName = (owner: Property['owner']) =>
-  typeof owner === 'string' ? '—' : (owner as User).name;
+const getOwnerName = (owner: Property['owner']) => {
+  if (owner == null) return '—';
+  if (typeof owner === 'string') return '—';
+  return (owner as User).name ?? '—';
+};
 
 const fmtPrice = (n: number) =>
   new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(n) + '₫';

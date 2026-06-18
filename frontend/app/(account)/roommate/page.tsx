@@ -96,8 +96,14 @@ const profileSchema = z.object({
   pets:        z.enum(['ok', 'no']),
   smoking:     z.enum(['ok', 'no']),
   looking:     z.boolean(),
-  bio:         z.string().max(500).optional(),
-  city:        z.string().max(100).optional(),
+  bio:         z.string()
+                 .trim()
+                 .min(20, 'Giới thiệu phải có ít nhất 20 ký tự')
+                 .max(500, 'Giới thiệu tối đa 500 ký tự'),
+  city:        z.string()
+                 .trim()
+                 .min(2, 'Vui lòng nhập thành phố')
+                 .max(100, 'Tên thành phố tối đa 100 ký tự'),
 }).refine((d) => d.budgetMax >= d.budgetMin, {
   message: 'Ngân sách tối đa phải lớn hơn tối thiểu',
   path: ['budgetMax'],
@@ -243,10 +249,12 @@ function ProfileTab() {
             />
           </FieldGroup>
 
-          <FieldGroup label="Thành phố">
+          <FieldGroup label={
+            <span>Thành phố <span className="text-[#c13515]">*</span></span>
+          } error={errors.city?.message}>
             <input
               {...register('city')}
-              className={inputCls(false)}
+              className={inputCls(!!errors.city)}
               placeholder="VD: Hồ Chí Minh, Hà Nội..."
             />
             <p className="text-xs text-[#6a6a6a] mt-1">Chỉ hiển thị bạn cùng phòng trong cùng thành phố.</p>
@@ -348,14 +356,17 @@ function ProfileTab() {
 
         {/* Section: bio */}
         <div className="border-t border-[#dddddd] py-5 space-y-2">
-          <p className="text-xs font-semibold text-[#6a6a6a] uppercase tracking-wide">Giới thiệu bản thân</p>
+          <p className="text-xs font-semibold text-[#6a6a6a] uppercase tracking-wide">
+            Giới thiệu bản thân <span className="text-[#c13515]">*</span>
+          </p>
           <textarea
             {...register('bio')}
             rows={3}
             maxLength={500}
-            className={cn(inputCls(false), 'resize-none')}
-            placeholder="Mô tả ngắn về bản thân, thói quen, điều bạn mong muốn ở người ở ghép..."
+            className={cn(inputCls(!!errors.bio), 'resize-none')}
+            placeholder="Mô tả ngắn về bản thân, thói quen, điều bạn mong muốn ở người ở ghép (tối thiểu 20 ký tự)..."
           />
+          {errors.bio && <p className="text-xs text-[#c13515]">{errors.bio.message}</p>}
           <p className={cn('text-xs text-right', bioValue.length > 450 ? 'text-amber-600' : 'text-[#6a6a6a]')}>
             {bioValue.length}/500
           </p>
@@ -1183,7 +1194,7 @@ function Chip({ children }: { children: React.ReactNode }) {
   );
 }
 
-function FieldGroup({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function FieldGroup({ label, error, children }: { label: React.ReactNode; error?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
       <label className="block text-sm font-medium text-[#222222]">{label}</label>

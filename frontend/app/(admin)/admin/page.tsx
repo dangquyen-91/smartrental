@@ -87,9 +87,9 @@ function RevenueGauge({ value, target }: { value: number; target: number }) {
             </circle>
           )}
         </svg>
-        <div className="absolute bottom-0 flex flex-col items-center">
-          <span className="text-base font-bold text-[#222]">{pct.toFixed(0)}%</span>
-          <span className="text-[9px] text-[#9ca3af]">đạt mục tiêu</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pb-4 translate-x-4">
+          <span className="text-base font-bold text-[#222] leading-none">{pct.toFixed(0)}%</span>
+          <span className="text-[9px] text-[#9ca3af] mt-1">đạt mục tiêu</span>
         </div>
       </div>
       {target > 0 && (
@@ -571,9 +571,9 @@ function QuickActionCard({
   return (
     <Link
       href={href}
-      className="group flex items-center gap-4 bg-white rounded-2xl border border-[#e2e5ea] p-5 shadow-sm hover:shadow-md hover:border-[#e2e5ea]/60 transition-all"
+      className="group flex items-center gap-4 bg-white rounded-2xl border border-[#e2e5ea] p-5 shadow-sm hover:shadow-md hover:border-[#ff385c]/40 transition-all"
     >
-      <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${accent}15` }}>
+      <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105" style={{ background: `${accent}15` }}>
         <Icon className="w-6 h-6" style={{ color: accent }} />
       </div>
       <div className="flex-1 min-w-0">
@@ -628,7 +628,7 @@ export default function AdminPage() {
   const cancellationByActor = bookingAnalytics?.data?.summary?.cancellationByActor as Record<string, number> | undefined;
 
   return (
-    <div className="p-8 flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -769,55 +769,60 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* ══ ROW 3A: PENDING ACTIONS (Cần xử lý ngay) ═══════════════════════ */}
+      {/* ══ ROW 3A: PENDING ACTIONS (Cần xử lý ngay) — same row as quick actions ═══ */}
       {hasPending && (
-        <div className="bg-white rounded-2xl border border-[#fed7aa] p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-5">
-            <div className="w-8 h-8 rounded-lg bg-[#fff7ed] flex items-center justify-center">
-              <AlertCircle className="w-4 h-4 text-[#f59e0b]" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-[#222]">Cần xử lý ngay</h2>
-              <p className="text-xs text-[#9ca3af]">{TIME_FILTERS.find(f => f.value === timeFilter)?.label}</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[#f59e0b] mb-3 px-1 flex items-center gap-2">
+            <AlertCircle className="w-3.5 h-3.5" />
+            Cần xử lý ngay — {TIME_FILTERS.find(f => f.value === timeFilter)?.label}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {(pending?.payouts ?? 0) > 0 && (
               <Link
                 href="/admin/transactions"
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#fff7ed] hover:bg-[#fed7aa]/30 transition-colors"
+                className="flex items-center gap-4 bg-white rounded-2xl border border-[#fed7aa] p-5 shadow-sm hover:shadow-md hover:border-[#fb923c] transition-all"
               >
-                <div className="w-8 h-8 rounded-full bg-[#f59e0b] text-white text-xs font-bold flex items-center justify-center shrink-0">
-                  {pending?.payouts}
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-[#fff7ed]">
+                  <Wallet className="w-6 h-6 text-[#f59e0b]" />
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-[#222]">Chờ payout</p>
-                  <p className="text-xs text-[#9ca3af]">Chủ trọ &amp; provider</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-[#222]">{pending?.payouts}</span>
+                    <span className="text-xs text-[#9ca3af]">chờ payout</span>
+                  </div>
+                  <p className="text-xs text-[#9ca3af] mt-0.5">Chủ trọ & provider cần giải ngân</p>
                 </div>
+                <ArrowRight className="w-4 h-4 text-[#d1d5db] group-hover:text-[#f59e0b] shrink-0" />
               </Link>
             )}
             {(pending?.unassignedServiceOrders ?? 0) > 0 && (
               <Link
                 href="/admin/services"
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#fff0f3] hover:bg-[#ffd6de]/30 transition-colors"
+                className="flex items-center gap-4 bg-white rounded-2xl border border-[#ffd6de] p-5 shadow-sm hover:shadow-md hover:border-[#ff385c] transition-all"
               >
-                <div className="w-8 h-8 rounded-full bg-[#ff385c] text-white text-xs font-bold flex items-center justify-center shrink-0">
-                  {pending?.unassignedServiceOrders}
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-[#fff0f3]">
+                  <ClipboardList className="w-6 h-6 text-[#ff385c]" />
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-[#222]">Chưa assign</p>
-                  <p className="text-xs text-[#9ca3af]">Đơn dịch vụ</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-[#222]">{pending?.unassignedServiceOrders}</span>
+                    <span className="text-xs text-[#9ca3af]">chưa assign</span>
+                  </div>
+                  <p className="text-xs text-[#9ca3af] mt-0.5">Đơn dịch vụ cần phân công</p>
                 </div>
+                <ArrowRight className="w-4 h-4 text-[#d1d5db] group-hover:text-[#ff385c] shrink-0" />
               </Link>
             )}
           </div>
         </div>
       )}
 
-      {/* ══ ROW 3B: QUICK ACTIONS (Thao tác nhanh) — full-width row ════════ */}
-      <div className="bg-white rounded-2xl border border-[#e2e5ea] p-6 shadow-sm">
-        <h2 className="text-base font-bold text-[#222] mb-4">Thao tác nhanh</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* ══ ROW 3: QUICK ACTIONS (Thao tác nhanh) — 3 cols × 2 rows ══════ */}
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[#9ca3af] mb-3 px-1">
+          Thao tác nhanh
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <QuickActionCard label="Quản lý người dùng" desc="Kích hoạt / Vô hiệu hoá" href="/admin/users" icon={UserPlus} accent="#ff385c" />
           <QuickActionCard label="Quản lý tin đăng" desc="Nổi bật & trạng thái" href="/admin/properties" icon={Building} accent="#ff385c" />
           <QuickActionCard label="Giao dịch & Payout" desc="Xử lý payout" href="/admin/transactions" icon={Wallet} accent="#ff385c" />

@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuthStore } from '@/stores/auth.store';
 import { registerApi, googleLoginApi } from '@/lib/api/auth.api';
@@ -95,19 +95,15 @@ function ErrorBox({ message }: { message: string }) {
   );
 }
 
-/* ── Password Input with material-symbols toggle ── */
+/* ── Password Input with eye toggle ── */
 function PasswordInput({
   id,
   placeholder,
-  value,
-  onChange,
-  className = '',
+  registration,
 }: {
   id: string;
   placeholder: string;
-  value: string;
-  onChange: (v: string) => void;
-  className?: string;
+  registration: ReturnType<UseFormRegister<any>>;
 }) {
   const [visible, setVisible] = useState(false);
   return (
@@ -116,24 +112,25 @@ function PasswordInput({
         id={id}
         type={visible ? 'text' : 'password'}
         placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={cn(
-          'w-full px-4 py-3 rounded-xl border text-base transition-all focus:outline-none focus:ring-2',
-          className,
-        )}
+        autoComplete="new-password"
+        data-form-type="other"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-bwignore="true"
+        data-bitwarden-watching="false"
+        className="w-full px-4 pr-12 py-3 rounded-xl border text-base transition-all focus:outline-none focus:ring-2 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"
         style={{ backgroundColor: '#ffffff', borderColor: '#ccc7ac', color: '#191c1d', '--tw-ring-color': '#ffef3d' } as React.CSSProperties}
+        {...registration}
       />
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
-        className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer transition-colors hover:scale-110"
+        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md cursor-pointer transition-colors hover:scale-110"
         style={{ color: '#4a4733' }}
         tabIndex={-1}
+        aria-label={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
       >
-        <span className="material-symbols-outlined text-xl leading-none">
-          {visible ? 'visibility_off' : 'visibility'}
-        </span>
+        {visible ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
       </button>
     </div>
   );
@@ -487,13 +484,13 @@ function LandlordForm({
 
       <div className="space-y-2">
         <label className="block text-sm font-semibold" style={{ color: '#191c1d' }} htmlFor="lr-pwd">Mật khẩu</label>
-        <PasswordInput id="lr-pwd" placeholder="Ít nhất 6 ký tự" value={form.getValues('password')} onChange={(v) => form.setValue('password', v)} />
+        <PasswordInput id="lr-pwd" placeholder="Ít nhất 6 ký tự" registration={register('password')} />
         {errors.password && <p className="text-xs font-medium" style={{ color: '#c13515' }}>{errors.password.message}</p>}
       </div>
 
       <div className="space-y-2">
         <label className="block text-sm font-semibold" style={{ color: '#191c1d' }} htmlFor="lr-cpwd">Xác nhận mật khẩu</label>
-        <PasswordInput id="lr-cpwd" placeholder="Nhập lại mật khẩu" value={form.getValues('confirmPassword')} onChange={(v) => form.setValue('confirmPassword', v)} />
+        <PasswordInput id="lr-cpwd" placeholder="Nhập lại mật khẩu" registration={register('confirmPassword')} />
         {errors.confirmPassword && <p className="text-xs font-medium" style={{ color: '#c13515' }}>{errors.confirmPassword.message}</p>}
       </div>
 
@@ -564,13 +561,13 @@ function TenantForm({
 
       <div className="space-y-2">
         <label className="block text-sm font-semibold" style={{ color: '#191c1d' }} htmlFor="tn-pwd">Mật khẩu</label>
-        <PasswordInput id="tn-pwd" placeholder="Ít nhất 6 ký tự" value={form.getValues('password')} onChange={(v) => form.setValue('password', v)} />
+        <PasswordInput id="tn-pwd" placeholder="Ít nhất 6 ký tự" registration={register('password')} />
         {errors.password && <p className="text-xs font-medium" style={{ color: '#c13515' }}>{errors.password.message}</p>}
       </div>
 
       <div className="space-y-2">
         <label className="block text-sm font-semibold" style={{ color: '#191c1d' }} htmlFor="tn-cpwd">Xác nhận mật khẩu</label>
-        <PasswordInput id="tn-cpwd" placeholder="Nhập lại mật khẩu" value={form.getValues('confirmPassword')} onChange={(v) => form.setValue('confirmPassword', v)} />
+        <PasswordInput id="tn-cpwd" placeholder="Nhập lại mật khẩu" registration={register('confirmPassword')} />
         {errors.confirmPassword && <p className="text-xs font-medium" style={{ color: '#c13515' }}>{errors.confirmPassword.message}</p>}
       </div>
 
