@@ -227,7 +227,7 @@ export default function HostingPage() {
                 key={b.id}
                 booking={b}
                 onConfirm={() => confirmBooking.mutate(b.id)}
-                onReject={() => rejectBooking.mutate({ id: b.id })}
+                onReject={(reason) => rejectBooking.mutate({ id: b.id, reason })}
                 confirming={confirmBooking.isPending && confirmBooking.variables === b.id}
                 rejecting={rejectBooking.isPending && (rejectBooking.variables as { id: string }).id === b.id}
               />
@@ -478,70 +478,106 @@ function PendingBookingRow({
 }: {
   booking: Booking;
   onConfirm: () => void;
-  onReject: () => void;
+  onReject: (reason: string) => void;
   confirming: boolean;
   rejecting: boolean;
 }) {
+  const [showRejectInput, setShowRejectInput] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
   const busy = confirming || rejecting;
 
+  const handleRejectConfirm = () => {
+    onReject(rejectReason.trim());
+    setShowRejectInput(false);
+    setRejectReason('');
+  };
+
   return (
-    <div className="flex items-start self-stretch bg-white p-4 gap-[1px] rounded-[14px] border border-solid border-[#DDDDDD]">
-      <div className="flex-1">
-        <div className="flex flex-col items-start self-stretch mb-[1px]">
-          <span className="text-[#222222] text-sm font-bold">
-            {tenantName(b)}
-          </span>
+    <div className="bg-white rounded-[14px] border border-solid border-[#DDDDDD]">
+      <div className="flex items-start p-4 gap-[1px]">
+        <div className="flex-1">
+          <div className="flex flex-col items-start self-stretch mb-[1px]">
+            <span className="text-[#222222] text-sm font-bold">
+              {tenantName(b)}
+            </span>
+          </div>
+          <div className="flex flex-col items-start self-stretch">
+            <span className="text-[#6A6A6A] text-xs">
+              {propertyTitle(b)}
+            </span>
+          </div>
+          <div className="flex items-center self-stretch mb-[1px] gap-1">
+            <MapPin className="w-3 h-3 text-[#929292]" />
+            <span className="text-[#929292] text-xs">
+              {propertyDistrict(b)}
+            </span>
+          </div>
+          <div className="flex flex-col items-start self-stretch pt-0.5">
+            <span className="text-[#929292] text-xs">
+              {formatDate(b.startDate)} · {b.duration} tháng · {formatVnd(b.totalPrice)}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col items-start self-stretch">
-          <span className="text-[#6A6A6A] text-xs">
-            {propertyTitle(b)}
-          </span>
-        </div>
-        <div className="flex items-center self-stretch mb-[1px] gap-1">
-          <img
-            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/e83ddeae-4471-4cc3-998a-49fb38ee3bb4"
-            className="w-3 h-3 object-fill"
+        {!showRejectInput && (
+          <div className="flex shrink-0 items-center gap-[9px]">
+            <button
+              onClick={() => setShowRejectInput(true)}
+              disabled={busy}
+              className="flex shrink-0 items-center bg-white text-left py-[7px] px-[13px] gap-1.5 rounded-lg border border-solid border-[#FF5E00] hover:bg-orange-50 transition-colors disabled:opacity-50"
+            >
+              <X className="w-3.5 h-3.5 text-[#FF5E00]" />
+              <span className="text-[#FF5E00] text-[13px] font-bold">Từ chối</span>
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={busy}
+              className="flex shrink-0 items-center bg-[#ffef3d] text-left py-[7px] px-3 gap-1.5 rounded-lg border-0 hover:shadow-lg transition-all disabled:opacity-50"
+            >
+              {confirming ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#1f1c00]" />
+              ) : (
+                <Check className="w-3.5 h-3.5 text-[#1f1c00]" />
+              )}
+              <span className="text-[#1f1c00] text-[13px] font-bold">
+                {confirming ? 'Đang xử lý...' : 'Xác nhận'}
+              </span>
+            </button>
+          </div>
+        )}
+        {showRejectInput && (
+          <button
+            onClick={() => { setShowRejectInput(false); setRejectReason(''); }}
+            className="text-xs text-[#929292] hover:text-[#222222] transition-colors px-2 py-1"
+          >
+            Hủy
+          </button>
+        )}
+      </div>
+      {showRejectInput && (
+        <div className="px-4 pb-4 border-t border-[#F0F0F0] pt-3">
+          <textarea
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            placeholder="Lý do từ chối (không bắt buộc)..."
+            rows={2}
+            className="w-full text-sm border border-[#E5E5E5] rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-[#FF5E00] transition-colors"
           />
-          <span className="text-[#929292] text-xs">
-            {propertyDistrict(b)}
-          </span>
+          <div className="flex justify-end mt-2">
+            <button
+              onClick={handleRejectConfirm}
+              disabled={rejecting}
+              className="flex items-center gap-1.5 bg-[#FF5E00] text-white text-[13px] font-bold py-[7px] px-4 rounded-lg hover:bg-[#e05500] transition-colors disabled:opacity-50"
+            >
+              {rejecting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <X className="w-3.5 h-3.5" />
+              )}
+              {rejecting ? 'Đang xử lý...' : 'Xác nhận từ chối'}
+            </button>
+          </div>
         </div>
-        <div className="flex flex-col items-start self-stretch pt-0.5">
-          <span className="text-[#929292] text-xs">
-            {formatDate(b.startDate)} · {b.duration} tháng · {formatVnd(b.totalPrice)}
-          </span>
-        </div>
-      </div>
-      <div className="flex shrink-0 items-center gap-[9px]">
-        <button
-          onClick={onReject}
-          disabled={busy}
-          className="flex shrink-0 items-center bg-white text-left py-[7px] px-[13px] gap-1.5 rounded-lg border border-solid border-[#FF5E00] hover:bg-orange-50 transition-colors disabled:opacity-50"
-        >
-          {rejecting ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FF5E00]" />
-          ) : (
-            <X className="w-3.5 h-3.5 text-[#FF5E00]" />
-          )}
-          <span className="text-[#FF5E00] text-[13px] font-bold">
-            {rejecting ? 'Đang xử lý...' : 'Từ chối'}
-          </span>
-        </button>
-        <button
-          onClick={onConfirm}
-          disabled={busy}
-          className="flex shrink-0 items-center bg-[#ffef3d] text-left py-[7px] px-3 gap-1.5 rounded-lg border-0 hover:shadow-lg transition-all disabled:opacity-50"
-        >
-          {confirming ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#1f1c00]" />
-          ) : (
-            <Check className="w-3.5 h-3.5 text-[#1f1c00]" />
-          )}
-          <span className="text-[#1f1c00] text-[13px] font-bold">
-            {confirming ? 'Đang xử lý...' : 'Xác nhận'}
-          </span>
-        </button>
-      </div>
+      )}
     </div>
   );
 }

@@ -187,114 +187,91 @@ function BookingPanel({ property, effectiveStatus, contactRevealed, hasPendingBo
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   const { mutate: createBooking, isPending, error } = useCreateBooking();
-
-  const [startDate, setStartDate] = useState(todayStr());
-  const [duration, setDuration] = useState(1);
   const [justBooked, setJustBooked] = useState(false);
 
   const isOwner = typeof property.owner === 'object' ? property.owner.id === user?.id : property.owner === user?.id;
   const unavailable = effectiveStatus !== 'available';
-  const totalRent = duration * property.price;
-  const platformFee = Math.round(property.price * 0.1);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleBook = () => {
     if (!isAuthenticated) { router.push('/login'); return; }
-    createBooking({ property: property.id, startDate, duration }, { onSuccess: () => setJustBooked(true) });
+    createBooking({ property: property.id, startDate: todayStr(), duration: 1 }, { onSuccess: () => setJustBooked(true) });
   };
 
   if (justBooked || hasPendingBooking) {
     return (
-      <div className="shrink-0 w-[340px] p-6 rounded-2xl border border-gray-100 shadow-lg shadow-black/5 bg-white">
-        <div className="mb-4">
-          <PriceDisplay amount={property.price} size="lg" />
-          <span className="text-ash-gray text-sm"> / tháng</span>
-        </div>
-        <div className="text-center py-4">
-          <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3"><Check className="w-6 h-6 text-emerald-600" /></div>
-          <h3 className="text-base font-semibold text-[#222222] mb-1">Đã gửi yêu cầu đặt phòng!</h3>
-          <p className="text-sm text-[#6A6A6A] mb-4">Chủ nhà sẽ xác nhận trong vòng 24h.</p>
-          <Link href="/trips" className="inline-block w-full text-center py-3 bg-[#ffef3d] hover:shadow-lg text-[#1f1c00] font-semibold rounded-xl transition-all">Xem đơn thuê của tôi</Link>
+      <div className="shrink-0 w-[320px] p-6 rounded-2xl border border-gray-100 shadow-lg shadow-black/5 bg-white">
+        <div className="text-center py-6">
+          <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="w-7 h-7 text-emerald-500" />
+          </div>
+          <h3 className="text-base font-semibold text-ink-black mb-1">Đã gửi yêu cầu!</h3>
+          <p className="text-sm text-ash-gray mb-6 leading-relaxed">
+            Chủ nhà sẽ liên hệ và xác nhận trong vòng 24h.
+          </p>
+          <Link
+            href="/trips"
+            className="block w-full text-center py-3 bg-[#ffef3d] hover:shadow-lg text-[#1f1c00] font-semibold rounded-xl transition-all text-sm"
+          >
+            Xem đơn thuê của tôi
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="shrink-0 w-[340px] p-6 rounded-2xl border border-gray-100 shadow-lg shadow-black/5 bg-white">
-      <div className="mb-5">
-        <PriceDisplay amount={property.price} size="lg" />
-        <span className="text-ash-gray text-sm"> / tháng</span>
+    <div className="shrink-0 w-[320px] rounded-2xl border border-gray-100 shadow-lg shadow-black/5 bg-white overflow-hidden">
+      {/* Price header */}
+      <div className="px-6 pt-6 pb-5 border-b border-gray-100">
+        <div className="flex items-baseline gap-1.5">
+          <PriceDisplay amount={property.price} size="lg" />
+          <span className="text-ash-gray text-sm">/ tháng</span>
+        </div>
+
+        {/* First month total */}
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+          <span className="text-sm font-semibold text-ink-black">Thanh toán tháng đầu</span>
+          <span className="text-sm font-semibold text-ink-black">{formatVnd(property.price)}</span>
+        </div>
+        <p className="text-xs text-stone-gray mt-1">
+          Các tháng tiếp theo thanh toán trực tiếp cho chủ nhà
+        </p>
       </div>
 
-      {isOwner ? (
-        <div className="text-center py-4 text-sm text-[#6A6A6A] border border-gray-100 rounded-xl w-full">Đây là bất động sản của bạn</div>
-      ) : unavailable ? (
-        <div className="text-center py-4 text-sm text-[#6A6A6A] border border-gray-100 rounded-xl w-full">Phòng này hiện đang {effectiveStatus === 'rented' ? 'đã thuê' : 'bảo trì'}</div>
-      ) : (
-        <form onSubmit={handleSubmit} className="w-full">
-          <div className="flex flex-col gap-3 mb-4">
-            {/* Date + Duration fields */}
-            <div className="rounded-xl border border-gray-100 overflow-hidden">
-              <div className="flex flex-col py-3 px-4 gap-1.5 border-b border-gray-100">
-                <span className="text-[#222222] text-xs font-bold">NGÀY VÀO</span>
-                <input
-                  type="date"
-                  value={startDate}
-                  min={todayStr()}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full text-sm text-[#222222] outline-none bg-transparent"
-                  required
-                />
-              </div>
-              <div className="flex flex-col py-3 px-4 gap-1.5">
-                <span className="text-[#222222] text-xs font-bold">THỜI HẠN THUÊ</span>
-                <select
-                  value={duration}
-                  onChange={(e) => setDuration(Number(e.target.value))}
-                  className="w-full text-sm text-[#222222] outline-none bg-transparent"
-                >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                    <option key={m} value={m}>{m} tháng</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Price breakdown */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center w-full">
-                <span className="text-[#6A6A6A] text-[15px] flex-1">{formatVnd(property.price)} × {duration} tháng</span>
-                <span className="text-[#222222] text-[15px]">{formatVnd(totalRent)}</span>
-              </div>
-              <div className="flex items-center w-full">
-                <span className="text-[#6A6A6A] text-[15px] flex-1">Phí dịch vụ (10%)</span>
-                <span className="text-[#6A6A6A] text-[15px]">{formatVnd(platformFee)}</span>
-              </div>
-              <div className="flex items-center py-3 border-t border-gray-100 w-full">
-                <span className="text-[#222222] text-[15px] font-bold flex-1">Thanh toán tháng đầu</span>
-                <span className="text-[#222222] text-[15px] font-bold">{formatVnd(property.price)}</span>
-              </div>
-            </div>
-
-            {error && <p className="text-xs text-red-500 w-full">Không thể đặt phòng. Vui lòng thử lại.</p>}
-
-            {/* Brand CTA button */}
-            <button
-              type="submit"
-              disabled={isPending}
-              className="w-full py-3.5 bg-[#ffef3d] text-[#1f1c00] font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-60 active:scale-[0.98]"
-            >
-              {isPending ? 'Đang gửi...' : isAuthenticated ? 'Đặt phòng' : 'Đăng nhập để đặt phòng'}
-            </button>
+      {/* CTA area */}
+      <div className="px-6 py-5 flex flex-col gap-3">
+        {isOwner ? (
+          <div className="text-center py-3 text-sm text-ash-gray bg-soft-cloud rounded-xl">
+            Đây là tin đăng của bạn
           </div>
-          {isAuthenticated && <p className="text-center text-xs text-[#6A6A6A]">Bạn chưa bị tính phí vào lúc này</p>}
-        </form>
-      )}
+        ) : unavailable ? (
+          <div className="text-center py-3 text-sm text-ash-gray bg-soft-cloud rounded-xl">
+            Phòng đang {effectiveStatus === 'rented' ? 'có người thuê' : 'bảo trì'}
+          </div>
+        ) : (
+          <>
+            {error && (
+              <p className="text-xs text-red-500 text-center">Không thể đặt phòng. Vui lòng thử lại.</p>
+            )}
+            <button
+              onClick={handleBook}
+              disabled={isPending}
+              className="w-full py-3.5 bg-[#ffef3d] text-[#1f1c00] font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-60 active:scale-[0.98] text-sm"
+            >
+              {isPending ? 'Đang gửi...' : isAuthenticated ? 'Gửi yêu cầu thuê' : 'Đăng nhập để đặt phòng'}
+            </button>
+            <p className="text-center text-xs text-stone-gray">
+              Bạn chưa bị tính phí — chủ nhà xác nhận trước
+            </p>
+          </>
+        )}
 
-      <div className="flex items-center gap-2 pt-5 border-t border-gray-100 mt-4">
-        <LockKeyhole className="w-4 h-4 text-[#6A6A6A] shrink-0" />
-        <span className="text-[#6A6A6A] text-xs leading-relaxed">SĐT hiển thị sau khi đặt phòng và thanh toán</span>
+        <div className="flex items-center gap-2 pt-1">
+          <LockKeyhole className="w-3.5 h-3.5 text-stone-gray shrink-0" />
+          <span className="text-xs text-stone-gray leading-relaxed">
+            SĐT hiển thị sau khi đặt phòng và thanh toán
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -445,7 +422,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       </div>
 
       {/* Two-column layout */}
-      <div className="max-w-[1280px] mx-auto px-6 w-full flex gap-12 items-start mt-8">
+      <div className="max-w-[1280px] mx-auto px-6 w-full flex gap-12 mt-8">
         {/* Left: main content */}
         <div className="flex-1 min-w-0">
           {/* Quick info strip */}
@@ -562,9 +539,11 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
-        {/* Right: booking panel */}
-        <div className="shrink-0 sticky top-6">
-          <BookingPanel property={p} effectiveStatus={effectiveStatus} contactRevealed={contactRevealed} hasPendingBooking={hasPendingBooking} />
+        {/* Right: booking panel — outer div stretches full left-column height so sticky has full range */}
+        <div className="shrink-0 w-[320px]">
+          <div className="sticky top-24">
+            <BookingPanel property={p} effectiveStatus={effectiveStatus} contactRevealed={contactRevealed} hasPendingBooking={hasPendingBooking} />
+          </div>
         </div>
       </div>
 
