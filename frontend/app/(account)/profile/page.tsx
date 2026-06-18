@@ -7,17 +7,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import {
-  Loader2, Phone, CreditCard, CheckCircle2,
-  Pencil, ArrowRight, Fingerprint,
+  Loader2, Phone, CheckCircle2,
+  Pencil,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getMeApi, updatePhoneApi, verifyPhoneApi, requestLandlordApi } from '@/lib/api/auth.api';
+import { getMeApi, updatePhoneApi } from '@/lib/api/auth.api';
 import { updateBankAccountApi, updateUserApi } from '@/lib/api/users.api';
 import { uploadImagesApi } from '@/lib/api/upload.api';
 import { useAuthStore } from '@/stores/auth.store';
-import { useAuth } from '@/hooks/use-auth';
 import { useMyBookings } from '@/hooks/use-bookings';
 import { useMyContracts } from '@/hooks/use-contracts';
 import { getApiErrorMessage } from '@/lib/api-error';
@@ -28,13 +27,6 @@ const phoneSchema = z.object({
   phone: z
     .string()
     .refine((v) => /^(0|\+84)\d{9}$/.test(v), 'Số điện thoại không hợp lệ'),
-});
-
-const otpSchema = z.object({
-  otp: z
-    .string()
-    .length(6, 'OTP gồm 6 chữ số')
-    .regex(/^\d+$/, 'Chỉ nhập số'),
 });
 
 const bankSchema = z.object({
@@ -54,7 +46,6 @@ const nationalIdSchema = z.object({
 });
 
 type PhoneForm = z.infer<typeof phoneSchema>;
-type OtpForm = z.infer<typeof otpSchema>;
 type BankForm = z.infer<typeof bankSchema>;
 type NationalIdForm = z.infer<typeof nationalIdSchema>;
 
@@ -71,12 +62,11 @@ function FieldError({ msg }: { msg?: string }) {
   ) : null;
 }
 
-type PhoneStep = 'view' | 'phone' | 'otp';
+type PhoneStep = 'view' | 'phone';
 
 export default function ProfilePage() {
   const storedUser = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
-  const { user: authUser, isAuthenticated } = useAuth();
   const qc = useQueryClient();
 
   const { data: user, isLoading } = useQuery({
@@ -423,49 +413,25 @@ function SecuritySection({
   user: UserType;
   onUpdate: (u: UserType) => void;
 }) {
-  const { isLandlord } = useAuth();
   const [step, setStep] = useState<PhoneStep>('view');
 
   const phoneForm = useForm<PhoneForm>({ resolver: zodResolver(phoneSchema) });
-  const otpForm = useForm<OtpForm>({ resolver: zodResolver(otpSchema) });
 
   const submitPhone = async ({ phone }: PhoneForm) => {
     try {
       const updated = await updatePhoneApi(phone);
       onUpdate(updated);
-
-      if (isLandlord) {
-        await requestLandlordApi();
-        setStep('otp');
-        toast.info('Mã OTP đã được gửi đến số điện thoại mới.');
-      } else {
-        toast.success('Đã cập nhật số điện thoại');
-        setStep('view');
-        phoneForm.reset();
-      }
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Cập nhật thất bại, vui lòng thử lại.'));
-    }
-  };
-
-  const submitOtp = async ({ otp }: OtpForm) => {
-    try {
-      await verifyPhoneApi(otp);
-      const fresh = await getMeApi();
-      onUpdate(fresh);
-      toast.success('Số điện thoại đã được xác thực thành công');
+      toast.success('Đã cập nhật số điện thoại');
       setStep('view');
       phoneForm.reset();
-      otpForm.reset();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, 'OTP không đúng hoặc đã hết hạn.'));
+      toast.error(getApiErrorMessage(err, 'Cập nhật thất bại, vui lòng thử lại.'));
     }
   };
 
   const cancelEdit = () => {
     setStep('view');
     phoneForm.reset();
-    otpForm.reset();
   };
 
   return (
@@ -515,11 +481,7 @@ function SecuritySection({
         {/* Phone form */}
         {step === 'phone' && (
           <div className="bg-[#f7f7f7] rounded-[10px] p-4 mt-3 space-y-3">
-            <p className="text-xs text-[#6a6a6a]">
-              {isLandlord
-                ? 'Nhập số điện thoại mới. Mã OTP sẽ được gửi để xác thực.'
-                : 'Nhập số điện thoại mới của bạn.'}
-            </p>
+            <p className="text-xs text-[#6a6a6a]">Nhập số điện thoại mới của bạn.</p>
             <div>
               <Input
                 type="tel"
@@ -539,7 +501,7 @@ function SecuritySection({
                 className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-50 rounded-lg transition-all"
               >
                 {phoneForm.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
-                {isLandlord ? 'Gửi mã OTP' : 'Lưu'}
+                Lưu
               </button>
               <button
                 type="button"
@@ -547,62 +509,6 @@ function SecuritySection({
                 className="px-4 py-2 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
               >
                 Huỷ
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* OTP form */}
-        {step === 'otp' && (
-          <div className="bg-[#f7f7f7] rounded-[10px] p-4 mt-3 space-y-3">
-            <p className="text-xs text-[#6a6a6a]">
-              Nhập mã OTP 6 chữ số đã gửi đến{' '}
-              <span className="font-semibold text-[#222222]">{user.phone}</span>.
-              Mã có hiệu lực trong <span className="font-semibold text-[#222222]">5 phút</span>.
-            </p>
-            <div>
-              <Input
-                placeholder="● ● ● ● ● ●"
-                maxLength={6}
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                autoFocus
-                className="h-12 border-[#dddddd] focus-visible:border-[#222222] text-center text-lg tracking-[0.5em] font-bold text-[#222222]"
-                {...otpForm.register('otp')}
-              />
-              <FieldError msg={otpForm.formState.errors.otp?.message} />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex gap-2">
-                <button
-                  onClick={otpForm.handleSubmit(submitOtp)}
-                  disabled={otpForm.formState.isSubmitting}
-                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-50 rounded-lg transition-all"
-                >
-                  {otpForm.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
-                  Xác nhận
-                </button>
-                <button
-                  type="button"
-                  onClick={cancelEdit}
-                  className="px-4 py-2 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
-                >
-                  Huỷ
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    await requestLandlordApi();
-                    toast.info('Đã gửi lại mã OTP.');
-                  } catch {
-                    toast.error('Không thể gửi lại OTP.');
-                  }
-                }}
-                className="text-xs font-semibold text-[#ff385c] hover:underline"
-              >
-                Gửi lại
               </button>
             </div>
           </div>

@@ -19,11 +19,4 @@ const refreshValidation = validate([
   body('refreshToken').notEmpty().withMessage('Refresh token is required'),
 ]);
 
-const otpValidation = validate([
-  body('otp')
-    .notEmpty().withMessage('OTP is required')
-    .isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits')
-    .isNumeric().withMessage('OTP must be numeric'),
-]);
-
-export { registerValidation, loginValidation, refreshValidation, otpValidation };
+export { registerValidation, loginValidation, refreshValidation };

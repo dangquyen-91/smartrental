@@ -24,7 +24,6 @@ export interface User {
   };
   savedProperties?: string[];
   isActive: boolean;
-  isPhoneVerified?: boolean;
   authProvider?: 'local' | 'google';
   createdAt: string;
 }
