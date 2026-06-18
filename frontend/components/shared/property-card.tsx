@@ -73,15 +73,17 @@ export function PropertyCard({ property, className, rentedPropertyIds }: Propert
           loading="lazy"
         />
 
-        {/* Verified badge — top left */}
-        {property.isVerified && (
+        {/* Owner plan badge — top left */}
+        {property.ownerBadge && (
           <div className="absolute top-3 left-3">
-            <Badge variant="verified">Đã xác thực</Badge>
+            <span className="inline-flex items-center gap-1 bg-[#FFF546] text-black text-[10px] font-bold px-2 py-0.5 rounded-full">
+              ★ {property.ownerBadge}
+            </span>
           </div>
         )}
 
-        {/* Featured badge — top left (below verified if both exist) */}
-        {property.isFeatured && !property.isVerified && (
+        {/* Featured badge — top left (khi không có owner badge) */}
+        {property.isFeatured && !property.ownerBadge && (
           <div className="absolute top-3 left-3">
             <Badge variant="featured">Nổi bật</Badge>
           </div>

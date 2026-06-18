@@ -313,12 +313,12 @@ export default function HostingServicesPage() {
   };
 
   return (
-    <div className="flex flex-col self-stretch bg-[#F6F8FB] gap-[25px]">
+    <div className="space-y-6">
       <Suspense><PaymentToast /></Suspense>
 
       {/* Title row */}
-      <div className="flex justify-between items-center self-stretch">
-        <span className="text-[#222222] text-[25px] font-bold">Dịch vụ của tôi</span>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-ink-black">Dịch vụ của tôi</h1>
         <Link
           href="/hosting/services/request"
           className="flex flex-col shrink-0 items-start bg-[#ffef3d] hover:shadow-lg transition-all text-left py-2.5 px-5 rounded-lg border-0"

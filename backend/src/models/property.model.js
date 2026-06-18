@@ -51,7 +51,8 @@ const propertySchema = new mongoose.Schema(
     views: { type: Number, default: 0 },
     isFeatured: { type: Boolean, default: false },
 
-    isActive: { type: Boolean, default: true },
+    isActive:             { type: Boolean, default: true },
+    hiddenBySubscription: { type: Boolean, default: false },
   },
   {
     timestamps: true,
@@ -74,6 +75,7 @@ const propertySchema = new mongoose.Schema(
         contact: ret.contact,
         views: ret.views,
         isFeatured: ret.isFeatured,
+        hiddenBySubscription: ret.hiddenBySubscription,
         createdAt: ret.createdAt,
         updatedAt: ret.updatedAt,
       }),

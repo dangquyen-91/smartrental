@@ -497,10 +497,10 @@ export default function HostingContractsPage() {
   };
 
   return (
-    <div className="flex flex-col self-stretch gap-6">
+    <div className="space-y-6">
       {/* Title row */}
-      <div className="flex justify-between items-center self-stretch">
-        <span className="text-[#222222] text-[25px] font-bold">Hợp đồng</span>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-ink-black">Hợp đồng</h1>
         <button
           onClick={() => setShowGenerateModal(true)}
           className="flex shrink-0 items-center bg-[#ffef3d] hover:shadow-lg transition-all text-left py-2 px-4 gap-2 rounded-lg border-0"

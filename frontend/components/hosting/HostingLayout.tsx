@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
-import { Star, LayoutDashboard, Home, CalendarCheck, FileText, Wrench } from 'lucide-react';
+import { Star, LayoutDashboard, Home, CalendarCheck, FileText, Wrench, CreditCard } from 'lucide-react';
 import { PublicNavbar, PublicFooter } from '@/components/layout/public-navbar';
 import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
@@ -15,6 +15,7 @@ const NAV_ITEMS: { label: string; href: string; active: string; Icon: LucideIcon
   { label: 'Yêu cầu thuê', href: '/hosting/reservations', active: '/hosting/reservations', Icon: CalendarCheck },
   { label: 'Hợp đồng',     href: '/hosting/contracts',    active: '/hosting/contracts',    Icon: FileText },
   { label: 'Dịch vụ',      href: '/hosting/services',     active: '/hosting/services',     Icon: Wrench },
+  { label: 'Gói đăng ký',  href: '/hosting/plans',        active: '/hosting/plans',        Icon: CreditCard },
 ];
 
 function isActive(pathname: string, item: typeof NAV_ITEMS[0]) {

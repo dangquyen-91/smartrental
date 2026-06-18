@@ -99,14 +99,12 @@ export default function HostingPage() {
   );
 
   return (
-    <>
+    <div className="space-y-6">
       {/* Welcome section */}
-      <div className="flex justify-between items-start self-stretch mb-4 w-full">
-        <div className="flex flex-col shrink-0 items-center pb-[23px]">
-          <span className="text-[#222222] text-[25px] font-bold">
-            Xin chào, {user?.name}!
-          </span>
-        </div>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-ink-black">
+          Xin chào, {user?.name}!
+        </h1>
         <Link
           href="/hosting/listings/new"
           className="flex shrink-0 items-center bg-[#ffef3d] hover:shadow-lg transition-all text-left py-2.5 px-4 gap-2 rounded-lg border-0"
@@ -116,12 +114,8 @@ export default function HostingPage() {
         </Link>
       </div>
 
-      <span className="text-black text-xl mb-6">
-        Dưới đây là tổng quan hoạt động cho thuê của bạn.
-      </span>
-
       {/* Stats cards */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-4 gap-4">
         {/* Tin đăng */}
         <div className="flex flex-col items-start bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD]">
           <div className="flex items-center justify-center bg-[#FFF546] w-10 h-10 rounded-[10px] mb-3">
@@ -357,7 +351,7 @@ export default function HostingPage() {
           />
         </Link>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -527,10 +521,7 @@ function PendingBookingRow({
           {rejecting ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FF5E00]" />
           ) : (
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/6e5e0b5b-a94d-4cf0-aa87-0ed7d9200465"
-              className="w-3.5 h-3.5 rounded-lg object-fill"
-            />
+            <X className="w-3.5 h-3.5 text-[#FF5E00]" />
           )}
           <span className="text-[#FF5E00] text-[13px] font-bold">
             {rejecting ? 'Đang xử lý...' : 'Từ chối'}
@@ -544,10 +535,7 @@ function PendingBookingRow({
           {confirming ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin text-[#1f1c00]" />
           ) : (
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/41826c94-9585-444c-ac7c-90717780594b"
-              className="w-3.5 h-3.5 rounded-lg object-fill"
-            />
+            <Check className="w-3.5 h-3.5 text-[#1f1c00]" />
           )}
           <span className="text-[#1f1c00] text-[13px] font-bold">
             {confirming ? 'Đang xử lý...' : 'Xác nhận'}

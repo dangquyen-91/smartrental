@@ -183,14 +183,14 @@ function ImageGallery({ images, title }: { images: { url: string }[]; title: str
 
 // ─── booking panel ────────────────────────────────────────────────────────────
 
-function BookingPanel({ property, effectiveStatus, contactRevealed }: { property: Property; effectiveStatus: string; contactRevealed: boolean }) {
+function BookingPanel({ property, effectiveStatus, contactRevealed, hasPendingBooking }: { property: Property; effectiveStatus: string; contactRevealed: boolean; hasPendingBooking: boolean }) {
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   const { mutate: createBooking, isPending, error } = useCreateBooking();
 
   const [startDate, setStartDate] = useState(todayStr());
   const [duration, setDuration] = useState(1);
-  const [success, setSuccess] = useState(false);
+  const [justBooked, setJustBooked] = useState(false);
 
   const isOwner = typeof property.owner === 'object' ? property.owner.id === user?.id : property.owner === user?.id;
   const unavailable = effectiveStatus !== 'available';
@@ -200,10 +200,10 @@ function BookingPanel({ property, effectiveStatus, contactRevealed }: { property
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAuthenticated) { router.push('/login'); return; }
-    createBooking({ property: property.id, startDate, duration }, { onSuccess: () => setSuccess(true) });
+    createBooking({ property: property.id, startDate, duration }, { onSuccess: () => setJustBooked(true) });
   };
 
-  if (success) {
+  if (justBooked || hasPendingBooking) {
     return (
       <div className="shrink-0 w-[340px] p-6 rounded-2xl border border-gray-100 shadow-lg shadow-black/5 bg-white">
         <div className="mb-4">
@@ -377,13 +377,20 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const ownerUser = typeof p.owner === 'object' ? p.owner : null;
   const address = [p.address?.street, p.address?.ward, p.address?.district, p.address?.city].filter(Boolean).join(', ');
 
+  const allBookings = myBookingsData?.data ?? [];
+
   // Build set of property IDs that the tenant has a confirmed/active booking for
   const rentedPropertyIds = new Set(
-    (myBookingsData?.data ?? [])
+    allBookings
       .filter((b: any) => ['confirmed', 'active'].includes(b.status))
       .map((b: any) => b.property?.id ?? b.property)
   );
   const effectiveStatus = rentedPropertyIds.has(id) ? 'rented' : p.status;
+
+  // Check if already has a pending booking for this property (survives page nav)
+  const hasPendingBooking = allBookings.some(
+    (b: any) => b.status === 'pending' && (b.property?.id ?? b.property) === id
+  );
   const statusLabel = effectiveStatus === 'available' ? 'Còn trống' : effectiveStatus === 'rented' ? 'Đã thuê' : 'Bảo trì';
   const statusCls = effectiveStatus === 'available'
     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -557,7 +564,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
         {/* Right: booking panel */}
         <div className="shrink-0 sticky top-6">
-          <BookingPanel property={p} effectiveStatus={effectiveStatus} contactRevealed={contactRevealed} />
+          <BookingPanel property={p} effectiveStatus={effectiveStatus} contactRevealed={contactRevealed} hasPendingBooking={hasPendingBooking} />
         </div>
       </div>
 

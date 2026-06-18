@@ -108,15 +108,17 @@ const googleLogin = async (googleAccessToken, role) => {
 
   let user = await User.findOne({ email });
   if (!user) {
-    const allowedRoles = ['tenant', 'landlord'];
-    const assignedRole = allowedRoles.includes(role) ? role : 'tenant';
+    // Không có role → request đến từ trang login, không tự tạo account
+    if (!role || !['tenant', 'landlord'].includes(role)) {
+      throw new AppError('Tài khoản chưa tồn tại. Vui lòng đăng ký trước.', 404);
+    }
     user = await User.create({
       name,
       email,
       avatar: picture,
       password: Math.random().toString(36) + Math.random().toString(36),
       authProvider: 'google',
-      role: assignedRole,
+      role,
     });
   }
   if (!user.isActive) throw new AppError('Account is deactivated', 403);

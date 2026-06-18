@@ -454,19 +454,19 @@ export default function LandlordReviewsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-[#222222] text-2xl sm:text-[28px] font-bold leading-tight">
+      <div>
+        <h1 className="text-2xl font-bold text-ink-black">
           Đánh giá từ người thuê
         </h1>
-        <p className="text-[#6A6A6A] text-sm mt-1">
+        <p className="text-ash-gray text-sm mt-1">
           Xem tất cả đánh giá mà người thuê đã gửi cho các tin đăng của bạn.
         </p>
       </div>
 
       {/* Summary card */}
-      <div className="bg-white rounded-[14px] border border-solid border-[#DDDDDD] p-5 sm:p-6 mb-5">
+      <div className="bg-white rounded-card border border-hairline-gray p-5">
         <div className="flex items-center gap-6">
           <div className="text-center shrink-0">
             <p className="text-[#222222] text-4xl font-bold leading-none mb-1">
@@ -507,7 +507,7 @@ export default function LandlordReviewsPage() {
       </div>
 
       {/* Filter chips */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {RATING_FILTERS.map((f) => (
           <button
             key={f.key}

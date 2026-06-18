@@ -3,7 +3,10 @@ import mongoose from 'mongoose';
 import payos from '../config/payos.js';
 import ServiceOrder from '../models/service-order.model.js';
 import Booking from '../models/booking.model.js';
+import Subscription from '../models/subscription.model.js';
+import Plan from '../models/plan.model.js';
 import AppError from '../utils/app-error.js';
+import { getLandlordCommissionRate, restoreHiddenListings, hideExcessListings } from './subscription.service.js';
 
 const PLATFORM_FEE_RATE = 0.10;
 
@@ -95,7 +98,7 @@ const getServicePaymentStatus = async (orderId, tenantId) => {
 const createBookingPaymentLink = async (bookingId, tenantId) => {
   const booking = await Booking.findOne({ _id: bookingId, tenant: tenantId })
     .populate('tenant', 'name email phone')
-    .populate('property', 'title price');
+    .populate('property', 'title price owner');
   if (!booking) throw new AppError('Booking not found', 404);
 
   if (booking.status !== 'active') {
@@ -108,7 +111,9 @@ const createBookingPaymentLink = async (bookingId, tenantId) => {
   await cancelOldPayosLink(booking.paymentCode);
 
   const firstMonth     = booking.property.price;
-  const { platformFee } = calcFees(firstMonth);
+  // Commission rate phụ thuộc vào gói subscription của landlord
+  const commissionRate = await getLandlordCommissionRate(booking.property.owner.toString());
+  const platformFee    = Math.round(firstMonth * commissionRate);
   const landlordPayout = firstMonth - platformFee;
   const orderCode      = genOrderCode();
 
@@ -202,6 +207,35 @@ const handleWebhook = async (body) => {
       return { rspCode: '00', message: 'Booking payment confirmed' };
     }
 
+    // Subscription payment
+    const sub = await Subscription.findOne({ paymentCode: orderCode }).populate('landlord plan').session(session);
+    if (sub) {
+      const paidPlan = await Plan.findOne({ price: data.amount }).session(session);
+      if (!paidPlan) {
+        await session.abortTransaction();
+        return { rspCode: '01', message: 'Plan not found for amount' };
+      }
+
+      const now     = new Date();
+      const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      await Subscription.updateOne(
+        { _id: sub._id },
+        { $set: { plan: paidPlan._id, status: 'active', startDate: now, endDate, paymentCode: null } },
+        { session },
+      );
+      await session.commitTransaction();
+
+      // Restore listings ẩn khi upgrade (ngoài transaction)
+      await restoreHiddenListings(sub.landlord._id || sub.landlord);
+      // Nếu limit mới nhỏ hơn số listing hiện tại (downgrade) → ẩn thừa
+      if (paidPlan.listingLimit !== -1) {
+        await hideExcessListings(sub.landlord._id || sub.landlord, paidPlan.listingLimit);
+      }
+
+      return { rspCode: '00', message: 'Subscription activated' };
+    }
+
     await session.abortTransaction();
     return { rspCode: '01', message: 'Order not found' };
 
@@ -213,10 +247,40 @@ const handleWebhook = async (body) => {
   }
 };
 
+// ─── SUBSCRIPTION — Tạo link thanh toán mua gói ─────────────────────────────
+
+const createSubscriptionPaymentLink = async (planKey, landlordId, landlordUser) => {
+  const plan = await Plan.findOne({ key: planKey });
+  if (!plan) throw new AppError('Plan not found', 404);
+  if (plan.price === 0) throw new AppError('Free plan does not require payment', 400);
+
+  const orderCode = genOrderCode();
+  const response  = await buildPayosLink({
+    orderCode,
+    amount:      plan.price,
+    description: `SR-PLAN-${plan.key.toUpperCase()}`,
+    buyer:       landlordUser,
+    items:       [{ name: plan.name, quantity: 1, price: plan.price }],
+    returnUrl:   process.env.PAYOS_PLAN_RETURN_URL || process.env.PAYOS_RETURN_URL,
+    cancelUrl:   process.env.PAYOS_PLAN_CANCEL_URL || process.env.PAYOS_CANCEL_URL,
+    ttlMinutes:  30,
+  });
+
+  // Lưu orderCode vào subscription (pending) để webhook biết map về đâu
+  await Subscription.findOneAndUpdate(
+    { landlord: landlordId },
+    { paymentCode: orderCode },
+    { upsert: false },
+  );
+
+  return { checkoutUrl: response.checkoutUrl, orderCode, planKey, amount: plan.price };
+};
+
 export {
   createServicePaymentLink,
   getServicePaymentStatus,
   createBookingPaymentLink,
   getBookingPaymentStatus,
+  createSubscriptionPaymentLink,
   handleWebhook,
 };
