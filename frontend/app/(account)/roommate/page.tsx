@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useForm, type UseFormRegister } from 'react-hook-form';
+import { useForm, type UseFormRegister, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -132,7 +132,7 @@ function ProfileTab() {
     reset,
     watch,
   } = useForm<ProfileForm>({
-    resolver: zodResolver(profileSchema),
+    resolver: zodResolver(profileSchema) as Resolver<ProfileForm>,
     defaultValues: DEFAULT_PROFILE_VALUES,
   });
 
