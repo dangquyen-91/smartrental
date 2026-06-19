@@ -109,7 +109,7 @@ function DeleteModal({
           <button
             onClick={onConfirm}
             disabled={isPending}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#2683EB] hover:bg-blue-600 rounded-lg transition-colors disabled:opacity-60 active:scale-95"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#c13515] hover:bg-[#a82d12] rounded-lg transition-colors disabled:opacity-60 active:scale-95"
           >
             {isPending && <Loader2 className="size-3.5 animate-spin" />}
             Xoá
@@ -290,7 +290,7 @@ function EmptyState({ filter }: { filter: StatusFilter }) {
       {isAll && (
         <Link
           href="/hosting/listings/new"
-          className="px-5 py-2.5 text-sm font-semibold text-white bg-[#2683EB] hover:bg-blue-600 rounded-lg transition-all active:scale-95"
+          className="px-5 py-2.5 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg rounded-lg transition-all active:scale-95"
         >
           Đăng tin đầu tiên
         </Link>
@@ -341,7 +341,7 @@ export default function HostingListingsPage() {
           <h1 className="text-2xl font-bold text-ink-black">Tin đăng của tôi</h1>
           <Link
             href="/hosting/listings/new"
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-[#2683EB] hover:bg-blue-600 rounded-lg transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg rounded-lg transition-all active:scale-95"
           >
             <Plus className="size-4" />
             Đăng tin mới

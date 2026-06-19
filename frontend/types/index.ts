@@ -24,9 +24,36 @@ export interface User {
   };
   savedProperties?: string[];
   isActive: boolean;
-  isPhoneVerified?: boolean;
   authProvider?: 'local' | 'google';
   createdAt: string;
+}
+
+export interface Plan {
+  id: string;
+  key: 'free' | 'basic' | 'premium';
+  name: string;
+  price: number;
+  listingLimit: number;   // -1 = unlimited
+  commissionRate: number;
+  badge: string | null;
+  features: string[];
+}
+
+export interface Subscription {
+  id: string;
+  landlord: string;
+  plan: Plan;
+  status: 'active' | 'expired' | 'cancelled';
+  startDate: string;
+  endDate: string | null;
+}
+
+export interface SubscriptionSummary {
+  subscription: Subscription;
+  plan: Plan;
+  activeListings: number;
+  daysLeft: number | null;
+  isExpiringSoon: boolean;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -57,6 +84,7 @@ export interface Property {
   description?: string;
   type: 'room' | 'apartment' | 'house' | 'studio';
   status: 'available' | 'rented' | 'maintenance';
+  ownerBadge?: string | null;
   price: number;
   pricePerM2?: number;
   area: number;
@@ -101,6 +129,8 @@ export interface Booking {
   platformFee?: number;
   landlordPayout?: number;
   payoutStatus?: 'pending' | 'paid' | null;
+  note?: string | null;
+  rejectionReason?: string | null;
   cancelledBy?: 'tenant' | 'landlord' | 'admin' | null;
   cancelReason?: string | null;
   createdAt: string;

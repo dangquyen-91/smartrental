@@ -64,7 +64,7 @@ export default function WishlistPage() {
           </p>
           <Link
             href="/"
-            className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-semibold text-white bg-[#222222] hover:bg-[#3a3a3a] rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg rounded-lg transition-all"
           >
             Khám phá bất động sản
             <ArrowRight className="size-4" />

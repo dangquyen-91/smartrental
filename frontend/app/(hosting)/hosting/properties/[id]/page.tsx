@@ -19,6 +19,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useWishlist, useToggleWishlist } from '@/hooks/use-wishlist';
 import { cn } from '@/lib/utils';
 import type { Property } from '@/types';
+import { PublicFooter } from '@/components/layout/public-navbar';
 
 function formatVnd(n: number) {
   return new Intl.NumberFormat('vi-VN').format(n) + '₫';
@@ -363,15 +364,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           <BookingPanel property={p} contactRevealed={contactRevealed} />
         </div>
 
-        {/* Footer */}
-        <div className="flex flex-col self-stretch bg-[#FFF546] py-10 px-20 gap-8 border-t border-solid border-t-[#FFF546]">
-          <div className="flex items-center self-stretch gap-8">
-            <div className="flex flex-1 flex-col items-start pb-[90px] gap-3"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/fc449148-484f-423d-b331-e6325dd4b7b7" className="w-[182px] h-[25px] object-fill" /><span className="text-black text-sm">Nền tảng thuê nhà thông minh cho thị trường Việt Nam.</span></div>
-            <div className="flex flex-1 flex-col gap-[11px]"><span className="text-black text-sm font-bold">Hỗ trợ</span><div className="flex flex-col gap-2 text-[#6A6A6A] text-sm"><span>Trung tâm trợ giúp</span><span>Liên hệ</span><span>Chính sách bảo mật</span><span>Điều khoản sử dụng</span></div></div>
-            <div className="flex flex-1 flex-col gap-[11px]"><span className="text-black text-sm font-bold">Dành cho chủ nhà</span><div className="flex flex-col gap-2 text-[#6A6A6A] text-sm"><span>Đăng tin cho thuê</span><span>Quản lý đặt phòng</span><span>Hợp đồng điện tử</span><span>Gói dịch vụ</span></div></div>
-          </div>
-          <div className="flex justify-between items-start self-stretch pt-[25px] border-t border-solid border-t-[#6C6C6C]"><span className="text-[#6C6C6C] text-xs">© 2026 Smart Rental. Nền tảng thuê nhà thông minh.</span><div className="w-[202px] h-[15px]" /></div>
-        </div>
+        <PublicFooter />
       </div>
     </div>
   );

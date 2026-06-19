@@ -17,6 +17,7 @@ import {
 } from "@/lib/api/bookings.api";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { type Booking } from "@/types";
+import { useAuth } from "@/hooks/use-auth";
 
 export const bookingKeys = {
   mine: (status?: Booking["status"]) => ["bookings", "mine", status] as const,
@@ -26,37 +27,43 @@ export const bookingKeys = {
 };
 
 export function useMyBookings(status?: Booking["status"]) {
+  const { isTenant } = useAuth();
   return useQuery({
     queryKey: bookingKeys.mine(status),
     queryFn: () => getMyBookingsApi(status),
+    enabled: isTenant,
     staleTime: 0,
     retry: false,
-    refetchInterval: 30_000,
+    refetchInterval: isTenant ? 30_000 : false,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   });
 }
 
 export function useAllMyBookings(enabled = true) {
+  const { isTenant } = useAuth();
+  const active = enabled && isTenant;
   return useQuery({
     queryKey: bookingKeys.mine(),
     queryFn: getAllMyBookingsApi,
-    enabled,
+    enabled: active,
     staleTime: 0,
     retry: false,
-    refetchInterval: enabled ? 30_000 : false,
+    refetchInterval: active ? 30_000 : false,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   });
 }
 
 export function useLandlordBookings(status?: Booking["status"]) {
+  const { isLandlord } = useAuth();
   return useQuery({
     queryKey: bookingKeys.landlord(status),
     queryFn: () => getLandlordBookingsApi(status),
+    enabled: isLandlord,
     staleTime: 0,
     retry: false,
-    refetchInterval: 30_000,
+    refetchInterval: isLandlord ? 30_000 : false,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   });
@@ -71,9 +78,11 @@ export function useBooking(id: string) {
 }
 
 export function useLandlordRevenueStats(period: RevenuePeriod = "3m") {
+  const { isLandlord } = useAuth();
   return useQuery({
     queryKey: bookingKeys.revenueStats(period),
     queryFn: () => getLandlordRevenueStatsApi(period),
+    enabled: isLandlord,
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });

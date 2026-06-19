@@ -158,6 +158,26 @@ function BookingCard({
           </div>
         )}
 
+        {/* Lý do chủ nhà hủy / từ chối */}
+        {booking.status === 'rejected' && booking.rejectionReason && (
+          <div className="flex flex-col w-full mb-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+            <span className="text-[11px] font-semibold text-[#c13515] mb-0.5">
+              Lý do chủ nhà từ chối
+            </span>
+            <span className="text-xs text-[#3F3F3F] break-words">{booking.rejectionReason}</span>
+          </div>
+        )}
+        {booking.status === 'cancelled' &&
+          booking.cancelledBy === 'landlord' &&
+          booking.cancelReason && (
+            <div className="flex flex-col w-full mb-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+              <span className="text-[11px] font-semibold text-[#c13515] mb-0.5">
+                Lý do chủ nhà huỷ
+              </span>
+              <span className="text-xs text-[#3F3F3F] break-words">{booking.cancelReason}</span>
+            </div>
+          )}
+
         <div className="flex items-center mb-[7px] w-full">
           <div className="flex shrink-0 items-center mr-4 gap-1.5">
             <CalendarDays className="size-3.5 text-[#929292] shrink-0" />
@@ -209,12 +229,12 @@ function BookingCard({
               <button
                 onClick={() => onPay(booking.id)}
                 disabled={isPayingThis}
-                className="flex shrink-0 items-center bg-[#FF385C] text-left py-1.5 px-3 gap-1.5 rounded-lg border-0 disabled:opacity-60"
+                className="flex shrink-0 items-center bg-[#ffef3d] text-left py-1.5 px-3 gap-1.5 rounded-lg border-0 disabled:opacity-60 hover:shadow-lg transition-all"
               >
                 {isPayingThis
-                  ? <Loader2 className="size-3.5 animate-spin text-white" />
+                  ? <Loader2 className="size-3.5 animate-spin text-[#1f1c00]" />
                   : <img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/1faf59bd-5913-4ace-9519-0cc4a813f6de" className="w-3.5 h-3.5 object-fill" alt="" />}
-                <span className="text-white text-xs font-bold">Thanh toán</span>
+                <span className="text-[#1f1c00] text-xs font-bold">Thanh toán</span>
               </button>
             )}
             {canReview && (
@@ -235,10 +255,13 @@ function BookingCard({
               </button>
             )}
             {showContract && (
-              <div className="flex shrink-0 items-center gap-[5px]">
-                <span className="text-[#222222] text-xs font-bold">Hợp đồng</span>
+              <Link
+                href="/contracts"
+                className="flex shrink-0 items-center gap-1 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#DDDDDD] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+              >
+                Hợp đồng
                 <ChevronRight className="size-3.5 text-[#6A6A6A]" />
-              </div>
+              </Link>
             )}
           </div>
         </div>
@@ -295,7 +318,7 @@ function EmptyState({ tabId }: { tabId: TabId }) {
       <h3 className="text-base font-semibold text-[#222222] mb-1">{message}</h3>
       <p className="text-sm text-[#6A6A6A] mb-6">{sub}</p>
       {showCTA && (
-        <Link href="/" className="px-5 py-2.5 bg-[#FF385C] text-white font-semibold rounded-lg text-sm hover:bg-pink-600 transition-colors">
+        <Link href="/" className="px-5 py-2.5 bg-[#ffef3d] text-[#1f1c00] font-semibold rounded-lg text-sm hover:shadow-lg transition-all">
           Tìm phòng ngay
         </Link>
       )}
@@ -416,12 +439,12 @@ export default function TripsPage() {
       <Suspense><PaymentToast /></Suspense>
 
       {/* Page title */}
-      <div className="flex flex-col items-start self-stretch px-4">
+      <div className="flex flex-col self-stretch gap-0.75">
         <span className="text-[#222222] text-2xl font-bold">Đơn thuê của tôi</span>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center self-stretch mb-[5px] px-4 border-b border-solid border-b-[#DDDDDD]">
+      <div className="flex items-center self-stretch mb-[5px] border-b border-solid border-b-[#DDDDDD]">
         {TABS.map((tab) => {
           const count = tabCounts[tab.id];
           const isActive = activeTab === tab.id;
@@ -457,14 +480,14 @@ export default function TripsPage() {
 
       {/* Booking list */}
       {isLoading ? (
-        <div className="flex flex-col gap-4 w-full px-4">
+        <div className="flex flex-col gap-4 w-full">
           <BookingCardSkeleton />
           <BookingCardSkeleton />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="px-4"><EmptyState tabId={activeTab} /></div>
+        <EmptyState tabId={activeTab} />
       ) : (
-        <div className="flex flex-col gap-4 w-full px-4">
+        <div className="flex flex-col gap-4 w-full">
           {filtered.map((booking) => (
             <BookingCard
               key={booking.id}

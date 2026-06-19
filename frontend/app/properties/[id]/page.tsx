@@ -12,6 +12,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PublicNavbar, PublicFooter } from '@/components/layout/public-navbar';
 import { PriceDisplay } from '@/components/ui/price-display';
 import { PropertyReviewSection } from '@/components/shared/review-list';
 import { useProperty } from '@/hooks/use-properties';
@@ -182,118 +183,95 @@ function ImageGallery({ images, title }: { images: { url: string }[]; title: str
 
 // ─── booking panel ────────────────────────────────────────────────────────────
 
-function BookingPanel({ property, effectiveStatus, contactRevealed }: { property: Property; effectiveStatus: string; contactRevealed: boolean }) {
+function BookingPanel({ property, effectiveStatus, contactRevealed, hasPendingBooking }: { property: Property; effectiveStatus: string; contactRevealed: boolean; hasPendingBooking: boolean }) {
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   const { mutate: createBooking, isPending, error } = useCreateBooking();
-
-  const [startDate, setStartDate] = useState(todayStr());
-  const [duration, setDuration] = useState(1);
-  const [success, setSuccess] = useState(false);
+  const [justBooked, setJustBooked] = useState(false);
 
   const isOwner = typeof property.owner === 'object' ? property.owner.id === user?.id : property.owner === user?.id;
   const unavailable = effectiveStatus !== 'available';
-  const totalRent = duration * property.price;
-  const platformFee = Math.round(property.price * 0.1);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleBook = () => {
     if (!isAuthenticated) { router.push('/login'); return; }
-    createBooking({ property: property.id, startDate, duration }, { onSuccess: () => setSuccess(true) });
+    createBooking({ property: property.id, startDate: todayStr(), duration: 1 }, { onSuccess: () => setJustBooked(true) });
   };
 
-  if (success) {
+  if (justBooked || hasPendingBooking) {
     return (
-      <div className="shrink-0 w-[340px] p-6 rounded-2xl border border-gray-100 shadow-lg shadow-black/5 bg-white">
-        <div className="mb-4">
-          <PriceDisplay amount={property.price} size="lg" />
-          <span className="text-ash-gray text-sm"> / tháng</span>
-        </div>
-        <div className="text-center py-4">
-          <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3"><Check className="w-6 h-6 text-emerald-600" /></div>
-          <h3 className="text-base font-semibold text-[#222222] mb-1">Đã gửi yêu cầu đặt phòng!</h3>
-          <p className="text-sm text-[#6A6A6A] mb-4">Chủ nhà sẽ xác nhận trong vòng 24h.</p>
-          <Link href="/trips" className="inline-block w-full text-center py-3 bg-black hover:bg-gray-800 text-white font-semibold rounded-xl transition-colors">Xem đơn thuê của tôi</Link>
+      <div className="shrink-0 w-[320px] p-6 rounded-2xl border border-gray-100 shadow-lg shadow-black/5 bg-white">
+        <div className="text-center py-6">
+          <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="w-7 h-7 text-emerald-500" />
+          </div>
+          <h3 className="text-base font-semibold text-ink-black mb-1">Đã gửi yêu cầu!</h3>
+          <p className="text-sm text-ash-gray mb-6 leading-relaxed">
+            Chủ nhà sẽ liên hệ và xác nhận trong vòng 24h.
+          </p>
+          <Link
+            href="/trips"
+            className="block w-full text-center py-3 bg-[#ffef3d] hover:shadow-lg text-[#1f1c00] font-semibold rounded-xl transition-all text-sm"
+          >
+            Xem đơn thuê của tôi
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="shrink-0 w-[340px] p-6 rounded-2xl border border-gray-100 shadow-lg shadow-black/5 bg-white">
-      <div className="mb-5">
-        <PriceDisplay amount={property.price} size="lg" />
-        <span className="text-ash-gray text-sm"> / tháng</span>
+    <div className="shrink-0 w-[320px] rounded-2xl border border-gray-100 shadow-lg shadow-black/5 bg-white overflow-hidden">
+      {/* Price header */}
+      <div className="px-6 pt-6 pb-5 border-b border-gray-100">
+        <div className="flex items-baseline gap-1.5">
+          <PriceDisplay amount={property.price} size="lg" />
+          <span className="text-ash-gray text-sm">/ tháng</span>
+        </div>
+
+        {/* First month total */}
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+          <span className="text-sm font-semibold text-ink-black">Thanh toán tháng đầu</span>
+          <span className="text-sm font-semibold text-ink-black">{formatVnd(property.price)}</span>
+        </div>
+        <p className="text-xs text-stone-gray mt-1">
+          Các tháng tiếp theo thanh toán trực tiếp cho chủ nhà
+        </p>
       </div>
 
-      {isOwner ? (
-        <div className="text-center py-4 text-sm text-[#6A6A6A] border border-gray-100 rounded-xl w-full">Đây là bất động sản của bạn</div>
-      ) : unavailable ? (
-        <div className="text-center py-4 text-sm text-[#6A6A6A] border border-gray-100 rounded-xl w-full">Phòng này hiện đang {effectiveStatus === 'rented' ? 'đã thuê' : 'bảo trì'}</div>
-      ) : (
-        <form onSubmit={handleSubmit} className="w-full">
-          <div className="flex flex-col gap-3 mb-4">
-            {/* Date + Duration fields */}
-            <div className="rounded-xl border border-gray-100 overflow-hidden">
-              <div className="flex flex-col py-3 px-4 gap-1.5 border-b border-gray-100">
-                <span className="text-[#222222] text-xs font-bold">NGÀY VÀO</span>
-                <input
-                  type="date"
-                  value={startDate}
-                  min={todayStr()}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full text-sm text-[#222222] outline-none bg-transparent"
-                  required
-                />
-              </div>
-              <div className="flex flex-col py-3 px-4 gap-1.5">
-                <span className="text-[#222222] text-xs font-bold">THỜI HẠN THUÊ</span>
-                <select
-                  value={duration}
-                  onChange={(e) => setDuration(Number(e.target.value))}
-                  className="w-full text-sm text-[#222222] outline-none bg-transparent"
-                >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                    <option key={m} value={m}>{m} tháng</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Price breakdown */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center w-full">
-                <span className="text-[#6A6A6A] text-[15px] flex-1">{formatVnd(property.price)} × {duration} tháng</span>
-                <span className="text-[#222222] text-[15px]">{formatVnd(totalRent)}</span>
-              </div>
-              <div className="flex items-center w-full">
-                <span className="text-[#6A6A6A] text-[15px] flex-1">Phí dịch vụ (10%)</span>
-                <span className="text-[#6A6A6A] text-[15px]">{formatVnd(platformFee)}</span>
-              </div>
-              <div className="flex items-center py-3 border-t border-gray-100 w-full">
-                <span className="text-[#222222] text-[15px] font-bold flex-1">Thanh toán tháng đầu</span>
-                <span className="text-[#222222] text-[15px] font-bold">{formatVnd(property.price)}</span>
-              </div>
-            </div>
-
-            {error && <p className="text-xs text-red-500 w-full">Không thể đặt phòng. Vui lòng thử lại.</p>}
-
-            {/* Black CTA button */}
-            <button
-              type="submit"
-              disabled={isPending}
-              className="w-full py-3.5 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-60 active:scale-[0.98]"
-            >
-              {isPending ? 'Đang gửi...' : isAuthenticated ? 'Đặt phòng' : 'Đăng nhập để đặt phòng'}
-            </button>
+      {/* CTA area */}
+      <div className="px-6 py-5 flex flex-col gap-3">
+        {isOwner ? (
+          <div className="text-center py-3 text-sm text-ash-gray bg-soft-cloud rounded-xl">
+            Đây là tin đăng của bạn
           </div>
-          {isAuthenticated && <p className="text-center text-xs text-[#6A6A6A]">Bạn chưa bị tính phí vào lúc này</p>}
-        </form>
-      )}
+        ) : unavailable ? (
+          <div className="text-center py-3 text-sm text-ash-gray bg-soft-cloud rounded-xl">
+            Phòng đang {effectiveStatus === 'rented' ? 'có người thuê' : 'bảo trì'}
+          </div>
+        ) : (
+          <>
+            {error && (
+              <p className="text-xs text-red-500 text-center">Không thể đặt phòng. Vui lòng thử lại.</p>
+            )}
+            <button
+              onClick={handleBook}
+              disabled={isPending}
+              className="w-full py-3.5 bg-[#ffef3d] text-[#1f1c00] font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-60 active:scale-[0.98] text-sm"
+            >
+              {isPending ? 'Đang gửi...' : isAuthenticated ? 'Gửi yêu cầu thuê' : 'Đăng nhập để đặt phòng'}
+            </button>
+            <p className="text-center text-xs text-stone-gray">
+              Bạn chưa bị tính phí — chủ nhà xác nhận trước
+            </p>
+          </>
+        )}
 
-      <div className="flex items-center gap-2 pt-5 border-t border-gray-100 mt-4">
-        <LockKeyhole className="w-4 h-4 text-[#6A6A6A] shrink-0" />
-        <span className="text-[#6A6A6A] text-xs leading-relaxed">SĐT hiển thị sau khi đặt phòng và thanh toán</span>
+        <div className="flex items-center gap-2 pt-1">
+          <LockKeyhole className="w-3.5 h-3.5 text-stone-gray shrink-0" />
+          <span className="text-xs text-stone-gray leading-relaxed">
+            SĐT hiển thị sau khi đặt phòng và thanh toán
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -366,7 +344,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       <div className="min-h-screen bg-white flex flex-col items-center justify-center">
         <h2 className="text-xl font-semibold text-[#222222] mb-2">Không tìm thấy bất động sản</h2>
         <p className="text-[#6A6A6A] text-sm mb-6">Tin đăng này có thể đã bị xoá hoặc không tồn tại.</p>
-        <Link href="/" className="px-5 py-2.5 bg-black text-white font-semibold rounded-xl text-sm hover:bg-gray-800 transition-colors">Về trang chủ</Link>
+        <Link href="/" className="px-5 py-2.5 bg-[#ffef3d] text-[#1f1c00] font-semibold rounded-xl text-sm hover:shadow-lg transition-all">Về trang chủ</Link>
       </div>
     );
   }
@@ -376,35 +354,30 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const ownerUser = typeof p.owner === 'object' ? p.owner : null;
   const address = [p.address?.street, p.address?.ward, p.address?.district, p.address?.city].filter(Boolean).join(', ');
 
+  const allBookings = myBookingsData?.data ?? [];
+
   // Build set of property IDs that the tenant has a confirmed/active booking for
   const rentedPropertyIds = new Set(
-    (myBookingsData?.data ?? [])
+    allBookings
       .filter((b: any) => ['confirmed', 'active'].includes(b.status))
       .map((b: any) => b.property?.id ?? b.property)
   );
   const effectiveStatus = rentedPropertyIds.has(id) ? 'rented' : p.status;
+
+  // Check if already has a pending booking for this property (survives page nav)
+  const hasPendingBooking = allBookings.some(
+    (b: any) => b.status === 'pending' && (b.property?.id ?? b.property) === id
+  );
   const statusLabel = effectiveStatus === 'available' ? 'Còn trống' : effectiveStatus === 'rented' ? 'Đã thuê' : 'Bảo trì';
+  const statusCls = effectiveStatus === 'available'
+    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+    : effectiveStatus === 'rented'
+    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+    : 'bg-amber-50 text-amber-700 border border-amber-200';
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Navbar */}
-      <div className="bg-cover bg-center py-6 px-6 md:px-20" style={{ backgroundImage: 'url(https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/30ac8eae-07ac-4021-b386-ee5d8a4d8a53)' }}>
-        <div className="flex justify-between items-center max-w-[1280px] mx-auto">
-          <Link href="/"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/a949daa0-a417-4cbf-91d7-3ac6756bb215" className="w-[160px] h-auto object-fill cursor-pointer" /></Link>
-          <div className="flex shrink-0 items-center gap-2">
-            {isAuthenticated ? (
-              <Link href="/profile" className="flex items-center justify-center w-10 h-10 bg-[#222222] text-white font-bold rounded-full text-sm hover:bg-gray-800 transition-colors">
-                {user?.name?.charAt(0)?.toUpperCase() ?? 'N'}
-              </Link>
-            ) : (
-              <>
-                <Link href="/login" className="py-2 px-4 text-[#222222] text-sm font-semibold hover:opacity-80 transition-opacity">Đăng nhập</Link>
-                <Link href="/register" className="py-2 px-4 bg-[#222222] text-white text-sm font-semibold rounded-full hover:bg-gray-800 transition-colors">Đăng ký</Link>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+      <PublicNavbar activeLink="search" />
 
       <div className="max-w-[1280px] mx-auto px-6 w-full">
         {/* Back + Actions */}
@@ -439,7 +412,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           </div>
           <span className="text-gray-300">·</span>
           <span className="text-[#6A6A6A] text-sm">{TYPE_LABEL[p.type]}</span>
-          <span className="bg-[#FFF546] text-black text-xs font-bold px-2.5 py-0.5 rounded-full">{statusLabel}</span>
+          <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${statusCls}`}>{statusLabel}</span>
         </div>
 
         {/* Gallery */}
@@ -449,7 +422,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       </div>
 
       {/* Two-column layout */}
-      <div className="max-w-[1280px] mx-auto px-6 w-full flex gap-12 items-start mt-8">
+      <div className="max-w-[1280px] mx-auto px-6 w-full flex gap-12 mt-8">
         {/* Left: main content */}
         <div className="flex-1 min-w-0">
           {/* Quick info strip */}
@@ -566,44 +539,15 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
-        {/* Right: booking panel */}
-        <div className="shrink-0 sticky top-6">
-          <BookingPanel property={p} effectiveStatus={effectiveStatus} contactRevealed={contactRevealed} />
+        {/* Right: booking panel — outer div stretches full left-column height so sticky has full range */}
+        <div className="shrink-0 w-[320px]">
+          <div className="sticky top-24">
+            <BookingPanel property={p} effectiveStatus={effectiveStatus} contactRevealed={contactRevealed} hasPendingBooking={hasPendingBooking} />
+          </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="bg-[#FFF546] py-10 px-6 md:px-20 mt-auto">
-        <div className="max-w-[1280px] mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8 border-b border-black/10">
-            <div>
-              <img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/fc449148-484f-423d-b331-e6325dd4b7b7" className="w-[160px] h-auto mb-3" />
-              <p className="text-black text-sm">Nền tảng thuê nhà thông minh cho thị trường Việt Nam.</p>
-            </div>
-            <div>
-              <h4 className="text-black text-sm font-bold mb-3">Hỗ trợ</h4>
-              <div className="flex flex-col gap-2 text-black/60 text-sm">
-                <span className="hover:text-black cursor-pointer transition-colors">Trung tâm trợ giúp</span>
-                <span className="hover:text-black cursor-pointer transition-colors">Liên hệ</span>
-                <span className="hover:text-black cursor-pointer transition-colors">Chính sách bảo mật</span>
-                <span className="hover:text-black cursor-pointer transition-colors">Điều khoản sử dụng</span>
-              </div>
-            </div>
-            <div>
-              <h4 className="text-black text-sm font-bold mb-3">Dành cho chủ nhà</h4>
-              <div className="flex flex-col gap-2 text-black/60 text-sm">
-                <span className="hover:text-black cursor-pointer transition-colors">Đăng tin cho thuê</span>
-                <span className="hover:text-black cursor-pointer transition-colors">Quản lý đặt phòng</span>
-                <span className="hover:text-black cursor-pointer transition-colors">Hợp đồng điện tử</span>
-                <span className="hover:text-black cursor-pointer transition-colors">Gói dịch vụ</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-between items-start pt-6">
-            <span className="text-black/40 text-xs">© 2026 Smart Rental. Nền tảng thuê nhà thông minh.</span>
-          </div>
-        </div>
-      </div>
+      <PublicFooter />
     </div>
   );
 }

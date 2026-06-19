@@ -1,4 +1,6 @@
 import * as paymentService from '../services/payment.service.js';
+import * as subService from '../services/subscription.service.js';
+import User from '../models/user.model.js';
 import * as R from '../utils/response.js';
 
 // ─── Service Order ────────────────────────────────────────────────────────────
@@ -64,10 +66,24 @@ const handleWebhook = async (req, res) => {
   }
 };
 
+const createSubscriptionPaymentLink = async (req, res, next) => {
+  try {
+    await subService.getOrCreateSubscription(req.user.id);
+    const landlord = await User.findById(req.user.id).select('name email phone');
+    const result = await paymentService.createSubscriptionPaymentLink(
+      req.params.planKey,
+      req.user.id,
+      { name: landlord.name, email: landlord.email, phone: landlord.phone },
+    );
+    return R.success(res, result, 'Subscription payment link created');
+  } catch (err) { next(err); }
+};
+
 export {
   createServicePaymentLink,
   getServicePaymentStatus,
   createBookingPaymentLink,
   getBookingPaymentStatus,
+  createSubscriptionPaymentLink,
   handleWebhook,
 };

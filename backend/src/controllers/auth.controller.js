@@ -3,7 +3,7 @@ import * as R from '../utils/response.js';
 
 const googleLogin = async (req, res, next) => {
   try {
-    const data = await authService.googleLogin(req.body.googleAccessToken);
+    const data = await authService.googleLogin(req.body.googleAccessToken, req.body.role);
     return R.success(res, data, 'Google login successful');
   } catch (err) {
     next(err);
@@ -55,24 +55,6 @@ const getMe = async (req, res, next) => {
   }
 };
 
-const requestLandlord = async (req, res, next) => {
-  try {
-    await authService.requestLandlord(req.user.id);
-    return R.success(res, null, 'OTP sent to your phone number');
-  } catch (err) {
-    next(err);
-  }
-};
-
-const verifyPhone = async (req, res, next) => {
-  try {
-    const data = await authService.verifyPhone(req.user.id, req.body.otp);
-    return R.success(res, data, 'Phone verified. You are now a landlord!');
-  } catch (err) {
-    next(err);
-  }
-};
-
 const verifyPassword = async (req, res, next) => {
   try {
     await authService.verifyPassword(req.user.id, req.body.password);
@@ -100,4 +82,4 @@ const updatePhone = async (req, res, next) => {
   }
 };
 
-export { register, login, refreshToken, logout, getMe, requestLandlord, verifyPhone, googleLogin, verifyPassword, verifyGoogleToken, updatePhone };
+export { register, login, refreshToken, logout, getMe, googleLogin, verifyPassword, verifyGoogleToken, updatePhone };

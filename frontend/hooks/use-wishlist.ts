@@ -22,7 +22,6 @@ export function useWishlist() {
 
 export function useToggleWishlist(propertyId: string) {
   const qc = useQueryClient();
-  const accessToken = useAuthStore((s) => s.accessToken);
 
   return useMutation({
     mutationFn: () => toggleWishlistApi(propertyId),
@@ -55,8 +54,5 @@ export function useToggleWishlist(propertyId: string) {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: wishlistKeys.all() });
     },
-    // Disable mutation when not logged in
-    meta: { requiresAuth: true },
-    ...(accessToken ? {} : { enabled: false }),
   });
 }

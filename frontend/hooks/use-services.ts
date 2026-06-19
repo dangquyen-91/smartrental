@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/use-auth';
 import {
   getServiceCatalogApi,
   getMyServiceOrdersApi,
@@ -29,36 +30,42 @@ export function useServiceCatalog() {
 }
 
 export function useMyServiceOrders() {
+  const { isTenant } = useAuth();
   return useQuery({
     queryKey: serviceKeys.mine,
     queryFn:  () => getMyServiceOrdersApi({ limit: 50 }),
+    enabled: isTenant,
     staleTime: 0,
     retry: false,
-    refetchInterval: 60_000,
+    refetchInterval: isTenant ? 60_000 : false,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   });
 }
 
 export function useLandlordServiceOrders() {
+  const { isLandlord } = useAuth();
   return useQuery({
     queryKey: serviceKeys.landlord,
     queryFn:  () => getLandlordServiceOrdersApi({ limit: 50 }),
+    enabled: isLandlord,
     staleTime: 0,
     retry: false,
-    refetchInterval: 60_000,
+    refetchInterval: isLandlord ? 60_000 : false,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   });
 }
 
 export function useProviderServiceOrders() {
+  const { isProvider } = useAuth();
   return useQuery({
     queryKey: serviceKeys.provider,
     queryFn:  () => getProviderServiceOrdersApi({ limit: 50 }),
+    enabled: isProvider,
     staleTime: 0,
     retry: false,
-    refetchInterval: 60_000,
+    refetchInterval: isProvider ? 60_000 : false,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   });

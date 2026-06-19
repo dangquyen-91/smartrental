@@ -6,6 +6,7 @@ import {
   Home,
   Download,
   Loader2,
+  PenLine,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMyContracts, useSignContract } from '@/hooks/use-contracts';
@@ -106,23 +107,33 @@ function ContractCard({
 
         {/* Signature badges */}
         <div className="flex gap-[9px] mb-[9px]">
-          <button className="flex shrink-0 items-center bg-[#F7F7F7] text-left py-[5px] px-[11px] gap-[5px] rounded-lg border border-solid border-[#DDDDDD]">
+          <button className={cn(
+            "flex shrink-0 items-center text-left py-[5px] px-[11px] gap-[5px] rounded-lg border border-solid",
+            contract.signedByTenant.signed
+              ? "bg-emerald-50 border-emerald-200"
+              : "bg-[#F7F7F7] border-[#DDDDDD]",
+          )}>
             <img
               src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d85e7988-abae-422f-8280-7ac0748fbf12"
               className="w-3.5 h-3.5 object-fill"
               alt=""
             />
-            <span className="text-[#6A6A6A] text-xs">
+            <span className={cn("text-xs", contract.signedByTenant.signed ? "text-emerald-700 font-medium" : "text-[#6A6A6A]")}>
               Bạn · {contract.signedByTenant.signed ? 'Đã ký' : 'Chưa ký'}
             </span>
           </button>
-          <button className="flex shrink-0 items-center bg-[#F7F7F7] text-left py-[5px] px-[11px] gap-[5px] rounded-lg border border-solid border-[#DDDDDD]">
+          <button className={cn(
+            "flex shrink-0 items-center text-left py-[5px] px-[11px] gap-[5px] rounded-lg border border-solid",
+            contract.signedByLandlord.signed
+              ? "bg-emerald-50 border-emerald-200"
+              : "bg-[#F7F7F7] border-[#DDDDDD]",
+          )}>
             <img
               src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9d3e07d5-15b7-4725-9c61-e7fbf37a73cb"
               className="w-3.5 h-3.5 object-fill"
               alt=""
             />
-            <span className="text-[#6A6A6A] text-xs">
+            <span className={cn("text-xs", contract.signedByLandlord.signed ? "text-emerald-700 font-medium" : "text-[#6A6A6A]")}>
               Chủ nhà · {contract.signedByLandlord.signed ? 'Đã ký' : 'Chưa ký'}
             </span>
           </button>
@@ -156,18 +167,14 @@ function ContractCard({
             <button
               onClick={() => onSign(contract)}
               disabled={isSigningThis}
-              className="flex shrink-0 items-center bg-[#2683EB] text-left py-1.5 px-3 gap-1.5 rounded-lg border-0"
+              className="flex shrink-0 items-center bg-[#ffef3d] hover:shadow-lg transition-all text-left py-1.5 px-3 gap-1.5 rounded-lg border-0"
             >
               {isSigningThis ? (
-                <Loader2 className="size-3.5 animate-spin text-white" />
+                <Loader2 className="size-3.5 animate-spin text-[#1f1c00]" />
               ) : (
-                <img
-                  src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7dfe4f36-bc25-408c-a882-7c0889c04cec"
-                  className="w-3.5 h-3.5 object-fill"
-                  alt=""
-                />
+                <PenLine className="size-3.5 text-[#1f1c00]" />
               )}
-              <span className="text-white text-xs font-bold">Ký hợp đồng</span>
+              <span className="text-[#1f1c00] text-xs font-bold">Ký hợp đồng</span>
             </button>
           )}
         </div>

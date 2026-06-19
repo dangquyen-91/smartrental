@@ -126,7 +126,7 @@ function BankAccountModal({ userId, onSuccess }: { userId: string; onSuccess: ()
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 py-2.5 text-sm font-semibold text-white bg-[#2683EB] hover:bg-blue-600 rounded-lg transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg rounded-lg transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : 'Lưu & tiếp tục'}
             </button>
@@ -163,8 +163,8 @@ const schema = z.object({
   type: z.enum(['room', 'apartment', 'house', 'studio'] as const),
   price: z.number({ message: 'Vui lòng nhập giá' }).min(2000, 'Giá tối thiểu 2.000₫'),
   area: z.number({ message: 'Vui lòng nhập diện tích' }).min(5, 'Diện tích tối thiểu 5m²'),
-  bedrooms: z.number().min(0).optional(),
-  bathrooms: z.number().min(0).optional(),
+  bedrooms: z.preprocess((v) => (typeof v === 'number' && isNaN(v) ? undefined : v), z.number().min(0, 'Phải >= 0').optional()),
+  bathrooms: z.preprocess((v) => (typeof v === 'number' && isNaN(v) ? undefined : v), z.number().min(0, 'Phải >= 0').optional()),
   description: z.string().max(2000, 'Tối đa 2000 ký tự').optional(),
   address: z.object({
     city: z.string().min(1, 'Vui lòng nhập thành phố'),
@@ -720,7 +720,7 @@ export default function NewListingPage() {
           <button
             type="submit"
             disabled={isPending || images.some((i) => i.uploading)}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-[#2683EB] hover:bg-blue-600 disabled:opacity-50 rounded-lg transition-all active:scale-95"
+            className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-50 rounded-lg transition-all active:scale-95"
           >
             {isPending ? <><Loader2 className="size-4 animate-spin" />Đang đăng...</> : 'Đăng tin'}
           </button>

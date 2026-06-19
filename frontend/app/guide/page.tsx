@@ -156,7 +156,7 @@ export default function GuidePage() {
                   <div className="flex flex-wrap gap-4">
                     <Link
                       href="/hosting/listings/new"
-                      className="px-6 py-2.5 bg-black text-white text-sm font-semibold rounded-full hover:bg-[#4a4733] transition-colors"
+                      className="px-6 py-2.5 bg-[#ffef3d] text-[#1f1c00] text-sm font-semibold rounded-full hover:shadow-lg transition-all"
                     >
                       Đăng tin ngay
                     </Link>

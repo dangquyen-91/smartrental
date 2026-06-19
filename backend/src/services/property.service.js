@@ -1,7 +1,28 @@
 import Property from '../models/property.model.js';
 import Booking from '../models/booking.model.js';
 import User from '../models/user.model.js';
+import Subscription from '../models/subscription.model.js';
 import AppError from '../utils/app-error.js';
+import { getActiveSubscription } from './subscription.service.js';
+
+// Batch-lookup badge cho danh sách ownerIds — 1 query duy nhất
+const getBadgeMap = async (ownerIds) => {
+  const subs = await Subscription.find({ landlord: { $in: ownerIds }, status: 'active' })
+    .populate('plan', 'badge')
+    .select('landlord plan');
+  const map = {};
+  for (const s of subs) {
+    if (s.plan?.badge) map[s.landlord.toString()] = s.plan.badge;
+  }
+  return map;
+};
+
+const attachBadges = (properties, badgeMap) =>
+  properties.map((p) => {
+    const obj = p.toJSON();
+    obj.ownerBadge = badgeMap[p.owner?._id?.toString() ?? p.owner?.toString()] ?? null;
+    return obj;
+  });
 
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -41,7 +62,7 @@ const getProperties = async ({
   const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
   const skip = (pageNum - 1) * limitNum;
 
-  const [properties, total] = await Promise.all([
+  const [rawProperties, total] = await Promise.all([
     Property.find(filter)
       .populate('owner', 'name phone avatar')
       .sort({ isFeatured: -1, ...(sortMap[sort] || sortMap.newest) })
@@ -49,6 +70,10 @@ const getProperties = async ({
       .limit(limitNum),
     Property.countDocuments(filter),
   ]);
+
+  const ownerIds = [...new Set(rawProperties.map((p) => p.owner?._id?.toString()).filter(Boolean))];
+  const badgeMap = await getBadgeMap(ownerIds);
+  const properties = attachBadges(rawProperties, badgeMap);
 
   return {
     properties,
@@ -59,7 +84,8 @@ const getProperties = async ({
 // ─── Owner's properties ──────────────────────────────────────────────────────
 
 const getMyProperties = async (ownerId, { status, page = 1, limit = 10 }) => {
-  const filter = { owner: ownerId, isActive: true };
+  // Chủ nhà thấy cả listing bị ẩn do subscription hết hạn (isActive: false + hiddenBySubscription: true)
+  const filter = { owner: ownerId, $or: [{ isActive: true }, { hiddenBySubscription: true }] };
   if (status) filter.status = status;
 
   const pageNum = Math.max(1, parseInt(page));
@@ -104,8 +130,11 @@ const getPropertyById = async (id, requestingUserId) => {
     }
   }
 
-  // Serialize và strip phone nếu chưa đủ điều kiện
+  // Gắn badge của chủ nhà
+  const badgeMap = await getBadgeMap([property.owner?._id?.toString()]);
   const propertyData = property.toJSON();
+  propertyData.ownerBadge = badgeMap[property.owner?._id?.toString()] ?? null;
+
   if (!contactRevealed) {
     if (propertyData.owner)   propertyData.owner.phone   = null;
     if (propertyData.contact) propertyData.contact.phone = null;
@@ -120,6 +149,19 @@ const createProperty = async (data, ownerId) => {
   const owner = await User.findById(ownerId).select('bankAccount');
   if (!owner?.bankAccount?.bankName) {
     throw new AppError('Vui lòng thêm tài khoản ngân hàng trước khi đăng tin', 400);
+  }
+
+  // Kiểm tra giới hạn listing theo gói subscription
+  const sub = await getActiveSubscription(ownerId);
+  const { listingLimit } = sub.plan;
+  if (listingLimit !== -1) {
+    const activeCount = await Property.countDocuments({ owner: ownerId, isActive: true });
+    if (activeCount >= listingLimit) {
+      throw new AppError(
+        `Gói ${sub.plan.name} chỉ cho phép tối đa ${listingLimit} tin đăng. Vui lòng nâng cấp gói để đăng thêm.`,
+        403,
+      );
+    }
   }
 
   const {

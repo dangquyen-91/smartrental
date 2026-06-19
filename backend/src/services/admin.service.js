@@ -527,7 +527,7 @@ export const getAdminUsers = async ({ page, limit, role, search, isActive } = {}
 
   const [users, total] = await Promise.all([
     User.find(filter)
-      .select('-password -refreshToken -phoneOtp -phoneOtpExpiry')
+      .select('-password -refreshToken')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum),

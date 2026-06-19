@@ -263,7 +263,7 @@ export default function HostingServiceRequestPage() {
           <button
             type="submit"
             disabled={!canSubmit}
-            className="flex-1 py-3 text-sm font-semibold text-white bg-[#2683EB] hover:bg-[#1a6fd8] disabled:opacity-50 disabled:cursor-not-allowed rounded-[8px] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            className="flex-1 py-3 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed rounded-[8px] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
           >
             {isPending && <Loader2 className="size-4 animate-spin" />}
             {isPending ? 'Đang tạo...' : 'Xác nhận'}

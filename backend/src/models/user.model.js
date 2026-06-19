@@ -14,9 +14,6 @@ const userSchema = new mongoose.Schema(
     dateOfBirth: { type: Date, default: null },
     address: { type: String, default: null },
     isActive: { type: Boolean, default: true },
-    isPhoneVerified: { type: Boolean, default: false },
-    phoneOtp: { type: String, default: null },
-    phoneOtpExpiry: { type: Date, default: null },
     authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
     refreshToken: { type: String, default: null },
     nationalId: {
@@ -49,7 +46,6 @@ const userSchema = new mongoose.Schema(
         role: ret.role,
         isActive: ret.isActive,
         authProvider: ret.authProvider,
-        isPhoneVerified: ret.isPhoneVerified,
         nationalId: ret.nationalId?.number ? ret.nationalId : null,
         bankAccount: ret.bankAccount?.bankName ? ret.bankAccount : null,
         savedProperties: (ret.savedProperties ?? []).map((id) => id.toString()),

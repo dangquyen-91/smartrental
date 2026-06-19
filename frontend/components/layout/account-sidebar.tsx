@@ -8,7 +8,6 @@ import {
   FileText,
   Users,
   Wrench,
-  Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -19,7 +18,6 @@ const NAV = [
   { label: 'Hợp đồng',             href: '/contracts',     icon: FileText },
   { label: 'Tìm bạn cùng phòng',  href: '/roommate',     icon: Users },
   { label: 'Dịch vụ',              href: '/services',     icon: Wrench },
-  { label: 'Cài đặt',              href: '/profile',      icon: Settings },
 ];
 
 export default function AccountSidebar() {

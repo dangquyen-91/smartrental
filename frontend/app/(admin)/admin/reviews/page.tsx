@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { Loader2, Trash2, Star, AlertTriangle, Building2, User as UserIcon } from 'lucide-react';
 import { useAllReviewsAdmin, useDeleteReview } from '@/hooks/use-reviews';
@@ -164,12 +164,14 @@ function ReviewRow({
         <ReviewerAvatar reviewer={review.reviewer} />
 
         <div className="flex-1 min-w-0 space-y-1.5">
-          {/* Top row: name + role */}
+          {/* Top row: name */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-semibold text-[#222222]">
               {reviewer?.name ?? '—'}
             </span>
-            <span className="text-[11px] text-[#929292]">(Người thuê)</span>
+            {reviewer?.email && (
+              <span className="text-[11px] text-[#929292]">{reviewer.email}</span>
+            )}
           </div>
 
           {/* Target entity */}
@@ -225,14 +227,34 @@ function RowSkeleton() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+type TargetTypeFilter = '' | 'property' | 'landlord' | 'tenant';
+
+const TARGET_TYPE_OPTIONS: { label: string; value: TargetTypeFilter }[] = [
+  { label: 'Tất cả', value: '' },
+  { label: 'Phòng / BĐS', value: 'property' },
+  { label: 'Chủ trọ', value: 'landlord' },
+  { label: 'Người thuê', value: 'tenant' },
+];
+
 export default function AdminReviewsPage() {
-  const [page, setPage]             = useState(1);
+  const [page, setPage] = useState(1);
+  const [targetType, setTargetType] = useState<TargetTypeFilter>('');
   const [deleteTarget, setDeleteTarget] = useState<Review | null>(null);
 
-  const { data, isLoading, isFetching } = useAllReviewsAdmin({ page, limit: 20 });
+  const handleFilterChange = useCallback((v: TargetTypeFilter) => {
+    setTargetType(v);
+    setPage(1);
+  }, []);
+
+  const { data, isLoading, isFetching } = useAllReviewsAdmin({
+    page,
+    limit: 20,
+    ...(targetType ? { targetType } : {}),
+  });
 
   const reviews    = data?.data ?? [];
   const pagination = data?.pagination;
+  const hasLowRating = !isLoading && reviews.some((r) => r.rating <= 2);
 
   const { mutate: deleteReview, isPending: isDeleting } = useDeleteReview();
 
@@ -256,42 +278,61 @@ export default function AdminReviewsPage() {
         )}
       </div>
 
+      {/* Low-rating warning — đầu trang để dễ thấy */}
+      {hasLowRating && (
+        <div className="flex items-start gap-3 px-4 py-3 bg-[#fff7ed] border border-[#fed7aa] rounded-[10px]">
+          <AlertTriangle className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />
+          <p className="text-sm text-[#9a3412]">
+            Có đánh giá xếp hạng thấp (1–2 sao) trên trang này. Cân nhắc kiểm tra và xoá nếu vi phạm.
+          </p>
+        </div>
+      )}
+
+      {/* Filter */}
+      <div className="bg-white rounded-card border border-[#dddddd] p-4 flex flex-wrap gap-3 items-center">
+        <span className="text-sm text-[#6a6a6a] font-medium">Lọc theo:</span>
+        <div className="flex items-center gap-1 bg-[#f7f7f7] rounded-[8px] p-1">
+          {TARGET_TYPE_OPTIONS.map(({ label, value }) => (
+            <button
+              key={value}
+              onClick={() => handleFilterChange(value)}
+              className={cn(
+                'px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-all',
+                targetType === value
+                  ? 'bg-white text-[#222222] shadow-sm'
+                  : 'text-[#929292] hover:text-[#6a6a6a]',
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Table */}
       <div className="bg-white rounded-[12px] border border-[#dddddd] overflow-hidden">
         {/* Column header */}
         <div className="grid grid-cols-[1fr_auto] px-5 py-3 bg-[#f7f7f7] border-b border-[#ebebeb]">
-          <span className="text-xs font-semibold text-[#6a6a6a] uppercase tracking-wider">
-            Đánh giá
-          </span>
-          <span className="text-xs font-semibold text-[#6a6a6a] uppercase tracking-wider">
-            Hành động
-          </span>
+          <span className="text-xs font-semibold text-[#6a6a6a] uppercase tracking-wider">Đánh giá</span>
+          <span className="text-xs font-semibold text-[#6a6a6a] uppercase tracking-wider">Hành động</span>
         </div>
 
         {/* Rows */}
         {isLoading ? (
-          <>
-            <RowSkeleton />
-            <RowSkeleton />
-            <RowSkeleton />
-            <RowSkeleton />
-            <RowSkeleton />
-          </>
+          <>{[0,1,2,3,4].map(i => <RowSkeleton key={i} />)}</>
         ) : reviews.length === 0 ? (
           <div className="flex flex-col items-center py-16 text-center">
             <div className="w-12 h-12 rounded-full bg-[#f7f7f7] flex items-center justify-center mb-3">
               <Star className="w-6 h-6 text-[#dddddd]" />
             </div>
             <p className="text-sm font-semibold text-[#222222] mb-1">Không có đánh giá nào</p>
-            <p className="text-sm text-[#929292]">Chưa có đánh giá phù hợp với bộ lọc hiện tại.</p>
+            <p className="text-sm text-[#929292]">
+              {targetType ? 'Không có đánh giá nào phù hợp với bộ lọc.' : 'Hệ thống chưa có đánh giá nào.'}
+            </p>
           </div>
         ) : (
           reviews.map((review) => (
-            <ReviewRow
-              key={review.id}
-              review={review}
-              onDelete={setDeleteTarget}
-            />
+            <ReviewRow key={review.id} review={review} onDelete={setDeleteTarget} />
           ))
         )}
       </div>
@@ -319,16 +360,6 @@ export default function AdminReviewsPage() {
               Tiếp →
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Low-rating warning banner */}
-      {!isLoading && reviews.some((r) => r.rating <= 2) && (
-        <div className="flex items-start gap-3 px-4 py-3 bg-[#fff7ed] border border-[#fed7aa] rounded-[10px]">
-          <AlertTriangle className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />
-          <p className="text-sm text-[#9a3412]">
-            Có đánh giá xếp hạng thấp (1–2 sao) trên trang này. Cân nhắc kiểm tra và xoá nếu vi phạm.
-          </p>
         </div>
       )}
 

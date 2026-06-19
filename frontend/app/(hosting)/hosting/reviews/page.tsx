@@ -454,26 +454,19 @@ export default function LandlordReviewsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="mb-6">
-        <Link
-          href="/hosting"
-          className="inline-flex items-center gap-1 text-[#2683EB] text-sm font-medium hover:underline mb-3"
-        >
-          <ChevronLeft className="size-4" />
-          Về trang quản lý
-        </Link>
-        <h1 className="text-[#222222] text-2xl sm:text-[28px] font-bold leading-tight">
+      <div>
+        <h1 className="text-2xl font-bold text-ink-black">
           Đánh giá từ người thuê
         </h1>
-        <p className="text-[#6A6A6A] text-sm mt-1">
+        <p className="text-ash-gray text-sm mt-1">
           Xem tất cả đánh giá mà người thuê đã gửi cho các tin đăng của bạn.
         </p>
       </div>
 
       {/* Summary card */}
-      <div className="bg-white rounded-[14px] border border-solid border-[#DDDDDD] p-5 sm:p-6 mb-5">
+      <div className="bg-white rounded-card border border-hairline-gray p-5">
         <div className="flex items-center gap-6">
           <div className="text-center shrink-0">
             <p className="text-[#222222] text-4xl font-bold leading-none mb-1">
@@ -514,7 +507,7 @@ export default function LandlordReviewsPage() {
       </div>
 
       {/* Filter chips */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {RATING_FILTERS.map((f) => (
           <button
             key={f.key}
@@ -522,8 +515,8 @@ export default function LandlordReviewsPage() {
             className={
               'shrink-0 px-4 py-1.5 text-[13px] font-medium rounded-full border transition-colors ' +
               (ratingFilter === f.key
-                ? 'bg-[#2683EB] text-white border-[#2683EB]'
-                : 'bg-white text-[#222222] border-[#DDDDDD] hover:border-[#2683EB]')
+                ? 'bg-[#ffef3d] text-[#1f1c00] border-[#ffef3d]'
+                : 'bg-white text-[#222222] border-[#DDDDDD] hover:border-[#ffef3d]')
             }
           >
             {f.label}
@@ -569,7 +562,7 @@ export default function LandlordReviewsPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1 || isFetching}
-            className="size-9 flex items-center justify-center rounded-full border border-solid border-[#DDDDDD] text-[#222222] hover:border-[#2683EB] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="size-9 flex items-center justify-center rounded-full border border-solid border-[#DDDDDD] text-[#222222] hover:border-[#ffef3d] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             aria-label="Trang trước"
           >
             <ChevronLeft className="size-4" />
@@ -593,8 +586,8 @@ export default function LandlordReviewsPage() {
                   className={
                     'min-w-9 h-9 px-3 flex items-center justify-center rounded-full text-sm font-medium border transition-colors ' +
                     (p === page
-                      ? 'bg-[#2683EB] text-white border-[#2683EB]'
-                      : 'bg-white text-[#222222] border-[#DDDDDD] hover:border-[#2683EB]')
+                      ? 'bg-[#ffef3d] text-[#1f1c00] border-[#ffef3d]'
+                      : 'bg-white text-[#222222] border-[#DDDDDD] hover:border-[#ffef3d]')
                   }
                 >
                   {isFetching && p === page ? <Loader2 className="size-3.5 animate-spin" /> : p}
@@ -605,7 +598,7 @@ export default function LandlordReviewsPage() {
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages || isFetching}
-            className="size-9 flex items-center justify-center rounded-full border border-solid border-[#DDDDDD] text-[#222222] hover:border-[#2683EB] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="size-9 flex items-center justify-center rounded-full border border-solid border-[#DDDDDD] text-[#222222] hover:border-[#ffef3d] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             aria-label="Trang sau"
           >
             <ChevronRight className="size-4" />

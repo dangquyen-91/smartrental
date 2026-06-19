@@ -5,6 +5,7 @@ import {
   getServicePaymentStatus,
   createBookingPaymentLink,
   getBookingPaymentStatus,
+  createSubscriptionPaymentLink,
   handleWebhook,
 } from '../controllers/payment.controller.js';
 
@@ -18,8 +19,10 @@ router.get('/service/:orderId/status',  protect, authorizeRoles('tenant'), getSe
 router.post('/booking/:bookingId',       protect, authorizeRoles('tenant'), createBookingPaymentLink);
 router.get('/booking/:bookingId/status', protect, authorizeRoles('tenant'), getBookingPaymentStatus);
 
+// ─── Subscription ─────────────────────────────────────────────────────────────
+router.post('/subscription/:planKey', protect, authorizeRoles('landlord'), createSubscriptionPaymentLink);
+
 // ─── PayOS Webhook — không cần auth ──────────────────────────────────────────
 router.post('/webhook', handleWebhook);
-
 
 export default router;

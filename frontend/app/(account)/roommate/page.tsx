@@ -87,8 +87,8 @@ function ScoreBadge({ score }: { score: number }) {
 
 const profileSchema = z.object({
   gender:      z.enum(['male', 'female', 'any']),
-  budgetMin:   z.number({ error: 'Nhập ngân sách tối thiểu' }).min(500_000),
-  budgetMax:   z.number({ error: 'Nhập ngân sách tối đa' }).min(500_000),
+  budgetMin:   z.preprocess((v) => (typeof v === 'number' && isNaN(v) ? undefined : v), z.number({ message: 'Nhập ngân sách tối thiểu' }).min(500_000, 'Tối thiểu 500.000₫')),
+  budgetMax:   z.preprocess((v) => (typeof v === 'number' && isNaN(v) ? undefined : v), z.number({ message: 'Nhập ngân sách tối đa' }).min(500_000, 'Tối thiểu 500.000₫')),
   schedule:    z.enum(['early_bird', 'night_owl', 'flexible']),
   lifestyle:   z.enum(['quiet', 'active', 'mixed']),
   cleanliness: z.enum(['neat', 'average', 'relaxed']),
@@ -96,8 +96,14 @@ const profileSchema = z.object({
   pets:        z.enum(['ok', 'no']),
   smoking:     z.enum(['ok', 'no']),
   looking:     z.boolean(),
-  bio:         z.string().max(500).optional(),
-  city:        z.string().max(100).optional(),
+  bio:         z.string()
+                 .trim()
+                 .min(20, 'Giới thiệu phải có ít nhất 20 ký tự')
+                 .max(500, 'Giới thiệu tối đa 500 ký tự'),
+  city:        z.string()
+                 .trim()
+                 .min(2, 'Vui lòng nhập thành phố')
+                 .max(100, 'Tên thành phố tối đa 100 ký tự'),
 }).refine((d) => d.budgetMax >= d.budgetMin, {
   message: 'Ngân sách tối đa phải lớn hơn tối thiểu',
   path: ['budgetMax'],
@@ -226,7 +232,7 @@ function ProfileTab() {
           </div>
           <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
             <input type="checkbox" {...register('looking')} className="sr-only peer" />
-            <div className="w-10 h-5 bg-[#dddddd] rounded-full peer peer-checked:bg-[#ff385c] transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5" />
+            <div className="w-10 h-5 bg-[#dddddd] rounded-full peer peer-checked:bg-[#ffef3d] transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5" />
           </label>
         </div>
 
@@ -243,10 +249,12 @@ function ProfileTab() {
             />
           </FieldGroup>
 
-          <FieldGroup label="Thành phố">
+          <FieldGroup label={
+            <span>Thành phố <span className="text-[#c13515]">*</span></span>
+          } error={errors.city?.message}>
             <input
               {...register('city')}
-              className={inputCls(false)}
+              className={inputCls(!!errors.city)}
               placeholder="VD: Hồ Chí Minh, Hà Nội..."
             />
             <p className="text-xs text-[#6a6a6a] mt-1">Chỉ hiển thị bạn cùng phòng trong cùng thành phố.</p>
@@ -348,14 +356,17 @@ function ProfileTab() {
 
         {/* Section: bio */}
         <div className="border-t border-[#dddddd] py-5 space-y-2">
-          <p className="text-xs font-semibold text-[#6a6a6a] uppercase tracking-wide">Giới thiệu bản thân</p>
+          <p className="text-xs font-semibold text-[#6a6a6a] uppercase tracking-wide">
+            Giới thiệu bản thân <span className="text-[#c13515]">*</span>
+          </p>
           <textarea
             {...register('bio')}
             rows={3}
             maxLength={500}
-            className={cn(inputCls(false), 'resize-none')}
-            placeholder="Mô tả ngắn về bản thân, thói quen, điều bạn mong muốn ở người ở ghép..."
+            className={cn(inputCls(!!errors.bio), 'resize-none')}
+            placeholder="Mô tả ngắn về bản thân, thói quen, điều bạn mong muốn ở người ở ghép (tối thiểu 20 ký tự)..."
           />
+          {errors.bio && <p className="text-xs text-[#c13515]">{errors.bio.message}</p>}
           <p className={cn('text-xs text-right', bioValue.length > 450 ? 'text-amber-600' : 'text-[#6a6a6a]')}>
             {bioValue.length}/500
           </p>
@@ -366,7 +377,7 @@ function ProfileTab() {
           <button
             type="submit"
             disabled={upsert.isPending || (!isDirty && !!profile)}
-            className="flex items-center gap-2 bg-[#ff385c] text-white text-sm font-medium px-6 py-2.5 rounded-lg hover:bg-[#e00b41] disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 bg-[#ffef3d] text-[#1f1c00] text-sm font-medium px-6 py-2.5 rounded-lg hover:shadow-lg disabled:opacity-50 transition-all"
           >
             {upsert.isPending && <Loader2 size={15} className="animate-spin" />}
             {profile ? 'Cập nhật hồ sơ' : 'Tạo hồ sơ'}
@@ -589,7 +600,7 @@ function MatchCard({
               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default'
               : isPending
               ? 'bg-amber-50 text-amber-700 border border-amber-200 cursor-default'
-              : 'bg-[#ff385c] text-white hover:bg-[#e00b41] disabled:opacity-60'
+              : 'bg-[#ffef3d] text-[#1f1c00] hover:shadow-lg disabled:opacity-60'
           )}
         >
           {isAccepted ? <Check size={13} /> : isPending ? <Loader2 size={13} /> : <Send size={13} />}
@@ -865,7 +876,7 @@ function InviteModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold bg-[#ff385c] text-white py-2.5 rounded-lg hover:bg-[#e00b41] disabled:opacity-60 transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold bg-[#ffef3d] text-[#1f1c00] py-2.5 rounded-lg hover:shadow-lg disabled:opacity-60 transition-all"
             >
               {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
               Gửi lời mời
@@ -986,7 +997,7 @@ function RequestCard({
           <button
             onClick={() => onRespond('accepted')}
             disabled={isResponding}
-            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold bg-[#222222] text-white py-2 rounded-lg hover:bg-black disabled:opacity-50 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold bg-[#ffef3d] text-[#1f1c00] py-2 rounded-lg hover:shadow-lg disabled:opacity-50 transition-all"
           >
             {isResponding ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
             Chấp nhận
@@ -1183,7 +1194,7 @@ function Chip({ children }: { children: React.ReactNode }) {
   );
 }
 
-function FieldGroup({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function FieldGroup({ label, error, children }: { label: React.ReactNode; error?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
       <label className="block text-sm font-medium text-[#222222]">{label}</label>

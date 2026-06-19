@@ -1,23 +1,22 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import {
-  Loader2, Phone, CreditCard, CheckCircle2,
-  Pencil, ArrowRight, Fingerprint,
+  Loader2, Phone, CheckCircle2,
+  Pencil,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getMeApi, updatePhoneApi, verifyPhoneApi, requestLandlordApi } from '@/lib/api/auth.api';
+import { getMeApi, updatePhoneApi } from '@/lib/api/auth.api';
 import { updateBankAccountApi, updateUserApi } from '@/lib/api/users.api';
 import { uploadImagesApi } from '@/lib/api/upload.api';
 import { useAuthStore } from '@/stores/auth.store';
-import { useAuth } from '@/hooks/use-auth';
 import { useMyBookings } from '@/hooks/use-bookings';
 import { useMyContracts } from '@/hooks/use-contracts';
 import { getApiErrorMessage } from '@/lib/api-error';
@@ -28,13 +27,6 @@ const phoneSchema = z.object({
   phone: z
     .string()
     .refine((v) => /^(0|\+84)\d{9}$/.test(v), 'Số điện thoại không hợp lệ'),
-});
-
-const otpSchema = z.object({
-  otp: z
-    .string()
-    .length(6, 'OTP gồm 6 chữ số')
-    .regex(/^\d+$/, 'Chỉ nhập số'),
 });
 
 const bankSchema = z.object({
@@ -54,7 +46,6 @@ const nationalIdSchema = z.object({
 });
 
 type PhoneForm = z.infer<typeof phoneSchema>;
-type OtpForm = z.infer<typeof otpSchema>;
 type BankForm = z.infer<typeof bankSchema>;
 type NationalIdForm = z.infer<typeof nationalIdSchema>;
 
@@ -71,12 +62,11 @@ function FieldError({ msg }: { msg?: string }) {
   ) : null;
 }
 
-type PhoneStep = 'view' | 'phone' | 'otp';
+type PhoneStep = 'view' | 'phone';
 
 export default function ProfilePage() {
   const storedUser = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
-  const { user: authUser, isAuthenticated } = useAuth();
   const qc = useQueryClient();
 
   const { data: user, isLoading } = useQuery({
@@ -96,6 +86,7 @@ export default function ProfilePage() {
   const handleUpdate = (updated: UserType) => {
     setUser(updated);
     qc.setQueryData(['me'], updated);
+    void qc.invalidateQueries({ queryKey: ['me'] });
   };
 
   if (isLoading && !storedUser) {
@@ -289,8 +280,8 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex justify-between items-center self-stretch py-3.5 mb-[1px] border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7]">
                     <span className="text-[#6A6A6A] text-sm">Trạng thái</span>
-                    <span className={cn('text-sm font-bold', user.isActive ? 'text-emerald-600' : 'text-[#929292]')}>
-                      {user.isActive ? 'Đang hoạt động' : 'Đã vô hiệu hoá'}
+                    <span className={cn('text-sm font-bold', user.isActive === false ? 'text-[#929292]' : 'text-emerald-600')}>
+                      {user.isActive === false ? 'Đã vô hiệu hoá' : 'Đang hoạt động'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center self-stretch py-3.5">
@@ -325,8 +316,11 @@ function AvatarSection({
   onUpdate: (u: UserType) => void;
 }) {
   const [uploading, setUploading] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const role = ROLE_META[user.role] ?? { label: user.role, style: 'bg-[#f7f7f7] text-[#6a6a6a]' };
+
+  useEffect(() => { setImgError(false); }, [user.avatar]);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -352,8 +346,13 @@ function AvatarSection({
           className="w-24 h-24 rounded-full bg-[#00000066] overflow-hidden cursor-pointer relative group"
           onClick={() => fileRef.current?.click()}
         >
-          {user.avatar ? (
-            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+          {user.avatar && !imgError ? (
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="w-full h-full object-cover"
+              onError={() => setImgError(true)}
+            />
           ) : (
             <div className="w-full h-full bg-[#ff385c] flex items-center justify-center text-white text-3xl font-bold">
               {user.name?.charAt(0)?.toUpperCase() ?? 'U'}
@@ -392,7 +391,7 @@ function AvatarSection({
         <span className={cn('text-sm font-bold px-3 py-1 rounded-full', role.style)}>
           {role.label}
         </span>
-        {!user.isActive && (
+        {user.isActive === false && (
           <span className="text-sm font-bold px-2.5 py-1 rounded-full bg-red-50 text-[#FF5E00] border border-[#FF5E00]">
             Vô hiệu hoá
           </span>
@@ -415,49 +414,25 @@ function SecuritySection({
   user: UserType;
   onUpdate: (u: UserType) => void;
 }) {
-  const { isLandlord } = useAuth();
   const [step, setStep] = useState<PhoneStep>('view');
 
   const phoneForm = useForm<PhoneForm>({ resolver: zodResolver(phoneSchema) });
-  const otpForm = useForm<OtpForm>({ resolver: zodResolver(otpSchema) });
 
   const submitPhone = async ({ phone }: PhoneForm) => {
     try {
       const updated = await updatePhoneApi(phone);
       onUpdate(updated);
-
-      if (isLandlord) {
-        await requestLandlordApi();
-        setStep('otp');
-        toast.info('Mã OTP đã được gửi đến số điện thoại mới.');
-      } else {
-        toast.success('Đã cập nhật số điện thoại');
-        setStep('view');
-        phoneForm.reset();
-      }
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Cập nhật thất bại, vui lòng thử lại.'));
-    }
-  };
-
-  const submitOtp = async ({ otp }: OtpForm) => {
-    try {
-      await verifyPhoneApi(otp);
-      const fresh = await getMeApi();
-      onUpdate(fresh);
-      toast.success('Số điện thoại đã được xác thực thành công');
+      toast.success('Đã cập nhật số điện thoại');
       setStep('view');
       phoneForm.reset();
-      otpForm.reset();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, 'OTP không đúng hoặc đã hết hạn.'));
+      toast.error(getApiErrorMessage(err, 'Cập nhật thất bại, vui lòng thử lại.'));
     }
   };
 
   const cancelEdit = () => {
     setStep('view');
     phoneForm.reset();
-    otpForm.reset();
   };
 
   return (
@@ -483,35 +458,28 @@ function SecuritySection({
 
       <div className="flex flex-col self-stretch mb-[21px] mx-[25px] gap-[1px]">
         {/* Phone row */}
-        <div className="flex justify-between items-center self-stretch pb-[31px] border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7]">
-          <div className="flex flex-col shrink-0 items-center gap-[1px]">
-            <div className="flex flex-col items-center pr-[237px]">
-              <span className="text-[#222222] text-sm font-bold">Số điện thoại</span>
-            </div>
-            <span className="text-[#929292] text-xs">
-              {user.phone ?? 'Cập nhật số điện thoại để xác thực và liên lạc nhanh chóng hơn'}
-            </span>
+        <div className="flex justify-between items-center self-stretch py-4 border-b border-[#F7F7F7]">
+          <span className="text-[#6A6A6A] text-sm">Số điện thoại</span>
+          <div className="flex items-center gap-3">
+            {user.phone ? (
+              <span className="text-[#222222] text-sm font-bold">{user.phone}</span>
+            ) : (
+              <span className="text-[#929292] text-sm">Chưa cập nhật</span>
+            )}
+            <button
+              onClick={() => setStep('phone')}
+              className="flex shrink-0 items-center bg-transparent py-1.5 px-3 gap-1.5 rounded-lg border border-[#dddddd] hover:bg-[#f7f7f7] transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5 text-[#6a6a6a]" />
+              <span className="text-[#222222] text-xs font-semibold">Chỉnh sửa</span>
+            </button>
           </div>
-          <button
-            onClick={() => setStep('phone')}
-            className="flex shrink-0 items-center bg-transparent text-left py-1.5 px-3 gap-1.5 rounded-lg border border-solid border-[#2683EB]"
-          >
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7b740a75-b978-4031-941d-e77c78491a25"
-              className="w-3.5 h-3.5 rounded-lg object-fill"
-            />
-            <span className="text-[#222222] text-xs font-bold">Chỉnh sửa</span>
-          </button>
         </div>
 
         {/* Phone form */}
         {step === 'phone' && (
           <div className="bg-[#f7f7f7] rounded-[10px] p-4 mt-3 space-y-3">
-            <p className="text-xs text-[#6a6a6a]">
-              {isLandlord
-                ? 'Nhập số điện thoại mới. Mã OTP sẽ được gửi để xác thực.'
-                : 'Nhập số điện thoại mới của bạn.'}
-            </p>
+            <p className="text-xs text-[#6a6a6a]">Nhập số điện thoại mới của bạn.</p>
             <div>
               <Input
                 type="tel"
@@ -528,10 +496,10 @@ function SecuritySection({
               <button
                 onClick={phoneForm.handleSubmit(submitPhone)}
                 disabled={phoneForm.formState.isSubmitting}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 rounded-lg transition-all"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-50 rounded-lg transition-all"
               >
                 {phoneForm.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
-                {isLandlord ? 'Gửi mã OTP' : 'Lưu'}
+                Lưu
               </button>
               <button
                 type="button"
@@ -539,62 +507,6 @@ function SecuritySection({
                 className="px-4 py-2 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
               >
                 Huỷ
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* OTP form */}
-        {step === 'otp' && (
-          <div className="bg-[#f7f7f7] rounded-[10px] p-4 mt-3 space-y-3">
-            <p className="text-xs text-[#6a6a6a]">
-              Nhập mã OTP 6 chữ số đã gửi đến{' '}
-              <span className="font-semibold text-[#222222]">{user.phone}</span>.
-              Mã có hiệu lực trong <span className="font-semibold text-[#222222]">5 phút</span>.
-            </p>
-            <div>
-              <Input
-                placeholder="● ● ● ● ● ●"
-                maxLength={6}
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                autoFocus
-                className="h-12 border-[#dddddd] focus-visible:border-[#222222] text-center text-lg tracking-[0.5em] font-bold text-[#222222]"
-                {...otpForm.register('otp')}
-              />
-              <FieldError msg={otpForm.formState.errors.otp?.message} />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex gap-2">
-                <button
-                  onClick={otpForm.handleSubmit(submitOtp)}
-                  disabled={otpForm.formState.isSubmitting}
-                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 rounded-lg transition-all"
-                >
-                  {otpForm.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
-                  Xác nhận
-                </button>
-                <button
-                  type="button"
-                  onClick={cancelEdit}
-                  className="px-4 py-2 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
-                >
-                  Huỷ
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    await requestLandlordApi();
-                    toast.info('Đã gửi lại mã OTP.');
-                  } catch {
-                    toast.error('Không thể gửi lại OTP.');
-                  }
-                }}
-                className="text-xs font-semibold text-[#ff385c] hover:underline"
-              >
-                Gửi lại
               </button>
             </div>
           </div>
@@ -669,7 +581,7 @@ function BankSection({
   };
 
   return (
-    <div className="self-stretch bg-white pt-[1px] rounded-[14px] border border-solid border-[#DDDDDD]">
+    <div className="self-stretch bg-white pt-[1px] mb-5 rounded-[14px] border border-solid border-[#DDDDDD]">
       <div className="flex items-center self-stretch py-5 mb-[21px] mx-[1px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
         <div className="flex flex-col shrink-0 items-center pt-0.5 ml-6 mr-3">
           <div className="flex flex-col items-start bg-[#FFF546] text-left py-[9px] px-2.5 rounded-[26843500px] border-0">
@@ -716,7 +628,7 @@ function BankSection({
             <button
               onClick={form.handleSubmit(onSubmit)}
               disabled={form.formState.isSubmitting}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 rounded-lg transition-all"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-50 rounded-lg transition-all"
             >
               {form.formState.isSubmitting && <Loader2 className="size-4 animate-spin" />}
               Lưu thay đổi
@@ -773,9 +685,9 @@ function BankSection({
           </div>
           <button
             onClick={() => setEditing(true)}
-            className="flex flex-col items-start bg-black text-left py-[7px] px-4 rounded-lg border-0"
+            className="flex flex-col items-start bg-[#ffef3d] text-left py-[7px] px-4 rounded-lg border-0"
           >
-            <span className="text-white text-sm font-bold">
+            <span className="text-[#1f1c00] text-sm font-bold">
               Thêm tài khoản ngân hàng
             </span>
           </button>
@@ -826,7 +738,7 @@ function NationalIdSection({
     d ? new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '---';
 
   return (
-    <div className="self-stretch bg-white pt-[1px] rounded-[14px] border border-solid border-[#DDDDDD]">
+    <div className="self-stretch bg-white pt-[1px] mb-5 rounded-[14px] border border-solid border-[#DDDDDD]">
       <div className="flex items-center self-stretch py-5 mb-[21px] mx-[1px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
         <div className="flex flex-col shrink-0 items-center pt-0.5 ml-6 mr-3">
           <div className="flex flex-col items-start bg-[#FFF546] text-left p-2.5 rounded-[26843500px] border-0">
@@ -890,7 +802,7 @@ function NationalIdSection({
             <button
               onClick={form.handleSubmit(onSubmit)}
               disabled={form.formState.isSubmitting}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 rounded-lg transition-all"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-50 rounded-lg transition-all"
             >
               {form.formState.isSubmitting && <Loader2 className="size-4 animate-spin" />}
               Lưu thay đổi
@@ -947,9 +859,9 @@ function NationalIdSection({
           </div>
           <button
             onClick={() => setEditing(true)}
-            className="flex flex-col items-start bg-black text-left py-[7px] px-4 rounded-lg border-0"
+            className="flex flex-col items-start bg-[#ffef3d] text-left py-[7px] px-4 rounded-lg border-0"
           >
-            <span className="text-white text-sm font-bold">
+            <span className="text-[#1f1c00] text-sm font-bold">
               Thêm CMND/CCCD
             </span>
           </button>

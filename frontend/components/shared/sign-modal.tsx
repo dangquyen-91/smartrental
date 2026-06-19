@@ -336,7 +336,7 @@ function StepSuccess({ onClose }: { onClose: () => void }) {
       </div>
       <button
         onClick={onClose}
-        className="mt-2 px-8 py-2.5 text-sm font-semibold text-white bg-[#222222] hover:bg-[#111111] rounded-xl transition-colors"
+        className="mt-2 px-8 py-2.5 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg rounded-xl transition-all"
       >
         Đóng
       </button>
@@ -490,10 +490,7 @@ export function SignModal({
             <button
               onClick={handleNext}
               disabled={!canAdvanceLocal || busy}
-              className={cn(
-                'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
-                isStep3Local ? 'bg-[#ff385c] hover:bg-[#e00b41]' : 'bg-[#222222] hover:bg-[#111111]',
-              )}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {busy ? (
                 <>

@@ -198,7 +198,7 @@ function ServiceOrderCard({
               <button
                 onClick={() => onPay(order.id)}
                 disabled={isPayingThis}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-60 rounded-lg transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-60 rounded-lg transition-all active:scale-95"
               >
                 {isPayingThis ? <Loader2 className="size-3.5 animate-spin" /> : <CreditCard className="size-3.5" />}
                 Thanh toán
@@ -384,7 +384,7 @@ function CreateOrderModal({
             <button
               type="submit"
               disabled={!type || !propertyId || !scheduledAt || isPending || activeBookings.length === 0}
-              className="flex-1 py-3 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] disabled:opacity-50 disabled:cursor-not-allowed rounded-[8px] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+              className="flex-1 py-3 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed rounded-[8px] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
             >
               {isPending && <Loader2 className="size-4 animate-spin" />}
               {isPending ? 'Đang tạo...' : 'Xác nhận'}
@@ -454,7 +454,7 @@ function EmptyState({ tabId, onRequest }: { tabId: TabId; onRequest: () => void 
       {tabId === 'processing' && (
         <button
           onClick={onRequest}
-          className="px-6 py-3 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] rounded-[8px] transition-all active:scale-95"
+          className="px-6 py-3 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg rounded-[8px] transition-all active:scale-95"
         >
           Yêu cầu dịch vụ
         </button>
@@ -595,7 +595,7 @@ export default function ServicesPage() {
         <h1 className="text-2xl font-bold text-[#222222]">Dịch vụ của tôi</h1>
         <button
           onClick={() => openModal()}
-          className="px-5 py-2.5 text-sm font-semibold text-white bg-[#ff385c] hover:bg-[#e00b41] rounded-[8px] transition-all active:scale-95"
+          className="px-5 py-2.5 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg rounded-[8px] transition-all active:scale-95"
         >
           + Yêu cầu dịch vụ
         </button>

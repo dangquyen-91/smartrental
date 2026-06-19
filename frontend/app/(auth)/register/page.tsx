@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import type { UseFormRegister, FieldErrors } from 'react-hook-form';
+import type { UseFormRegister, FieldErrors, Resolver } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuthStore } from '@/stores/auth.store';
-import { registerApi, requestLandlordApi, verifyPhoneApi, getMeApi, updatePhoneApi, googleLoginApi } from '@/lib/api/auth.api';
+import { registerApi, googleLoginApi } from '@/lib/api/auth.api';
 import { cn } from '@/lib/utils';
 import { PublicNavbar, PublicFooter } from '@/components/layout/public-navbar';
 import type { User } from '@/types';
@@ -31,13 +31,29 @@ function SplitText({ text }: { text: string }) {
 }
 
 /* ── Zod Schemas ── */
+const acceptTermsError = 'Xin vui lòng đồng ý với điều khoản dịch vụ';
+
+const acceptTermsField = z.unknown().superRefine((v, ctx) => {
+  if (v !== true) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: acceptTermsError,
+    });
+  }
+});
+
 const landlordSchema = z
   .object({
     name: z.string().min(2, 'Tên ít nhất 2 ký tự'),
     email: z.string().email('Email không hợp lệ'),
-    phone: z.string().refine((v) => /^(0|\+84)\d{9}$/.test(v), 'Số điện thoại không hợp lệ'),
+    phone: z
+      .string()
+      .refine((v) => !v || /^(0|\+84)\d{9}$/.test(v), 'Số điện thoại không hợp lệ')
+      .optional()
+      .or(z.literal('')),
     password: z.string().min(6, 'Mật khẩu ít nhất 6 ký tự'),
     confirmPassword: z.string(),
+    acceptTerms: acceptTermsField,
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: 'Mật khẩu xác nhận không khớp',
@@ -55,26 +71,16 @@ const tenantSchema = z
       .or(z.literal('')),
     password: z.string().min(6, 'Mật khẩu ít nhất 6 ký tự'),
     confirmPassword: z.string(),
+    acceptTerms: acceptTermsField,
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: 'Mật khẩu xác nhận không khớp',
     path: ['confirmPassword'],
   });
 
-const otpSchema = z.object({
-  otp: z.string().length(6, 'OTP gồm 6 số').regex(/^\d+$/, 'Chỉ nhập số'),
-});
-
-const phoneSchema = z.object({
-  phone: z.string().refine((v) => /^(0|\+84)\d{9}$/.test(v), 'Số điện thoại không hợp lệ'),
-});
-
 type LandlordData = z.infer<typeof landlordSchema>;
 type TenantData = z.infer<typeof tenantSchema>;
-type OtpData = z.infer<typeof otpSchema>;
-type PhoneData = z.infer<typeof phoneSchema>;
 type Role = 'tenant' | 'landlord';
-type Step = 'form' | 'phone' | 'otp';
 
 /* ── Shared UI Components ── */
 function ErrorBox({ message }: { message: string }) {
@@ -89,33 +95,15 @@ function ErrorBox({ message }: { message: string }) {
   );
 }
 
-function StepDots({ current }: { current: 0 | 1 }) {
-  return (
-    <div className="flex items-center justify-center gap-2">
-      {([0, 1] as const).map((i) => (
-        <span
-          key={i}
-          className={cn('rounded-full transition-all', i < current ? 'w-2 h-2' : i === current ? 'w-5 h-2' : 'w-2 h-2')}
-          style={{ backgroundColor: i <= current ? '#676000' : '#ccc7ac' }}
-        />
-      ))}
-    </div>
-  );
-}
-
-/* ── Password Input with material-symbols toggle ── */
+/* ── Password Input with eye toggle ── */
 function PasswordInput({
   id,
   placeholder,
-  value,
-  onChange,
-  className = '',
+  registration,
 }: {
   id: string;
   placeholder: string;
-  value: string;
-  onChange: (v: string) => void;
-  className?: string;
+  registration: ReturnType<UseFormRegister<any>>;
 }) {
   const [visible, setVisible] = useState(false);
   return (
@@ -124,24 +112,25 @@ function PasswordInput({
         id={id}
         type={visible ? 'text' : 'password'}
         placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={cn(
-          'w-full px-4 py-3 rounded-xl border text-base transition-all focus:outline-none focus:ring-2',
-          className,
-        )}
+        autoComplete="new-password"
+        data-form-type="other"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-bwignore="true"
+        data-bitwarden-watching="false"
+        className="w-full px-4 pr-12 py-3 rounded-xl border text-base transition-all focus:outline-none focus:ring-2 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"
         style={{ backgroundColor: '#ffffff', borderColor: '#ccc7ac', color: '#191c1d', '--tw-ring-color': '#ffef3d' } as React.CSSProperties}
+        {...registration}
       />
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
-        className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer transition-colors hover:scale-110"
+        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md cursor-pointer transition-colors hover:scale-110"
         style={{ color: '#4a4733' }}
         tabIndex={-1}
+        aria-label={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
       >
-        <span className="material-symbols-outlined text-xl leading-none">
-          {visible ? 'visibility_off' : 'visibility'}
-        </span>
+        {visible ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
       </button>
     </div>
   );
@@ -151,11 +140,9 @@ function PasswordInput({
 function GoogleRegisterButton({
   role,
   onError,
-  onSuccess,
 }: {
   role: Role;
   onError: (msg: string) => void;
-  onSuccess?: () => void;
 }) {
   const [loading, setLoading] = useState(false);
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -165,11 +152,9 @@ function GoogleRegisterButton({
     onSuccess: async (tokenResponse) => {
       try {
         setLoading(true);
-        const data = await googleLoginApi(tokenResponse.access_token);
+        const data = await googleLoginApi(tokenResponse.access_token, role);
         setAuth(data.user as unknown as User, data.accessToken, data.refreshToken);
-        if (onSuccess) {
-          onSuccess();
-        } else if (role === 'landlord') {
+        if (role === 'landlord') {
           router.push('/hosting');
         } else {
           router.push('/');
@@ -211,7 +196,6 @@ function GoogleRegisterButton({
 export default function RegisterPage() {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
-  const setUser = useAuthStore((s) => s.setUser);
   const headingRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const heroTitleRef = useRef<HTMLHeadingElement>(null);
@@ -219,7 +203,6 @@ export default function RegisterPage() {
   const heroFeaturesRef = useRef<HTMLDivElement>(null);
 
   const [role, setRole] = useState<Role>('tenant');
-  const [step, setStep] = useState<Step>('form');
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'tenant' | 'host'>('tenant');
   const tabKey = useRef(0);
@@ -264,10 +247,12 @@ export default function RegisterPage() {
     );
   }, [tabKey.current]);
 
-  const landlordForm = useForm<LandlordData>({ resolver: zodResolver(landlordSchema) });
-  const tenantForm = useForm<TenantData>({ resolver: zodResolver(tenantSchema) });
-  const phoneForm = useForm<PhoneData>({ resolver: zodResolver(phoneSchema) });
-  const otpForm = useForm<OtpData>({ resolver: zodResolver(otpSchema) });
+  const landlordForm = useForm<LandlordData, any, LandlordData>({
+    resolver: zodResolver(landlordSchema) as Resolver<LandlordData, any, LandlordData>,
+  });
+  const tenantForm = useForm<TenantData, any, TenantData>({
+    resolver: zodResolver(tenantSchema) as Resolver<TenantData, any, TenantData>,
+  });
 
   const handleRegisterSubmit = async (values: LandlordData | TenantData) => {
     try {
@@ -280,51 +265,10 @@ export default function RegisterPage() {
         role,
       });
       setAuth(data.user as unknown as User, data.accessToken, data.refreshToken);
-
-      if (role === 'landlord') {
-        await requestLandlordApi();
-        setStep('otp');
-      } else {
-        router.push('/');
-      }
+      router.push(role === 'landlord' ? '/hosting' : '/');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Đăng ký thất bại, vui lòng thử lại.');
-    }
-  };
-
-  const handlePhoneSubmit = async ({ phone }: PhoneData) => {
-    try {
-      setError('');
-      const updatedUser = await updatePhoneApi(phone);
-      setUser(updatedUser);
-      await requestLandlordApi();
-      setStep('otp');
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || 'Không thể cập nhật số điện thoại, vui lòng thử lại.');
-    }
-  };
-
-  const handleOtpSubmit = async ({ otp }: OtpData) => {
-    try {
-      setError('');
-      await verifyPhoneApi(otp);
-      const updatedUser = await getMeApi();
-      setUser(updatedUser);
-      router.push('/hosting');
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || 'OTP không đúng hoặc đã hết hạn.');
-    }
-  };
-
-  const handleResendOtp = async () => {
-    try {
-      setError('');
-      await requestLandlordApi();
-    } catch {
-      setError('Không thể gửi lại OTP, vui lòng thử lại.');
     }
   };
 
@@ -332,9 +276,9 @@ export default function RegisterPage() {
     setActiveTab(tab);
     setRole(tab === 'tenant' ? 'tenant' : 'landlord');
     setError('');
+    tenantForm.resetField('acceptTerms');
+    landlordForm.resetField('acceptTerms');
   };
-
-  const stepDotIndex = step === 'otp' ? 1 : 0;
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#f8f9fa' }}>
@@ -345,7 +289,7 @@ export default function RegisterPage() {
         borderColor: 'rgba(204,199,172,0.3)',
       }}>
         <Link href="/" className="cursor-pointer">
-          <img src="/logo/logo_header.png" alt="Smart Rental" className="h-4 w-auto object-contain" />
+          <img src="/logo/SmartRental_02.png" alt="Smart Rental" className="h-10 w-auto object-contain" />
         </Link>
         <div className="hidden md:flex gap-6">
           <a className="text-sm font-semibold transition-colors cursor-pointer" style={{ color: '#4a4733' }}
@@ -432,131 +376,42 @@ export default function RegisterPage() {
             </div>
 
             {/* Google Button */}
-            {step === 'form' && (
-              <>
-                <GoogleRegisterButton
-                  role={role}
-                  onError={setError}
-                  onSuccess={role === 'landlord' ? () => { setStep('phone'); } : undefined}
-                />
+            <>
+              <GoogleRegisterButton
+                role={role}
+                onError={setError}
+              />
 
-                {/* Divider */}
-                <div className="relative flex items-center my-8">
-                  <div className="flex-grow border-t" style={{ borderColor: 'rgba(204,199,172,0.5)' }} />
-                  <span className="flex-shrink mx-4 text-xs font-medium px-2 bg-white" style={{ color: '#4a4733' }}>hoặc</span>
-                  <div className="flex-grow border-t" style={{ borderColor: 'rgba(204,199,172,0.5)' }} />
-                </div>
-              </>
-            )}
+              {/* Divider */}
+              <div className="relative flex items-center my-8">
+                <div className="flex-grow border-t" style={{ borderColor: 'rgba(204,199,172,0.5)' }} />
+                <span className="flex-shrink mx-4 text-xs font-medium px-2 bg-white" style={{ color: '#4a4733' }}>hoặc</span>
+                <div className="flex-grow border-t" style={{ borderColor: 'rgba(204,199,172,0.5)' }} />
+              </div>
+            </>
 
-            {/* STEP: form */}
-            {step === 'form' && (
-              <>
-                {role === 'landlord' && (
-                  <LandlordForm
-                    form={landlordForm}
-                    error={error}
-                    onSubmit={handleRegisterSubmit}
-                    onError={setError}
-                  />
-                )}
-                {role === 'tenant' && (
-                  <TenantForm
-                    form={tenantForm}
-                    error={error}
-                    onSubmit={handleRegisterSubmit}
-                    onError={setError}
-                  />
-                )}
-                <p className="mt-10 text-center text-base" style={{ color: '#4a4733' }}>
-                  Đã có tài khoản?{' '}
-                  <Link href="/login" className="font-bold hover:underline decoration-2 underline-offset-4 cursor-pointer transition-colors" style={{ color: '#191c1d' }}>
-                    Đăng nhập
-                  </Link>
-                </p>
-              </>
+            {role === 'landlord' && (
+              <LandlordForm
+                form={landlordForm}
+                error={error}
+                onSubmit={handleRegisterSubmit}
+                onError={setError}
+              />
             )}
-
-            {/* STEP: phone (landlord Google) */}
-            {step === 'phone' && (
-              <form onSubmit={phoneForm.handleSubmit(handlePhoneSubmit)} className="space-y-6">
-                <div className="rounded-xl p-4 text-sm leading-relaxed" style={{ backgroundColor: '#f3f4f5', color: '#4a4733' }}>
-                  Chủ nhà cần xác thực số điện thoại để đảm bảo an toàn cho người thuê. Mã OTP sẽ được gửi đến số này.
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold" style={{ color: '#191c1d' }} htmlFor="phone">
-                    Số điện thoại <span style={{ color: '#c13515' }}>*</span>
-                  </label>
-                  <input
-                    id="phone"
-                    type="tel"
-                    placeholder="0912 345 678"
-                    inputMode="numeric"
-                    className="w-full px-4 py-3 rounded-xl border text-base transition-all focus:outline-none focus:ring-2"
-                    style={{ backgroundColor: '#ffffff', borderColor: '#ccc7ac', color: '#191c1d', '--tw-ring-color': '#ffef3d' } as React.CSSProperties}
-                    {...phoneForm.register('phone')}
-                  />
-                  {phoneForm.formState.errors.phone && (
-                    <p className="text-xs font-medium" style={{ color: '#c13515' }}>{phoneForm.formState.errors.phone.message}</p>
-                  )}
-                </div>
-                {error && <ErrorBox message={error} />}
-                <button
-                  type="submit"
-                  disabled={phoneForm.formState.isSubmitting}
-                  className="w-full text-base font-semibold py-4 rounded-xl transition-all active:scale-[0.98] cursor-pointer"
-                  style={{ backgroundColor: '#1b1c1b', color: '#ffffff' }}
-                >
-                  {phoneForm.formState.isSubmitting ? (
-                    <span className="flex items-center justify-center gap-2"><Loader2 size={18} className="animate-spin" /> Đang gửi...</span>
-                  ) : 'Gửi mã OTP'}
-                </button>
-              </form>
+            {role === 'tenant' && (
+              <TenantForm
+                form={tenantForm}
+                error={error}
+                onSubmit={handleRegisterSubmit}
+                onError={setError}
+              />
             )}
-
-            {/* STEP: otp */}
-            {step === 'otp' && (
-              <form onSubmit={otpForm.handleSubmit(handleOtpSubmit)} className="space-y-6">
-                <div className="rounded-xl p-4 text-sm leading-relaxed" style={{ backgroundColor: '#f3f4f5', color: '#4a4733' }}>
-                  Mã OTP gồm 6 chữ số đã được gửi đến số điện thoại bạn đăng ký. Mã có hiệu lực trong{' '}
-                  <span className="font-semibold" style={{ color: '#191c1d' }}>5 phút</span>.
-                </div>
-                {role === 'landlord' && <StepDots current={stepDotIndex as 0 | 1} />}
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold" style={{ color: '#191c1d' }} htmlFor="otp">Mã OTP</label>
-                  <input
-                    id="otp"
-                    placeholder="Nhập 6 chữ số"
-                    maxLength={6}
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    className="w-full px-4 py-3 rounded-xl border text-base text-center tracking-[0.5em] font-semibold transition-all focus:outline-none focus:ring-2"
-                    style={{ backgroundColor: '#ffffff', borderColor: '#ccc7ac', color: '#191c1d', '--tw-ring-color': '#ffef3d' } as React.CSSProperties}
-                    {...otpForm.register('otp')}
-                  />
-                  {otpForm.formState.errors.otp && (
-                    <p className="text-xs font-medium" style={{ color: '#c13515' }}>{otpForm.formState.errors.otp.message}</p>
-                  )}
-                </div>
-                {error && <ErrorBox message={error} />}
-                <button
-                  type="submit"
-                  disabled={otpForm.formState.isSubmitting}
-                  className="w-full text-base font-semibold py-4 rounded-xl transition-all active:scale-[0.98] cursor-pointer"
-                  style={{ backgroundColor: '#1b1c1b', color: '#ffffff' }}
-                >
-                  {otpForm.formState.isSubmitting ? (
-                    <span className="flex items-center justify-center gap-2"><Loader2 size={18} className="animate-spin" /> Đang xác thực...</span>
-                  ) : 'Xác thực'}
-                </button>
-                <p className="text-center text-sm" style={{ color: '#4a4733' }}>
-                  Không nhận được mã?{' '}
-                  <button type="button" onClick={handleResendOtp} className="font-semibold hover:underline cursor-pointer" style={{ color: '#676000' }}>
-                    Gửi lại
-                  </button>
-                </p>
-              </form>
-            )}
+            <p className="mt-10 text-center text-base" style={{ color: '#4a4733' }}>
+              Đã có tài khoản?{' '}
+              <Link href="/login" className="font-bold hover:underline decoration-2 underline-offset-4 cursor-pointer transition-colors" style={{ color: '#191c1d' }}>
+                Đăng nhập
+              </Link>
+            </p>
           </div>
         </section>
       </main>
@@ -574,7 +429,7 @@ function LandlordForm({
   onSubmit,
   onError,
 }: {
-  form: ReturnType<typeof useForm<LandlordData>>;
+  form: ReturnType<typeof useForm<LandlordData, any, LandlordData>>;
   error: string;
   onSubmit: (values: LandlordData) => Promise<void>;
   onError: (msg: string) => void;
@@ -613,7 +468,7 @@ function LandlordForm({
 
       <div className="space-y-2">
         <label className="block text-sm font-semibold" style={{ color: '#191c1d' }} htmlFor="lr-phone">
-          Số điện thoại <span style={{ color: '#c13515' }}>*</span>
+          Số điện thoại <span style={{ color: '#4a4733', fontWeight: 400 }}>(tuỳ chọn)</span>
         </label>
         <input
           id="lr-phone"
@@ -625,22 +480,26 @@ function LandlordForm({
           {...register('phone')}
         />
         {errors.phone && <p className="text-xs font-medium" style={{ color: '#c13515' }}>{errors.phone.message}</p>}
-        <p className="text-xs" style={{ color: '#4a4733' }}>Dùng để xác thực danh tính người cho thuê</p>
       </div>
 
       <div className="space-y-2">
         <label className="block text-sm font-semibold" style={{ color: '#191c1d' }} htmlFor="lr-pwd">Mật khẩu</label>
-        <PasswordInput id="lr-pwd" placeholder="Ít nhất 6 ký tự" value={form.getValues('password')} onChange={(v) => form.setValue('password', v)} />
+        <PasswordInput id="lr-pwd" placeholder="Ít nhất 6 ký tự" registration={register('password')} />
         {errors.password && <p className="text-xs font-medium" style={{ color: '#c13515' }}>{errors.password.message}</p>}
       </div>
 
       <div className="space-y-2">
         <label className="block text-sm font-semibold" style={{ color: '#191c1d' }} htmlFor="lr-cpwd">Xác nhận mật khẩu</label>
-        <PasswordInput id="lr-cpwd" placeholder="Nhập lại mật khẩu" value={form.getValues('confirmPassword')} onChange={(v) => form.setValue('confirmPassword', v)} />
+        <PasswordInput id="lr-cpwd" placeholder="Nhập lại mật khẩu" registration={register('confirmPassword')} />
         {errors.confirmPassword && <p className="text-xs font-medium" style={{ color: '#c13515' }}>{errors.confirmPassword.message}</p>}
       </div>
 
-      <TermsCheckbox />
+      <TermsCheckbox
+        value={!!form.watch('acceptTerms')}
+        onChange={(v) => form.setValue('acceptTerms', v as true, { shouldValidate: true })}
+        onBlur={() => form.trigger('acceptTerms')}
+        error={errors.acceptTerms?.message}
+      />
 
       {error && <ErrorBox message={error} />}
 
@@ -663,7 +522,7 @@ function TenantForm({
   onSubmit,
   onError,
 }: {
-  form: ReturnType<typeof useForm<TenantData>>;
+  form: ReturnType<typeof useForm<TenantData, any, TenantData>>;
   error: string;
   onSubmit: (values: TenantData) => Promise<void>;
   onError: (msg: string) => void;
@@ -702,17 +561,22 @@ function TenantForm({
 
       <div className="space-y-2">
         <label className="block text-sm font-semibold" style={{ color: '#191c1d' }} htmlFor="tn-pwd">Mật khẩu</label>
-        <PasswordInput id="tn-pwd" placeholder="Ít nhất 6 ký tự" value={form.getValues('password')} onChange={(v) => form.setValue('password', v)} />
+        <PasswordInput id="tn-pwd" placeholder="Ít nhất 6 ký tự" registration={register('password')} />
         {errors.password && <p className="text-xs font-medium" style={{ color: '#c13515' }}>{errors.password.message}</p>}
       </div>
 
       <div className="space-y-2">
         <label className="block text-sm font-semibold" style={{ color: '#191c1d' }} htmlFor="tn-cpwd">Xác nhận mật khẩu</label>
-        <PasswordInput id="tn-cpwd" placeholder="Nhập lại mật khẩu" value={form.getValues('confirmPassword')} onChange={(v) => form.setValue('confirmPassword', v)} />
+        <PasswordInput id="tn-cpwd" placeholder="Nhập lại mật khẩu" registration={register('confirmPassword')} />
         {errors.confirmPassword && <p className="text-xs font-medium" style={{ color: '#c13515' }}>{errors.confirmPassword.message}</p>}
       </div>
 
-      <TermsCheckbox />
+      <TermsCheckbox
+        value={!!form.watch('acceptTerms')}
+        onChange={(v) => form.setValue('acceptTerms', v as true, { shouldValidate: true })}
+        onBlur={() => form.trigger('acceptTerms')}
+        error={errors.acceptTerms?.message}
+      />
 
       {error && <ErrorBox message={error} />}
 
@@ -729,20 +593,43 @@ function TenantForm({
 }
 
 /* ── Terms Checkbox ── */
-function TermsCheckbox() {
+function TermsCheckbox({
+  value,
+  onChange,
+  error,
+  onBlur,
+}: {
+  value: boolean;
+  onChange: (v: boolean) => void;
+  error?: string;
+  onBlur?: () => void;
+}) {
   return (
-    <div className="flex items-start gap-3">
-      <input
-        id="terms"
-        type="checkbox"
-        className="mt-1 w-5 h-5 rounded cursor-pointer accent-[#676000]"
-      />
-      <label htmlFor="terms" className="text-base leading-tight cursor-pointer" style={{ color: '#4a4733' }}>
-        Tôi đồng ý với{' '}
-        <Link href="/terms" className="font-semibold underline decoration-[#f6e633] hover:text-[#676000] transition-colors cursor-pointer">Điều khoản bảo mật</Link>
-        {' '}và{' '}
-        <Link href="/privacy" className="font-semibold underline decoration-[#f6e633] hover:text-[#676000] transition-colors cursor-pointer">Chính sách của Smart Rental</Link>.
-      </label>
+    <div className="space-y-1.5">
+      <div className="flex items-start gap-3">
+        <input
+          id="terms"
+          type="checkbox"
+          checked={value}
+          onChange={(e) => onChange(e.target.checked)}
+          onBlur={onBlur}
+          aria-invalid={error ? 'true' : 'false'}
+          aria-describedby={error ? 'terms-error' : undefined}
+          className="mt-1 w-5 h-5 rounded cursor-pointer accent-[#676000] shrink-0"
+          style={error ? { outline: '2px solid #c13515', outlineOffset: 2 } : undefined}
+        />
+        <label htmlFor="terms" className="text-base leading-tight cursor-pointer" style={{ color: '#4a4733' }}>
+          Tôi đồng ý với{' '}
+          <Link href="/terms" className="font-semibold underline decoration-[#f6e633] hover:text-[#676000] transition-colors cursor-pointer">Điều khoản bảo mật</Link>
+          {' '}và{' '}
+          <Link href="/privacy" className="font-semibold underline decoration-[#f6e633] hover:text-[#676000] transition-colors cursor-pointer">Chính sách của Smart Rental</Link>.
+        </label>
+      </div>
+      {error && (
+        <p id="terms-error" className="text-xs font-medium pl-8" style={{ color: '#c13515' }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Loader2, Search, UserCheck, X, Check } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { Loader2, UserCheck, X, Check } from 'lucide-react';
 import { useAdminServiceOrders, useAssignProvider, useAdminUsers } from '@/hooks/use-admin';
 import type { ServiceOrder, Property, User } from '@/types';
 import { cn } from '@/lib/utils';
@@ -53,8 +53,6 @@ const fmtDate = (s: string) =>
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AdminServicesPage() {
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [type, setType] = useState('');
   const [page, setPage] = useState(1);
@@ -62,11 +60,6 @@ export default function AdminServicesPage() {
   // Inline assign state
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [pickedProvider, setPickedProvider] = useState('');
-
-  useEffect(() => {
-    const t = setTimeout(() => { setSearch(searchInput); setPage(1); }, 400);
-    return () => clearTimeout(t);
-  }, [searchInput]);
 
   const handleStatusChange = useCallback((v: string) => { setStatus(v); setPage(1); }, []);
   const handleTypeChange = useCallback((v: string) => { setType(v); setPage(1); }, []);
@@ -98,9 +91,6 @@ export default function AdminServicesPage() {
     setPickedProvider('');
   };
 
-  // Suppress unused variable warning — search is used for filter parity
-  void search;
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -118,17 +108,6 @@ export default function AdminServicesPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-card border border-[#dddddd] p-4 flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-52">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#929292]" />
-          <input
-            type="text"
-            placeholder="Tìm khách thuê, tài sản..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full h-9 pl-9 pr-3 rounded-[8px] border border-[#dddddd] text-sm text-[#222222] placeholder:text-[#929292] focus:outline-none focus:border-[#222222] transition-colors"
-          />
-        </div>
-
         <select
           value={status}
           onChange={(e) => handleStatusChange(e.target.value)}

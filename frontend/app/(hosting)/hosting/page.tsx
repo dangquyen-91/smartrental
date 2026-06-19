@@ -3,8 +3,9 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Star,
-  MapPin, Pencil, Check, X, Loader2,
+  MapPin, Pencil, Check, X, Loader2, Plus, ArrowRight,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { useMyProperties } from '@/hooks/use-properties';
 import { useLandlordBookings, useConfirmBooking, useRejectBooking, useLandlordRevenueStats } from '@/hooks/use-bookings';
@@ -30,9 +31,9 @@ const REVENUE_PERIOD_OPTIONS: { value: RevenuePeriod; label: string }[] = [
 ];
 
 const STATUS_CONFIG: Record<Property['status'], { label: string; cls: string }> = {
-  available:   { label: 'Còn trống',     cls: 'bg-[#FFF546] text-black' },
-  rented:      { label: 'Đang cho thuê', cls: 'bg-blue-50 text-blue-700' },
-  maintenance: { label: 'Bảo trì',       cls: 'bg-amber-50 text-amber-700' },
+  available:   { label: 'Còn trống',     cls: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+  rented:      { label: 'Đang cho thuê', cls: 'bg-blue-50 text-blue-700 border border-blue-200' },
+  maintenance: { label: 'Bảo trì',       cls: 'bg-amber-50 text-amber-700 border border-amber-200' },
 };
 
 const TYPE_LABEL: Record<Property['type'], string> = {
@@ -98,32 +99,23 @@ export default function HostingPage() {
   );
 
   return (
-    <>
+    <div className="space-y-6">
       {/* Welcome section */}
-      <div className="flex justify-between items-start self-stretch mb-4 w-full">
-        <div className="flex flex-col shrink-0 items-center pb-[23px]">
-          <span className="text-[#222222] text-[25px] font-bold">
-            Xin chào, {user?.name}!
-          </span>
-        </div>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-ink-black">
+          Xin chào, {user?.name}!
+        </h1>
         <Link
           href="/hosting/listings/new"
-          className="flex shrink-0 items-center bg-[#2683EB] text-left py-2.5 px-4 gap-2 rounded-lg border-0"
+          className="flex shrink-0 items-center bg-[#ffef3d] hover:shadow-lg transition-all text-left py-2.5 px-4 gap-2 rounded-lg border-0"
         >
-          <img
-            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/76cd3957-c0df-44d3-87a2-4e397b09f0d7"
-            className="w-4 h-4 rounded-lg object-fill"
-          />
-          <span className="text-white text-sm font-bold">Đăng tin</span>
+          <Plus className="size-4 text-[#1f1c00]" />
+          <span className="text-[#1f1c00] text-sm font-bold">Đăng tin</span>
         </Link>
       </div>
 
-      <span className="text-black text-xl mb-6">
-        Dưới đây là tổng quan hoạt động cho thuê của bạn.
-      </span>
-
       {/* Stats cards */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-4 gap-4">
         {/* Tin đăng */}
         <div className="flex flex-col items-start bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD]">
           <div className="flex items-center justify-center bg-[#FFF546] w-10 h-10 rounded-[10px] mb-3">
@@ -191,7 +183,7 @@ export default function HostingPage() {
             <select
               value={revenuePeriod}
               onChange={(e) => setRevenuePeriod(e.target.value as RevenuePeriod)}
-              className="text-[11px] text-[#6A6A6A] bg-transparent border border-solid border-[#DDDDDD] rounded-md px-1.5 py-0.5 cursor-pointer hover:border-[#2683EB] focus:outline-none focus:border-[#2683EB]"
+              className="text-[11px] text-[#6A6A6A] bg-transparent border border-solid border-[#DDDDDD] rounded-md px-1.5 py-0.5 cursor-pointer hover:border-[#ffef3d] focus:outline-none focus:border-[#ffef3d]"
             >
               {REVENUE_PERIOD_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>{o.label}</option>
@@ -235,7 +227,7 @@ export default function HostingPage() {
                 key={b.id}
                 booking={b}
                 onConfirm={() => confirmBooking.mutate(b.id)}
-                onReject={() => rejectBooking.mutate({ id: b.id })}
+                onReject={(reason) => rejectBooking.mutate({ id: b.id, reason })}
                 confirming={confirmBooking.isPending && confirmBooking.variables === b.id}
                 rejecting={rejectBooking.isPending && (rejectBooking.variables as { id: string }).id === b.id}
               />
@@ -251,12 +243,9 @@ export default function HostingPage() {
             Tin đăng của bạn
           </h2>
           {properties.length > 0 && (
-            <Link href="/hosting/listings" className="flex items-center gap-1.5">
-              <span className="text-[#2683EB] text-xs font-bold">Quản lý</span>
-              <img
-                src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/dab1d7c7-395b-40e0-be15-7e92fcc9ce3a"
-                className="w-3 h-3 object-fill"
-              />
+            <Link href="/hosting/listings" className="flex items-center gap-1 text-xs font-semibold text-[#222222] hover:text-[#676000] transition-colors">
+              Quản lý
+              <ArrowRight className="size-3.5" />
             </Link>
           )}
         </div>
@@ -275,7 +264,7 @@ export default function HostingPage() {
         ) : recentListings.length === 0 ? (
           <div className="bg-white py-8 px-4 rounded-[14px] border border-solid border-[#DDDDDD] text-center">
             <p className="text-[#6A6A6A] text-sm">Chưa có tin đăng nào</p>
-            <Link href="/hosting/listings/new" className="text-[#2683EB] text-sm font-semibold hover:underline mt-2 inline-block">
+            <Link href="/hosting/listings/new" className="text-[#222222] text-sm font-semibold hover:underline mt-2 inline-block">
               Đăng tin ngay
             </Link>
           </div>
@@ -295,12 +284,9 @@ export default function HostingPage() {
             Đánh giá mới nhất
           </h2>
           {reviewsData && reviewsData.totalReviews > 0 && (
-            <Link href="/hosting/reviews" className="flex items-center gap-1.5">
-              <span className="text-[#2683EB] text-xs font-bold">Xem tất cả</span>
-              <img
-                src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/dab1d7c7-395b-40e0-be15-7e92fcc9ce3a"
-                className="w-3 h-3 object-fill"
-              />
+            <Link href="/hosting/reviews" className="flex items-center gap-1 text-xs font-semibold text-[#222222] hover:text-[#676000] transition-colors">
+              Xem tất cả
+              <ArrowRight className="size-3.5" />
             </Link>
           )}
         </div>
@@ -331,7 +317,7 @@ export default function HostingPage() {
 
       {/* Quick links */}
       <div className="grid grid-cols-2 gap-4">
-        <Link href="/hosting/listings/new" className="flex items-center bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD] hover:border-[#2683EB] transition-colors">
+        <Link href="/hosting/listings/new" className="flex items-center bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD] hover:border-[#ffef3d] transition-colors">
           <div className="flex items-center justify-center bg-black w-10 h-10 rounded-[10px] mr-4">
             <img
               src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/6f2ef548-2935-44f3-bebe-1d685810286d"
@@ -348,7 +334,7 @@ export default function HostingPage() {
           />
         </Link>
 
-        <Link href="/hosting/reservations" className="flex items-center bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD] hover:border-[#2683EB] transition-colors">
+        <Link href="/hosting/reservations" className="flex items-center bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD] hover:border-[#ffef3d] transition-colors">
           <div className="flex items-center justify-center bg-black w-10 h-10 rounded-[10px] mr-4">
             <img
               src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/495abffe-7056-4f67-8362-507572babe5e"
@@ -365,7 +351,7 @@ export default function HostingPage() {
           />
         </Link>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -392,8 +378,8 @@ function ListingRow({ property: p }: { property: Property }) {
           <span className="text-[#222222] text-sm font-bold">
             {p.title}
           </span>
-          <div className="flex flex-col shrink-0 items-start bg-[#FFF546] py-[1px] px-2 rounded-[26843500px]">
-            <span className="text-black text-xs">{sc.label}</span>
+          <div className={cn('flex shrink-0 items-center py-0.5 px-2.5 rounded-full text-xs font-medium', sc.cls)}>
+            {sc.label}
           </div>
         </div>
         <div className="flex items-center self-stretch gap-1">
@@ -492,76 +478,106 @@ function PendingBookingRow({
 }: {
   booking: Booking;
   onConfirm: () => void;
-  onReject: () => void;
+  onReject: (reason: string) => void;
   confirming: boolean;
   rejecting: boolean;
 }) {
+  const [showRejectInput, setShowRejectInput] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
   const busy = confirming || rejecting;
 
+  const handleRejectConfirm = () => {
+    onReject(rejectReason.trim());
+    setShowRejectInput(false);
+    setRejectReason('');
+  };
+
   return (
-    <div className="flex items-start self-stretch bg-white p-4 gap-[1px] rounded-[14px] border border-solid border-[#DDDDDD]">
-      <div className="flex-1">
-        <div className="flex flex-col items-start self-stretch mb-[1px]">
-          <span className="text-[#222222] text-sm font-bold">
-            {tenantName(b)}
-          </span>
+    <div className="bg-white rounded-[14px] border border-solid border-[#DDDDDD]">
+      <div className="flex items-start p-4 gap-[1px]">
+        <div className="flex-1">
+          <div className="flex flex-col items-start self-stretch mb-[1px]">
+            <span className="text-[#222222] text-sm font-bold">
+              {tenantName(b)}
+            </span>
+          </div>
+          <div className="flex flex-col items-start self-stretch">
+            <span className="text-[#6A6A6A] text-xs">
+              {propertyTitle(b)}
+            </span>
+          </div>
+          <div className="flex items-center self-stretch mb-[1px] gap-1">
+            <MapPin className="w-3 h-3 text-[#929292]" />
+            <span className="text-[#929292] text-xs">
+              {propertyDistrict(b)}
+            </span>
+          </div>
+          <div className="flex flex-col items-start self-stretch pt-0.5">
+            <span className="text-[#929292] text-xs">
+              {formatDate(b.startDate)} · {b.duration} tháng · {formatVnd(b.totalPrice)}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col items-start self-stretch">
-          <span className="text-[#6A6A6A] text-xs">
-            {propertyTitle(b)}
-          </span>
-        </div>
-        <div className="flex items-center self-stretch mb-[1px] gap-1">
-          <img
-            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/e83ddeae-4471-4cc3-998a-49fb38ee3bb4"
-            className="w-3 h-3 object-fill"
+        {!showRejectInput && (
+          <div className="flex shrink-0 items-center gap-[9px]">
+            <button
+              onClick={() => setShowRejectInput(true)}
+              disabled={busy}
+              className="flex shrink-0 items-center bg-white text-left py-[7px] px-[13px] gap-1.5 rounded-lg border border-solid border-[#FF5E00] hover:bg-orange-50 transition-colors disabled:opacity-50"
+            >
+              <X className="w-3.5 h-3.5 text-[#FF5E00]" />
+              <span className="text-[#FF5E00] text-[13px] font-bold">Từ chối</span>
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={busy}
+              className="flex shrink-0 items-center bg-[#ffef3d] text-left py-[7px] px-3 gap-1.5 rounded-lg border-0 hover:shadow-lg transition-all disabled:opacity-50"
+            >
+              {confirming ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#1f1c00]" />
+              ) : (
+                <Check className="w-3.5 h-3.5 text-[#1f1c00]" />
+              )}
+              <span className="text-[#1f1c00] text-[13px] font-bold">
+                {confirming ? 'Đang xử lý...' : 'Xác nhận'}
+              </span>
+            </button>
+          </div>
+        )}
+        {showRejectInput && (
+          <button
+            onClick={() => { setShowRejectInput(false); setRejectReason(''); }}
+            className="text-xs text-[#929292] hover:text-[#222222] transition-colors px-2 py-1"
+          >
+            Hủy
+          </button>
+        )}
+      </div>
+      {showRejectInput && (
+        <div className="px-4 pb-4 border-t border-[#F0F0F0] pt-3">
+          <textarea
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            placeholder="Lý do từ chối (không bắt buộc)..."
+            rows={2}
+            className="w-full text-sm border border-[#E5E5E5] rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-[#FF5E00] transition-colors"
           />
-          <span className="text-[#929292] text-xs">
-            {propertyDistrict(b)}
-          </span>
+          <div className="flex justify-end mt-2">
+            <button
+              onClick={handleRejectConfirm}
+              disabled={rejecting}
+              className="flex items-center gap-1.5 bg-[#FF5E00] text-white text-[13px] font-bold py-[7px] px-4 rounded-lg hover:bg-[#e05500] transition-colors disabled:opacity-50"
+            >
+              {rejecting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <X className="w-3.5 h-3.5" />
+              )}
+              {rejecting ? 'Đang xử lý...' : 'Xác nhận từ chối'}
+            </button>
+          </div>
         </div>
-        <div className="flex flex-col items-start self-stretch pt-0.5">
-          <span className="text-[#929292] text-xs">
-            {formatDate(b.startDate)} · {b.duration} tháng · {formatVnd(b.totalPrice)}
-          </span>
-        </div>
-      </div>
-      <div className="flex shrink-0 items-center gap-[9px]">
-        <button
-          onClick={onReject}
-          disabled={busy}
-          className="flex shrink-0 items-center bg-white text-left py-[7px] px-[13px] gap-1.5 rounded-lg border border-solid border-[#FF5E00] hover:bg-orange-50 transition-colors disabled:opacity-50"
-        >
-          {rejecting ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FF5E00]" />
-          ) : (
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/6e5e0b5b-a94d-4cf0-aa87-0ed7d9200465"
-              className="w-3.5 h-3.5 rounded-lg object-fill"
-            />
-          )}
-          <span className="text-[#FF5E00] text-[13px] font-bold">
-            {rejecting ? 'Đang xử lý...' : 'Từ chối'}
-          </span>
-        </button>
-        <button
-          onClick={onConfirm}
-          disabled={busy}
-          className="flex shrink-0 items-center bg-[#2683EB] text-left py-[7px] px-3 gap-1.5 rounded-lg border-0 hover:bg-blue-600 transition-colors disabled:opacity-50"
-        >
-          {confirming ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
-          ) : (
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/41826c94-9585-444c-ac7c-90717780594b"
-              className="w-3.5 h-3.5 rounded-lg object-fill"
-            />
-          )}
-          <span className="text-white text-[13px] font-bold">
-            {confirming ? 'Đang xử lý...' : 'Xác nhận'}
-          </span>
-        </button>
-      </div>
+      )}
     </div>
   );
 }

@@ -23,25 +23,25 @@ function SplitChars({ text, className }: { text: string; className?: string }) {
 
 const TEAM = [
   {
-    name: 'Nguyễn Văn Minh',
+    name: 'Nguyễn Đăng Quyền',
     role: 'Founder & CEO',
     desc: '10 năm kinh nghiệm trong lĩnh vực công nghệ bất động sản.',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=minh',
   },
   {
-    name: 'Trần Thị Lan',
+    name: 'Nguyễn Minh Châu',
     role: 'Head of Product',
     desc: 'Chuyên gia UX/UI với hơn 8 năm xây dựng sản phẩm số.',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lan',
   },
   {
-    name: 'Lê Hoàng Nam',
+    name: 'Nguyễn Đang Phát Tài',
     role: 'Lead Engineer',
     desc: 'Full-stack developer, tối ưu hệ thống cho hàng triệu người dùng.',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=nam',
   },
   {
-    name: 'Phạm Thu Hà',
+    name: 'Nguyễn Vũ Thu Uyên',
     role: 'Head of Operations',
     desc: 'Quản lý vận hành và hỗ trợ khách hàng trên toàn quốc.',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ha',

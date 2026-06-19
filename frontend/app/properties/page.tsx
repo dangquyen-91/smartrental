@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { gsap } from 'gsap';
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
@@ -239,15 +239,13 @@ function SearchBar({
 
 function PropertyGrid({
   filters,
+  page,
+  onPageChange,
 }: {
   filters: PropertyFilters;
+  page: number;
+  onPageChange: (page: number) => void;
 }) {
-  const [page, setPage] = useState(1);
-  const gridRef = useRef<HTMLDivElement>(null);
-  const rectsBeforeFetch = useRef<Map<string, DOMRect>>(new Map());
-  const prevIsFetching = useRef(false);
-  const isFetchingRef = useRef(false);
-
   const { isAuthenticated, hasHydrated } = useAuth();
   const { data: myBookings } = useAllMyBookings(hasHydrated && isAuthenticated);
   const rentedPropertyIds = new Set(
@@ -266,66 +264,9 @@ function PropertyGrid({
     excludePropertyIds: excludedPropertyIds,
   };
 
-  const { data, isLoading, isFetching } = useProperties(apiFilters);
+  const { data, isLoading } = useProperties(apiFilters);
   const properties = (data?.data ?? []).filter((p) => p.status === 'available');
   const pagination = data?.pagination;
-  const hasMore = pagination ? page < pagination.totalPages : false;
-
-  // Reset page when filters change
-  const prevFiltersRef = useRef(apiFilters);
-  useEffect(() => {
-    const prev = prevFiltersRef.current;
-    const filterChanged =
-      prev.type !== apiFilters.type ||
-      prev.search !== apiFilters.search ||
-      prev.minPrice !== apiFilters.minPrice ||
-      prev.maxPrice !== apiFilters.maxPrice ||
-      prev.minArea !== apiFilters.minArea ||
-      prev.maxArea !== apiFilters.maxArea;
-    if (filterChanged) {
-      setPage(1);
-      prevFiltersRef.current = apiFilters;
-    }
-  }, [apiFilters]);
-
-  // FLIP animation: capture rects when fetch starts, animate when new data arrives
-  useEffect(() => {
-    const isFetching = isFetchingRef.current;
-    isFetchingRef.current = isFetching;
-
-    if (isFetching) {
-      // Start of fetch — capture current card rects
-      const grid = gridRef.current;
-      if (!grid) return;
-      rectsBeforeFetch.current = new Map();
-      const cards = grid.querySelectorAll('[data-flip-id]');
-      cards.forEach((card) => {
-        const id = card.getAttribute('data-flip-id')!;
-        rectsBeforeFetch.current.set(id, card.getBoundingClientRect());
-      });
-      prevIsFetching.current = true;
-    } else if (prevIsFetching.current && !isFetching) {
-      // Fetch completed — animate from old positions to new positions
-      prevIsFetching.current = false;
-      const grid = gridRef.current;
-      if (!grid) return;
-      const cards = grid.querySelectorAll('[data-flip-id]');
-      cards.forEach((card) => {
-        const id = card.getAttribute('data-flip-id')!;
-        const prevRect = rectsBeforeFetch.current.get(id);
-        if (!prevRect) return;
-        const newRect = card.getBoundingClientRect();
-        const dx = prevRect.left - newRect.left;
-        const dy = prevRect.top - newRect.top;
-        if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
-        gsap.fromTo(
-          card,
-          { x: dx, y: dy, opacity: 0, scale: 0.95 },
-          { x: 0, y: 0, opacity: 1, scale: 1, duration: 0.4, ease: 'power2.out', clearProps: 'transform' }
-        );
-      });
-    }
-  }, [isFetching]);
 
   if (isLoading) {
     return (
@@ -351,29 +292,96 @@ function PropertyGrid({
 
   return (
     <div>
-      <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {properties.map((p) => (
-          <div key={p.id} data-flip-id={p.id}>
+          <div key={p.id}>
             <PropertyCard property={p} rentedPropertyIds={rentedPropertyIds} />
           </div>
         ))}
       </div>
 
-      {hasMore && (
-        <div className="mt-12 text-center">
-          <button
-            onClick={() => setPage((n) => n + 1)}
-            disabled={isFetching}
-            className="px-8 py-3 bg-white border border-[#e0e0e0] text-[#191c1d] text-sm font-semibold rounded-full hover:border-[#676000] hover:text-[#676000] transition-all disabled:opacity-50 flex items-center gap-2 mx-auto"
-          >
-            {isFetching ? 'Đang tải...' : 'Xem thêm'}
-            {!isFetching && <ChevronRight className="size-4" />}
-          </button>
-          <p className="mt-3 text-xs text-[#4a4733]">
-            Hiển thị {properties.length} / {pagination?.total ?? 0} bất động sản
+      {pagination && (
+        <div className="mt-12">
+          <PaginationControls
+            page={page}
+            totalPages={pagination.totalPages}
+            onPageChange={onPageChange}
+          />
+          <p className="mt-3 text-center text-xs text-[#4a4733]">
+            Hiển thị {properties.length} / {pagination.total} bất động sản
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── pagination controls ───────────────────────────────────────────────────────
+
+function getPageNumbers(current: number, total: number): (number | 'ellipsis')[] {
+  const pages: (number | 'ellipsis')[] = [];
+  for (let i = 1; i <= total; i++) {
+    if (i === 1 || i === total || Math.abs(i - current) <= 1) {
+      pages.push(i);
+    } else if (pages[pages.length - 1] !== 'ellipsis') {
+      pages.push('ellipsis');
+    }
+  }
+  return pages;
+}
+
+function PaginationControls({
+  page,
+  totalPages,
+  onPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-center gap-1.5">
+      <button
+        onClick={() => onPageChange(page - 1)}
+        disabled={page <= 1}
+        aria-label="Trang trước"
+        className="flex size-9 items-center justify-center rounded-full border border-[#e0e0e0] text-[#191c1d] hover:border-[#676000] hover:text-[#676000] disabled:opacity-40 disabled:hover:border-[#e0e0e0] disabled:hover:text-[#191c1d] transition-colors"
+      >
+        <ChevronLeft className="size-4" />
+      </button>
+
+      {getPageNumbers(page, totalPages).map((p, i) =>
+        p === 'ellipsis' ? (
+          <span key={`ellipsis-${i}`} className="px-1 text-sm text-[#4a4733]">
+            …
+          </span>
+        ) : (
+          <button
+            key={p}
+            onClick={() => onPageChange(p)}
+            aria-current={p === page ? 'page' : undefined}
+            className={cn(
+              'flex size-9 items-center justify-center rounded-full text-sm font-semibold transition-colors',
+              p === page
+                ? 'bg-[#676000] text-white'
+                : 'text-[#191c1d] hover:bg-[#f3f4f5]'
+            )}
+          >
+            {p}
+          </button>
+        )
+      )}
+
+      <button
+        onClick={() => onPageChange(page + 1)}
+        disabled={page >= totalPages}
+        aria-label="Trang sau"
+        className="flex size-9 items-center justify-center rounded-full border border-[#e0e0e0] text-[#191c1d] hover:border-[#676000] hover:text-[#676000] disabled:opacity-40 disabled:hover:border-[#e0e0e0] disabled:hover:text-[#191c1d] transition-colors"
+      >
+        <ChevronRight className="size-4" />
+      </button>
     </div>
   );
 }
@@ -388,6 +396,7 @@ export default function PropertiesPage() {
   const initialSearch = searchParams.get('search') || '';
   const initialMinPrice = searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined;
   const initialMaxPrice = searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined;
+  const initialPage = Math.max(1, Number(searchParams.get('page')) || 1);
 
   const [activeType, setActiveType] = useState<Property['type'] | undefined>(initialType);
   const [search, setSearch] = useState(initialSearch);
@@ -397,15 +406,19 @@ export default function PropertiesPage() {
     minPrice: initialMinPrice,
     maxPrice: initialMaxPrice,
   }));
+  const [page, setPage] = useState(initialPage);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const handleCategoryChange = useCallback((type: Property['type'] | 'all') => {
     setActiveType(type === 'all' ? undefined : type);
     setFilters((f) => ({ ...f, type: type === 'all' ? undefined : type }));
+    setPage(1);
   }, []);
 
   const handleFilterChange = useCallback((f: PropertyFilters) => {
     setFilters(f);
     setActiveType(f.type ?? undefined);
+    setPage(1);
     // sync URL
     const params = new URLSearchParams();
     if (f.type) params.set('type', f.type);
@@ -418,6 +431,7 @@ export default function PropertiesPage() {
 
   const handleSearch = useCallback(() => {
     setFilters((f) => ({ ...f, search: search || undefined }));
+    setPage(1);
     const params = new URLSearchParams();
     if (activeType) params.set('type', activeType);
     if (search) params.set('search', search);
@@ -426,6 +440,21 @@ export default function PropertiesPage() {
     const qs = params.toString();
     router.replace(qs ? `/properties?${qs}` : '/properties', { scroll: false });
   }, [search, activeType, filters.minPrice, filters.maxPrice, router]);
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+    const params = new URLSearchParams();
+    if (activeType) params.set('type', activeType);
+    if (search) params.set('search', search);
+    if (filters.minPrice != null) params.set('minPrice', String(filters.minPrice));
+    if (filters.maxPrice != null) params.set('maxPrice', String(filters.maxPrice));
+    if (newPage > 1) params.set('page', String(newPage));
+    const qs = params.toString();
+    router.replace(qs ? `/properties?${qs}` : '/properties', { scroll: false });
+    if (resultsRef.current) {
+      gsap.to(window, { duration: 0.4, scrollTo: { y: resultsRef.current, offsetY: 96 }, ease: 'power2.out' });
+    }
+  }, [activeType, search, filters.minPrice, filters.maxPrice, router]);
 
   const hasFilters =
     activeType !== undefined ||
@@ -484,7 +513,7 @@ export default function PropertiesPage() {
         </section>
 
         {/* ── Body ── */}
-        <section className="mx-auto px-4 md:px-10 py-8" style={{ maxWidth: '1280px' }}>
+        <section ref={resultsRef} className="mx-auto px-4 md:px-10 py-8" style={{ maxWidth: '1280px' }}>
           <div className="flex gap-8">
             <FilterSidebar
               filters={filters}
@@ -493,6 +522,7 @@ export default function PropertiesPage() {
                 setFilters({ status: 'available' });
                 setActiveType(undefined);
                 setSearch('');
+                setPage(1);
                 router.replace('/properties', { scroll: false });
               }}
             />
@@ -511,7 +541,7 @@ export default function PropertiesPage() {
                 )}
               </div>
 
-              <PropertyGrid filters={filters} />
+              <PropertyGrid filters={filters} page={page} onPageChange={handlePageChange} />
             </div>
           </div>
         </section>

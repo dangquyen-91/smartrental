@@ -19,10 +19,15 @@ import serviceRoutes from './routes/service.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import reviewRoutes from './routes/review.routes.js';
+import subscriptionRoutes from './routes/subscription.routes.js';
 import errorHandler from './middleware/error-handler.middleware.js';
 import ServiceCatalog from './models/service-catalog.model.js';
+import Plan from './models/plan.model.js';
 
-connectDB().then(() => ServiceCatalog.seedIfEmpty());
+connectDB().then(async () => {
+  await ServiceCatalog.seedIfEmpty();
+  await Plan.seedIfEmpty();
+});
 
 const app = express();
 
@@ -60,6 +65,7 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
 
 app.use((_req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
 app.use(errorHandler);

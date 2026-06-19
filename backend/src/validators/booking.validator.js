@@ -29,8 +29,8 @@ const createBookingValidation = validate([
 
 const rejectBookingValidation = validate([
   body('reason')
+    .optional()
     .trim()
-    .notEmpty().withMessage('Rejection reason is required')
     .isLength({ max: 500 }).withMessage('Reason must not exceed 500 characters'),
 ]);
 
