@@ -43,7 +43,7 @@ export async function getMyReviewsApi(page = 1, limit = 10) {
 export interface AdminReviewsParams {
   page?: number;
   limit?: number;
-  targetType?: "property";
+  targetType?: 'property' | 'landlord' | 'tenant';
   includeDeleted?: boolean;
 }
 

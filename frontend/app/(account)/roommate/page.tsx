@@ -87,8 +87,8 @@ function ScoreBadge({ score }: { score: number }) {
 
 const profileSchema = z.object({
   gender:      z.enum(['male', 'female', 'any']),
-  budgetMin:   z.number({ error: 'Nhập ngân sách tối thiểu' }).min(500_000),
-  budgetMax:   z.number({ error: 'Nhập ngân sách tối đa' }).min(500_000),
+  budgetMin:   z.preprocess((v) => (typeof v === 'number' && isNaN(v) ? undefined : v), z.number({ message: 'Nhập ngân sách tối thiểu' }).min(500_000, 'Tối thiểu 500.000₫')),
+  budgetMax:   z.preprocess((v) => (typeof v === 'number' && isNaN(v) ? undefined : v), z.number({ message: 'Nhập ngân sách tối đa' }).min(500_000, 'Tối thiểu 500.000₫')),
   schedule:    z.enum(['early_bird', 'night_owl', 'flexible']),
   lifestyle:   z.enum(['quiet', 'active', 'mixed']),
   cleanliness: z.enum(['neat', 'average', 'relaxed']),

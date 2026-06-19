@@ -94,7 +94,8 @@ function LoginForm() {
     try {
       const data = await loginApi(email, password);
       setAuth(data.user as unknown as User, data.accessToken, data.refreshToken);
-      router.push(from);
+      const user = data.user as unknown as User;
+      router.push(user.role === 'admin' ? '/admin' : from);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Email hoặc mật khẩu không đúng.');
@@ -103,8 +104,8 @@ function LoginForm() {
     }
   };
 
-  const handleGoogleSuccess = () => {
-    router.push(from);
+  const handleGoogleSuccess = (redirectTo?: string) => {
+    router.push(redirectTo ?? from);
   };
 
   return (
@@ -330,7 +331,7 @@ function RolePickerModal({
   );
 }
 
-function GoogleLoginButton({ onSuccess, onError }: { onSuccess: () => void; onError: (msg: string) => void }) {
+function GoogleLoginButton({ onSuccess, onError }: { onSuccess: (redirectTo?: string) => void; onError: (msg: string) => void }) {
   const [loading, setLoading] = useState(false);
   const [pendingToken, setPendingToken] = useState<string | null>(null);
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -339,9 +340,10 @@ function GoogleLoginButton({ onSuccess, onError }: { onSuccess: () => void; onEr
     try {
       setLoading(true);
       const data = await googleLoginApi(token, role);
-      setAuth(data.user as unknown as User, data.accessToken, data.refreshToken);
+      const gUser = data.user as unknown as User;
+      setAuth(gUser, data.accessToken, data.refreshToken);
       setPendingToken(null);
-      onSuccess();
+      onSuccess(gUser.role === 'admin' ? '/admin' : undefined);
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status === 404 && !role) {

@@ -163,8 +163,8 @@ const schema = z.object({
   type: z.enum(['room', 'apartment', 'house', 'studio'] as const),
   price: z.number({ message: 'Vui lòng nhập giá' }).min(2000, 'Giá tối thiểu 2.000₫'),
   area: z.number({ message: 'Vui lòng nhập diện tích' }).min(5, 'Diện tích tối thiểu 5m²'),
-  bedrooms: z.number().min(0).optional(),
-  bathrooms: z.number().min(0).optional(),
+  bedrooms: z.preprocess((v) => (typeof v === 'number' && isNaN(v) ? undefined : v), z.number().min(0, 'Phải >= 0').optional()),
+  bathrooms: z.preprocess((v) => (typeof v === 'number' && isNaN(v) ? undefined : v), z.number().min(0, 'Phải >= 0').optional()),
   description: z.string().max(2000, 'Tối đa 2000 ký tự').optional(),
   address: z.object({
     city: z.string().min(1, 'Vui lòng nhập thành phố'),

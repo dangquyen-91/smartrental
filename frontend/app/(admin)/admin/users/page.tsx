@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Loader2, Search } from 'lucide-react';
 import { useAdminUsers, useUpdateUserStatus, useUpdateUserRole } from '@/hooks/use-admin';
 import type { User } from '@/types';
+import { cn } from '@/lib/utils';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -141,32 +142,34 @@ export default function AdminUsersPage() {
             {users.map((user, i) => (
               <div
                 key={user.id}
-                className={`flex items-center gap-4 px-5 py-4 ${i < users.length - 1 ? 'border-b border-[#dddddd]' : ''} ${!user.isActive ? 'opacity-60' : ''}`}
+                className={cn(
+                  'flex items-center gap-3 md:grid md:grid-cols-[1fr_120px_120px_100px_120px] md:gap-4 md:items-center px-5 py-4',
+                  i < users.length - 1 ? 'border-b border-[#dddddd]' : '',
+                  !user.isActive ? 'opacity-60' : '',
+                )}
               >
-                {/* Avatar */}
-                <div className="w-9 h-9 rounded-full bg-[#f7f7f7] flex items-center justify-center shrink-0 overflow-hidden border border-[#dddddd]">
-                  {user.avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={user.avatar} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-xs font-semibold text-[#6a6a6a]">
-                      {getInitials(user.name)}
-                    </span>
-                  )}
+                {/* Cell 1: Avatar + name */}
+                <div className="flex items-center gap-3 min-w-0 flex-1 md:flex-initial">
+                  <div className="w-9 h-9 rounded-full bg-[#f7f7f7] flex items-center justify-center shrink-0 overflow-hidden border border-[#dddddd]">
+                    {user.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xs font-semibold text-[#6a6a6a]">
+                        {getInitials(user.name)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-[#222222] truncate">{user.name}</p>
+                    <p className="text-xs text-[#6a6a6a] truncate">{user.email}</p>
+                    {user.phone && <p className="text-xs text-[#929292]">{user.phone}</p>}
+                  </div>
                 </div>
 
-                {/* Name + email */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[#222222] truncate">{user.name}</p>
-                  <p className="text-xs text-[#6a6a6a] truncate">{user.email}</p>
-                  {user.phone && (
-                    <p className="text-xs text-[#929292]">{user.phone}</p>
-                  )}
-                </div>
-
-                {/* Role — editable select */}
+                {/* Cell 2: Role */}
                 {user.role === 'admin' ? (
-                  <span className={`hidden md:inline-flex text-xs font-medium px-2 py-0.5 rounded-[4px] ${ROLE_COLOR[user.role]}`}>
+                  <span className={cn('hidden md:inline-flex text-xs font-medium px-2 py-0.5 rounded-[4px]', ROLE_COLOR[user.role])}>
                     {ROLE_LABEL[user.role]}
                   </span>
                 ) : (
@@ -182,34 +185,38 @@ export default function AdminUsersPage() {
                   </select>
                 )}
 
-                {/* Status badge */}
+                {/* Cell 3: Status */}
                 <span
-                  className={`hidden md:inline-flex text-xs font-medium px-2 py-0.5 rounded-[4px] ${
-                    user.isActive ? 'bg-[#f0fdf4] text-[#16a34a]' : 'bg-[#f7f7f7] text-[#929292]'
-                  }`}
+                  className={cn(
+                    'hidden md:inline-flex text-xs font-medium px-2 py-0.5 rounded-[4px]',
+                    user.isActive ? 'bg-[#f0fdf4] text-[#16a34a]' : 'bg-[#f7f7f7] text-[#929292]',
+                  )}
                 >
                   {user.isActive ? 'Hoạt động' : 'Vô hiệu hoá'}
                 </span>
 
-                {/* Date */}
-                <span className="hidden md:block text-xs text-[#929292] w-[100px] shrink-0">
+                {/* Cell 4: Date */}
+                <span className="hidden md:block text-xs text-[#929292]">
                   {fmtDate(user.createdAt)}
                 </span>
 
-                {/* Toggle status button */}
-                {user.role !== 'admin' && (
-                  <button
-                    onClick={() => toggleStatus.mutate({ id: user.id, isActive: !user.isActive })}
-                    disabled={toggleStatus.isPending}
-                    className={`text-xs px-3 py-1.5 rounded-[8px] border transition-colors shrink-0 disabled:opacity-50 ${
-                      user.isActive
-                        ? 'border-[#dddddd] text-[#6a6a6a] hover:border-[#c13515] hover:text-[#c13515] hover:bg-[#fff5f5]'
-                        : 'border-[#dddddd] text-[#6a6a6a] hover:border-[#16a34a] hover:text-[#16a34a] hover:bg-[#f0fdf4]'
-                    }`}
-                  >
-                    {user.isActive ? 'Vô hiệu hoá' : 'Kích hoạt'}
-                  </button>
-                )}
+                {/* Cell 5: Action */}
+                <div className="hidden md:flex justify-end shrink-0">
+                  {user.role !== 'admin' && (
+                    <button
+                      onClick={() => toggleStatus.mutate({ id: user.id, isActive: !user.isActive })}
+                      disabled={toggleStatus.isPending}
+                      className={cn(
+                        'text-xs px-3 py-1.5 rounded-[8px] border transition-colors disabled:opacity-50',
+                        user.isActive
+                          ? 'border-[#dddddd] text-[#6a6a6a] hover:border-[#c13515] hover:text-[#c13515] hover:bg-[#fff5f5]'
+                          : 'border-[#dddddd] text-[#6a6a6a] hover:border-[#16a34a] hover:text-[#16a34a] hover:bg-[#f0fdf4]',
+                      )}
+                    >
+                      {user.isActive ? 'Vô hiệu hoá' : 'Kích hoạt'}
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
 

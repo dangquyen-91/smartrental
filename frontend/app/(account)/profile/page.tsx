@@ -86,6 +86,7 @@ export default function ProfilePage() {
   const handleUpdate = (updated: UserType) => {
     setUser(updated);
     qc.setQueryData(['me'], updated);
+    void qc.invalidateQueries({ queryKey: ['me'] });
   };
 
   if (isLoading && !storedUser) {
@@ -457,25 +458,22 @@ function SecuritySection({
 
       <div className="flex flex-col self-stretch mb-[21px] mx-[25px] gap-[1px]">
         {/* Phone row */}
-        <div className="flex justify-between items-center self-stretch pb-[31px] border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7]">
-          <div className="flex flex-col shrink-0 items-center gap-[1px]">
-            <div className="flex flex-col items-center pr-[237px]">
-              <span className="text-[#222222] text-sm font-bold">Số điện thoại</span>
-            </div>
-            <span className="text-[#929292] text-xs">
-              {user.phone ?? 'Cập nhật số điện thoại để xác thực và liên lạc nhanh chóng hơn'}
-            </span>
+        <div className="flex justify-between items-center self-stretch py-4 border-b border-[#F7F7F7]">
+          <span className="text-[#6A6A6A] text-sm">Số điện thoại</span>
+          <div className="flex items-center gap-3">
+            {user.phone ? (
+              <span className="text-[#222222] text-sm font-bold">{user.phone}</span>
+            ) : (
+              <span className="text-[#929292] text-sm">Chưa cập nhật</span>
+            )}
+            <button
+              onClick={() => setStep('phone')}
+              className="flex shrink-0 items-center bg-transparent py-1.5 px-3 gap-1.5 rounded-lg border border-[#dddddd] hover:bg-[#f7f7f7] transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5 text-[#6a6a6a]" />
+              <span className="text-[#222222] text-xs font-semibold">Chỉnh sửa</span>
+            </button>
           </div>
-          <button
-            onClick={() => setStep('phone')}
-            className="flex shrink-0 items-center bg-transparent text-left py-1.5 px-3 gap-1.5 rounded-lg border border-solid border-[#2683EB]"
-          >
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7b740a75-b978-4031-941d-e77c78491a25"
-              className="w-3.5 h-3.5 rounded-lg object-fill"
-            />
-            <span className="text-[#222222] text-xs font-bold">Chỉnh sửa</span>
-          </button>
         </div>
 
         {/* Phone form */}
@@ -583,7 +581,7 @@ function BankSection({
   };
 
   return (
-    <div className="self-stretch bg-white pt-[1px] rounded-[14px] border border-solid border-[#DDDDDD]">
+    <div className="self-stretch bg-white pt-[1px] mb-5 rounded-[14px] border border-solid border-[#DDDDDD]">
       <div className="flex items-center self-stretch py-5 mb-[21px] mx-[1px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
         <div className="flex flex-col shrink-0 items-center pt-0.5 ml-6 mr-3">
           <div className="flex flex-col items-start bg-[#FFF546] text-left py-[9px] px-2.5 rounded-[26843500px] border-0">
@@ -740,7 +738,7 @@ function NationalIdSection({
     d ? new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '---';
 
   return (
-    <div className="self-stretch bg-white pt-[1px] rounded-[14px] border border-solid border-[#DDDDDD]">
+    <div className="self-stretch bg-white pt-[1px] mb-5 rounded-[14px] border border-solid border-[#DDDDDD]">
       <div className="flex items-center self-stretch py-5 mb-[21px] mx-[1px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
         <div className="flex flex-col shrink-0 items-center pt-0.5 ml-6 mr-3">
           <div className="flex flex-col items-start bg-[#FFF546] text-left p-2.5 rounded-[26843500px] border-0">

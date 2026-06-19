@@ -43,13 +43,8 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       <div className="flex self-stretch">
         {/* Sidebar — fixed width, always visible */}
         <aside className="w-[223px] shrink-0 flex flex-col items-start bg-white border-r border-[#DDDDDD]">
-          <div className="flex items-center py-[21px] pl-[15px] pr-[118px] gap-2 border-b border-solid border-b-[#DDDDDD] w-full">
-            <span className="text-[#929292] text-[11px] font-bold uppercase tracking-widest">Tài khoản</span>
-          </div>
-
-          {/* Section label */}
-          <div className="flex flex-col items-start py-4 pl-[15px] pr-[70px] border-b border-solid border-b-[#DDDDDD]">
-            <span className="text-[#929292] text-[13px] font-bold">QUẢN LÝ TÀI KHOẢN</span>
+          <div className="flex items-center py-[21px] pl-[15px] gap-2 border-b border-solid border-b-[#DDDDDD] w-full">
+            <span className="text-[#929292] text-xs font-bold uppercase tracking-widest">Tài khoản</span>
           </div>
 
           {/* Nav items */}

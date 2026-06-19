@@ -30,7 +30,7 @@ const register = async ({ name, email, password, phone, role }) => {
   return {
     accessToken,
     refreshToken,
-    user: { id: user._id, name: user.name, email: user.email, role: user.role, authProvider: user.authProvider },
+    user: user.toJSON(),
   };
 };
 
@@ -131,7 +131,7 @@ const googleLogin = async (googleAccessToken, role) => {
   return {
     accessToken,
     refreshToken,
-    user: { id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar, authProvider: user.authProvider },
+    user: user.toJSON(),
   };
 };
 

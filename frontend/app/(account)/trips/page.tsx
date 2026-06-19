@@ -255,10 +255,13 @@ function BookingCard({
               </button>
             )}
             {showContract && (
-              <div className="flex shrink-0 items-center gap-[5px]">
-                <span className="text-[#222222] text-xs font-bold">Hợp đồng</span>
+              <Link
+                href="/contracts"
+                className="flex shrink-0 items-center gap-1 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#DDDDDD] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+              >
+                Hợp đồng
                 <ChevronRight className="size-3.5 text-[#6A6A6A]" />
-              </div>
+              </Link>
             )}
           </div>
         </div>
@@ -436,12 +439,12 @@ export default function TripsPage() {
       <Suspense><PaymentToast /></Suspense>
 
       {/* Page title */}
-      <div className="flex flex-col items-start self-stretch px-4">
+      <div className="flex flex-col self-stretch gap-0.75">
         <span className="text-[#222222] text-2xl font-bold">Đơn thuê của tôi</span>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center self-stretch mb-[5px] px-4 border-b border-solid border-b-[#DDDDDD]">
+      <div className="flex items-center self-stretch mb-[5px] border-b border-solid border-b-[#DDDDDD]">
         {TABS.map((tab) => {
           const count = tabCounts[tab.id];
           const isActive = activeTab === tab.id;
@@ -477,14 +480,14 @@ export default function TripsPage() {
 
       {/* Booking list */}
       {isLoading ? (
-        <div className="flex flex-col gap-4 w-full px-4">
+        <div className="flex flex-col gap-4 w-full">
           <BookingCardSkeleton />
           <BookingCardSkeleton />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="px-4"><EmptyState tabId={activeTab} /></div>
+        <EmptyState tabId={activeTab} />
       ) : (
-        <div className="flex flex-col gap-4 w-full px-4">
+        <div className="flex flex-col gap-4 w-full">
           {filtered.map((booking) => (
             <BookingCard
               key={booking.id}

@@ -27,6 +27,12 @@ const STATUS_COLOR: Record<string, string> = {
   maintenance: 'bg-[#fefce8] text-[#ca8a04]',
 };
 
+const STATUS_SELECT_COLOR: Record<string, string> = {
+  available:   'border-[#16a34a] text-[#16a34a]',
+  rented:      'border-[#2563eb] text-[#2563eb]',
+  maintenance: 'border-[#ca8a04] text-[#ca8a04]',
+};
+
 const getPrimaryImage = (images: PropertyImage[]) =>
   images.find((img) => img.isPrimary)?.url ?? images[0]?.url;
 
@@ -148,46 +154,43 @@ export default function AdminPropertiesPage() {
               return (
                 <div
                   key={property.id}
-                  className={`flex items-center gap-4 px-5 py-4 ${i < properties.length - 1 ? 'border-b border-[#dddddd]' : ''}`}
+                  className={cn(
+                    'flex items-center gap-3 lg:grid lg:grid-cols-[2fr_120px_120px_1fr_100px_80px] lg:gap-4 lg:items-center px-5 py-4',
+                    i < properties.length - 1 ? 'border-b border-[#dddddd]' : '',
+                  )}
                 >
-                  {/* Thumbnail */}
-                  <div className="w-14 h-14 rounded-[10px] bg-[#f7f7f7] shrink-0 overflow-hidden border border-[#dddddd]">
-                    {thumb ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={thumb} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[#929292] text-xs">
-                        N/A
-                      </div>
-                    )}
+                  {/* Cell 1: Thumbnail + title */}
+                  <div className="flex items-center gap-3 min-w-0 flex-1 lg:flex-initial">
+                    <div className="w-14 h-14 rounded-[10px] bg-[#f7f7f7] shrink-0 overflow-hidden border border-[#dddddd]">
+                      {thumb ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={thumb} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[#929292] text-xs">N/A</div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[#222222] truncate">{property.title}</p>
+                      <p className="text-xs text-[#6a6a6a] truncate">
+                        {property.address.district}, {property.address.city}
+                      </p>
+                      <p className="text-xs text-[#929292]">{property.views ?? 0} lượt xem</p>
+                    </div>
                   </div>
 
-                  {/* Title + location */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#222222] truncate">{property.title}</p>
-                    <p className="text-xs text-[#6a6a6a] truncate">
-                      {property.address.district}, {property.address.city}
-                    </p>
-                    <p className="text-xs text-[#929292]">{property.views ?? 0} lượt xem</p>
-                  </div>
-
-                  {/* Type badge */}
-                  <span className="hidden lg:inline-flex text-xs font-medium px-2 py-0.5 rounded-[4px] bg-[#f7f7f7] text-[#6a6a6a] shrink-0">
+                  {/* Cell 2: Type */}
+                  <span className="hidden lg:inline-flex w-fit text-xs font-medium px-2 py-0.5 rounded-[4px] bg-[#f7f7f7] text-[#6a6a6a]">
                     {TYPE_LABEL[property.type]}
                   </span>
 
-                  {/* Status dropdown */}
+                  {/* Cell 3: Status */}
                   <select
                     value={property.status}
-                    onChange={(e) =>
-                      updateStatus.mutate({ id: property.id, status: e.target.value })
-                    }
+                    onChange={(e) => updateStatus.mutate({ id: property.id, status: e.target.value })}
                     disabled={isPending}
                     className={cn(
-                      'hidden lg:block h-7 px-2 rounded-[6px] border text-xs bg-white focus:outline-none focus:border-[#222222] transition-colors disabled:opacity-50 shrink-0',
-                      STATUS_COLOR[property.status]
-                        ? 'border-current'
-                        : 'border-[#dddddd] text-[#222222]',
+                      'hidden lg:block h-7 px-2 rounded-[6px] border text-xs bg-white focus:outline-none focus:border-[#222222] transition-colors disabled:opacity-50',
+                      STATUS_SELECT_COLOR[property.status] ?? 'border-[#dddddd] text-[#222222]',
                     )}
                   >
                     <option value="available">Trống</option>
@@ -195,33 +198,32 @@ export default function AdminPropertiesPage() {
                     <option value="maintenance">Bảo trì</option>
                   </select>
 
-                  {/* Owner */}
-                  <p className="hidden lg:block text-xs text-[#6a6a6a] truncate w-[100px] shrink-0">
+                  {/* Cell 4: Owner */}
+                  <p className="hidden lg:block text-xs text-[#6a6a6a] truncate">
                     {ownerName}
                   </p>
 
-                  {/* Price */}
-                  <p className="text-xs font-semibold text-[#222222] shrink-0 w-[100px] text-right lg:text-left">
+                  {/* Cell 5: Price */}
+                  <p className="text-xs font-semibold text-[#222222] shrink-0 text-right lg:text-left">
                     {fmtPrice(property.price)}
                   </p>
 
-                  {/* Featured toggle */}
-                  <button
-                    onClick={() => toggleFeatured.mutate(property.id)}
-                    disabled={isPending}
-                    title={property.isFeatured ? 'Bỏ nổi bật' : 'Đặt nổi bật'}
-                    className={cn(
-                      'w-8 h-8 rounded-full flex items-center justify-center transition-colors shrink-0 disabled:opacity-50',
-                      property.isFeatured
-                        ? 'bg-[#fefce8] text-[#ca8a04] hover:bg-[#fef9c3]'
-                        : 'bg-[#f7f7f7] text-[#929292] hover:bg-[#f0fdf4] hover:text-[#16a34a]',
-                    )}
-                  >
-                    <Star
-                      className="w-4 h-4"
-                      fill={property.isFeatured ? 'currentColor' : 'none'}
-                    />
-                  </button>
+                  {/* Cell 6: Featured */}
+                  <div className="flex lg:justify-center shrink-0">
+                    <button
+                      onClick={() => toggleFeatured.mutate(property.id)}
+                      disabled={isPending}
+                      title={property.isFeatured ? 'Bỏ nổi bật' : 'Đặt nổi bật'}
+                      className={cn(
+                        'w-8 h-8 rounded-full flex items-center justify-center transition-colors disabled:opacity-50',
+                        property.isFeatured
+                          ? 'bg-[#fefce8] text-[#ca8a04] hover:bg-[#fef9c3]'
+                          : 'bg-[#f7f7f7] text-[#929292] hover:bg-[#f0fdf4] hover:text-[#16a34a]',
+                      )}
+                    >
+                      <Star className="w-4 h-4" fill={property.isFeatured ? 'currentColor' : 'none'} />
+                    </button>
+                  </div>
                 </div>
               );
             })}
