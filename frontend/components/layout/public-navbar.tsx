@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { LogOut, User, LayoutDashboard, ChevronDown } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, ChevronDown, Menu, X } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 
@@ -85,6 +85,7 @@ export function PublicNavbar({ activeLink }: PublicNavbarProps) {
   const { isAuthenticated, user } = useAuth();
   const navRef = useRef<HTMLElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -156,6 +157,14 @@ export function PublicNavbar({ activeLink }: PublicNavbarProps) {
         </div>
 
         <div className="flex items-center gap-4">
+          <button
+            className="md:hidden p-2 rounded-lg hover:bg-[#f3f4f5] transition-colors"
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label="Menu"
+          >
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
           {isAuthenticated && user?.role === 'landlord' && (
             <Link
               href="/hosting/listings/new"
@@ -210,6 +219,32 @@ export function PublicNavbar({ activeLink }: PublicNavbarProps) {
           )}
         </div>
       </div>
+
+      {mobileOpen && (
+        <div className="md:hidden border-t border-[#ccc7ac]/30 bg-[#f8f9fa]/95 backdrop-blur-md px-5 py-4 flex flex-col gap-4">
+          <Link href="/properties" className={linkCls(activeLink === 'search')} onClick={() => setMobileOpen(false)}>
+            Tìm kiếm
+          </Link>
+          <Link href="/about" className={linkCls(activeLink === 'about')} onClick={() => setMobileOpen(false)}>
+            Về chúng tôi
+          </Link>
+          <Link href="/guide" className={linkCls(activeLink === 'guide')} onClick={() => setMobileOpen(false)}>
+            Hướng dẫn
+          </Link>
+          <Link href="/news" className={linkCls(activeLink === 'news')} onClick={() => setMobileOpen(false)}>
+            Tin tức
+          </Link>
+          {isAuthenticated && user?.role === 'landlord' && (
+            <Link
+              href="/hosting/listings/new"
+              className="px-6 py-2 rounded-full text-sm font-semibold text-[#191c1d] border border-[#7b7861] hover:bg-[#f3f4f5] transition-all text-center"
+              onClick={() => setMobileOpen(false)}
+            >
+              Đăng tin
+            </Link>
+          )}
+        </div>
+      )}
     </nav>
   );
 }
