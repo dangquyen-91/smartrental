@@ -11,8 +11,21 @@ const beVietnamPro = Be_Vietnam_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "SmartRental",
-  description: "Nền tảng thuê nhà thông minh",
+  metadataBase: new URL("https://www.smartrental.io.vn"),
+  title: "SmartRental - Nền tảng thuê nhà thông minh",
+  description: "Tìm phòng trọ, nhà thuê nhanh chóng và an toàn với SmartRental.",
+  icons: {
+    icon: "/logo/SmartRental_02.png",
+  },
+  openGraph: {
+    title: "SmartRental - Nền tảng thuê nhà thông minh",
+    description: "Tìm phòng trọ, nhà thuê nhanh chóng và an toàn với SmartRental.",
+    url: "https://www.smartrental.io.vn",
+    siteName: "SmartRental",
+    images: [{ url: "/background/smartrental-logo.png", width: 1200, height: 630 }],
+    locale: "vi_VN",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
