@@ -136,6 +136,7 @@ export function PublicNavbar({ activeLink }: PublicNavbarProps) {
             height={160}
             className="h-12 w-auto object-contain"
             priority
+            loading="eager"
           />
         </Link>
 

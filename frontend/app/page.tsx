@@ -404,7 +404,7 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* ── Hero ── */}
-        <section className="hero-gradient pt-16 pb-32 px-4 md:px-10 text-center relative overflow-hidden">
+        <section className="hero-gradient pt-16 pb-32 px-4 md:px-10 text-center relative">
           <div className="mx-auto mb-12" style={{ maxWidth: '768px' }}>
             <img
               ref={heroImgRef}
