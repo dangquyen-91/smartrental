@@ -111,7 +111,7 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#f8f9fa' }}>
       {/* ── Header ── */}
-      <header className="sticky top-0 z-50 flex items-center justify-between px-[40px] h-16 border-b" style={{ backgroundColor: 'rgba(248,249,250,0.8)', backdropFilter: 'blur(12px)', borderColor: 'rgba(204,199,172,0.3)' }}>
+      <header className="sticky top-0 z-50 flex items-center justify-between px-4 md:px-10 h-16 border-b" style={{ backgroundColor: 'rgba(248,249,250,0.8)', backdropFilter: 'blur(12px)', borderColor: 'rgba(204,199,172,0.3)' }}>
         <Link href="/" className="cursor-pointer">
           <img src="/logo/SmartRental_02.png" alt="Smart Rental" className="h-10 w-auto object-contain" />
         </Link>
@@ -125,7 +125,7 @@ function LoginForm() {
       <main className="flex flex-1 flex-col md:flex-row overflow-hidden">
         {/* Left: Inspiring Image & Brand Message */}
         <section
-          className="relative w-full md:w-1/2 min-h-[300px] md:min-h-full flex flex-col justify-center px-[40px] overflow-hidden"
+          className="relative w-full md:w-1/2 min-h-50 md:min-h-full flex flex-col justify-center px-4 md:px-10 overflow-hidden"
           style={{ backgroundColor: '#f3f4f5' }}
         >
           <img
@@ -134,28 +134,28 @@ function LoginForm() {
             alt="A sun-drenched, modern minimalist living room"
           />
 
-          <div ref={heroRef} className="relative z-10 max-w-lg p-8 md:p-12 rounded-2xl border" style={{ backgroundColor: 'rgba(20,18,10,0.55)', backdropFilter: 'blur(16px)', borderColor: 'rgba(255,239,61,0.25)' }}>
-            <h1 ref={heroTitleRef} className="text-4xl font-bold leading-tight mb-6" style={{ color: '#ffffff', opacity: 0 }}>
+          <div ref={heroRef} className="relative z-10 max-w-lg p-4 md:p-12 rounded-2xl border" style={{ backgroundColor: 'rgba(20,18,10,0.55)', backdropFilter: 'blur(16px)', borderColor: 'rgba(255,239,61,0.25)' }}>
+            <h1 ref={heroTitleRef} className="text-xl md:text-4xl font-bold leading-tight mb-3 md:mb-6" style={{ color: '#ffffff', opacity: 0 }}>
               Bắt đầu hành trình<br />tìm kiếm tổ ấm
             </h1>
-            <p ref={heroDescRef} className="text-lg leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.92)', opacity: 0 }}>
+            <p ref={heroDescRef} className="text-sm md:text-lg leading-relaxed mb-4 md:mb-8" style={{ color: 'rgba(255,255,255,0.92)', opacity: 0 }}>
               Tham gia cộng đồng Smart Rental để khám phá hàng nghìn căn hộ, nhà nguyên căn chất lượng được xác thực mỗi ngày.
             </p>
-            <div ref={heroFeaturesRef} className="flex flex-col gap-4">
-              <div className="flex items-center gap-4" style={{ opacity: 0 }}>
-                <span className="material-symbols-outlined p-2 rounded-lg" style={{ backgroundColor: '#ffef3d', color: '#1f1c00' }}>verified_user</span>
-                <span className="text-sm font-semibold" style={{ color: '#f5f0c0' }}>Thông tin nhà cho thuê minh bạch</span>
+            <div ref={heroFeaturesRef} className="flex flex-col gap-2 md:gap-4">
+              <div className="flex items-center gap-3 md:gap-4" style={{ opacity: 0 }}>
+                <span className="material-symbols-outlined text-base md:text-2xl p-1.5 md:p-2 rounded-lg shrink-0" style={{ backgroundColor: '#ffef3d', color: '#1f1c00' }}>verified_user</span>
+                <span className="text-xs md:text-sm font-semibold" style={{ color: '#f5f0c0' }}>Thông tin nhà cho thuê minh bạch</span>
               </div>
-              <div className="flex items-center gap-4" style={{ opacity: 0 }}>
-                <span className="material-symbols-outlined p-2 rounded-lg" style={{ backgroundColor: '#ffef3d', color: '#1f1c00' }}>speed</span>
-                <span className="text-sm font-semibold" style={{ color: '#f5f0c0' }}>Quy trình đăng ký nhanh chóng</span>
+              <div className="flex items-center gap-3 md:gap-4" style={{ opacity: 0 }}>
+                <span className="material-symbols-outlined text-base md:text-2xl p-1.5 md:p-2 rounded-lg shrink-0" style={{ backgroundColor: '#ffef3d', color: '#1f1c00' }}>speed</span>
+                <span className="text-xs md:text-sm font-semibold" style={{ color: '#f5f0c0' }}>Quy trình đăng ký nhanh chóng</span>
               </div>
             </div>
           </div>
         </section>
 
         {/* Right: Login Form */}
-        <section className="w-full md:w-1/2 flex items-center justify-center py-12 px-4 md:px-[40px] bg-white">
+        <section className="w-full md:w-1/2 flex items-center justify-center py-8 md:py-12 px-4 md:px-10 bg-white">
           <div className="w-full max-w-md animate-stagger">
             {/* Heading */}
             <div className="mb-8">

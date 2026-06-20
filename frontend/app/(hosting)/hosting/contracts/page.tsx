@@ -73,9 +73,9 @@ function ContractCard({
       {/* Property image */}
       <div className="shrink-0 rounded-[10px] overflow-hidden bg-[#F7F7F7]">
         {imgUrl ? (
-          <img src={imgUrl} alt={property?.title ?? ''} className="w-[120px] h-[120px] object-cover" loading="lazy" />
+          <img src={imgUrl} alt={property?.title ?? ''} className="w-16 h-16 sm:w-[120px] sm:h-[120px] object-cover" loading="lazy" />
         ) : (
-          <div className="w-[120px] h-[120px] flex items-center justify-center">
+          <div className="w-16 h-16 sm:w-[120px] sm:h-[120px] flex items-center justify-center">
             <Home className="size-8 text-[#929292]" />
           </div>
         )}
@@ -358,7 +358,7 @@ function GenerateModal({
         )}
 
         {/* Utility prices */}
-        <div className="mb-4 grid grid-cols-2 gap-3">
+        <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-semibold text-[#222222] mb-2">
               Giá điện <span className="text-[#6A6A6A] font-normal">(đ/kWh)</span>

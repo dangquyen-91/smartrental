@@ -115,7 +115,7 @@ export default function HostingPage() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
         {/* Tin đăng */}
         <div className="flex flex-col items-start bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD]">
           <div className="flex items-center justify-center bg-[#FFF546] w-10 h-10 rounded-[10px] mb-3">
@@ -178,12 +178,12 @@ export default function HostingPage() {
                     0,
                 )}
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-1">
             <span className="text-black text-[15px]">Doanh thu</span>
             <select
               value={revenuePeriod}
               onChange={(e) => setRevenuePeriod(e.target.value as RevenuePeriod)}
-              className="text-[11px] text-[#6A6A6A] bg-transparent border border-solid border-[#DDDDDD] rounded-md px-1.5 py-0.5 cursor-pointer hover:border-[#ffef3d] focus:outline-none focus:border-[#ffef3d]"
+              className="text-[11px] text-[#6A6A6A] bg-transparent border border-solid border-[#DDDDDD] rounded-md px-1.5 py-0.5 cursor-pointer hover:border-[#ffef3d] focus:outline-none focus:border-[#ffef3d] w-fit"
             >
               {REVENUE_PERIOD_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>{o.label}</option>
@@ -196,7 +196,7 @@ export default function HostingPage() {
         </div>
 
         {/* Đánh giá */}
-        <div className="flex flex-col items-start bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD]">
+        <div className="col-span-2 md:col-span-1 flex flex-col items-start bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD]">
           <div className="flex items-center justify-center bg-[#FFF546] w-10 h-10 rounded-[10px] mb-3">
             <Star className="w-5 h-5 text-[#222222]" />
           </div>
@@ -316,7 +316,7 @@ export default function HostingPage() {
       </div>
 
       {/* Quick links */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Link href="/hosting/listings/new" className="flex items-center bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD] hover:border-[#ffef3d] transition-colors">
           <div className="flex items-center justify-center bg-black w-10 h-10 rounded-[10px] mr-4">
             <img
@@ -362,54 +362,45 @@ function ListingRow({ property: p }: { property: Property }) {
   const sc = STATUS_CONFIG[p.status];
 
   return (
-    <div className="flex items-center self-stretch bg-white py-[17px] px-4 mb-[13px] gap-4 rounded-[14px] border border-solid border-[#DDDDDD]">
+    <div className="flex items-center bg-white py-4 px-4 gap-3 rounded-[14px] border border-solid border-[#DDDDDD]">
       {/* Thumbnail */}
-      <div className="flex flex-col shrink-0 items-center bg-[#F0F0F0] rounded-[10px]">
+      <div className="shrink-0 w-20 h-[60px] sm:w-24 sm:h-[72px] rounded-[10px] overflow-hidden bg-[#F0F0F0]">
         {thumb ? (
-          <img src={thumb} alt={p.title} className="w-24 h-[72px] rounded-[10px] object-fill" />
+          <img src={thumb} alt={p.title} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-24 h-[72px]" />
+          <div className="w-full h-full" />
         )}
       </div>
 
       {/* Info */}
-      <div className="flex-1 pb-0.5">
-        <div className="flex justify-between items-center self-stretch mb-[1px]">
-          <span className="text-[#222222] text-sm font-bold">
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+        <div className="flex items-start justify-between gap-2">
+          <span className="text-[#222222] text-sm font-bold line-clamp-1 flex-1 min-w-0">
             {p.title}
           </span>
-          <div className={cn('flex shrink-0 items-center py-0.5 px-2.5 rounded-full text-xs font-medium', sc.cls)}>
+          <div className={cn('shrink-0 flex items-center py-0.5 px-2 rounded-full text-[11px] font-semibold', sc.cls)}>
             {sc.label}
           </div>
         </div>
-        <div className="flex items-center self-stretch gap-1">
-          <img
-            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/605a3c1c-1b1a-4f94-9d58-9c972afe58cd"
-            className="w-3 h-3 object-fill"
-          />
-          <span className="text-[#6A6A6A] text-xs">
+        <div className="flex items-center gap-1">
+          <MapPin className="w-3 h-3 text-[#929292] shrink-0" />
+          <span className="text-[#6A6A6A] text-xs truncate">
             {[p.address.district, p.address.city].filter(Boolean).join(', ')}
           </span>
         </div>
-        <div className="flex justify-between items-center self-stretch py-[7px]">
-          <div className="flex shrink-0 items-center py-0.5">
-            <span className="text-[#222222] text-sm font-bold mr-[3px]">
+        <div className="flex items-center justify-between gap-2 mt-0.5">
+          <div className="flex items-center gap-1 min-w-0">
+            <span className="text-[#222222] text-sm font-bold truncate">
               {formatVndFull(p.price)}
             </span>
-            <span className="text-[#929292] text-xs mr-[11px]">/tháng</span>
-            <span className="text-[#929292] text-xs mr-[11px]">{TYPE_LABEL[p.type]}</span>
+            <span className="text-[#929292] text-xs shrink-0">/tháng</span>
           </div>
           <Link
             href={`/hosting/listings/${p.id}/edit`}
-            className="flex shrink-0 items-center gap-1.5"
+            className="shrink-0 flex items-center gap-1 text-[#6A6A6A] text-xs font-bold hover:text-[#222222] transition-colors"
           >
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/a72a3ecd-3607-495d-80cc-8e59dd8e6f78"
-              className="w-3.5 h-3.5 object-fill"
-            />
-            <span className="text-[#6A6A6A] text-xs font-bold hover:text-[#222222] transition-colors">
-              Chỉnh sửa
-            </span>
+            <Pencil className="w-3 h-3" />
+            Sửa
           </Link>
         </div>
       </div>
@@ -494,60 +485,48 @@ function PendingBookingRow({
 
   return (
     <div className="bg-white rounded-[14px] border border-solid border-[#DDDDDD]">
-      <div className="flex items-start p-4 gap-[1px]">
-        <div className="flex-1">
-          <div className="flex flex-col items-start self-stretch mb-[1px]">
-            <span className="text-[#222222] text-sm font-bold">
-              {tenantName(b)}
-            </span>
+      <div className="flex flex-col p-4 gap-3">
+        {/* Info */}
+        <div className="flex-1 space-y-0.5">
+          <span className="block text-[#222222] text-sm font-bold">{tenantName(b)}</span>
+          <span className="block text-[#6A6A6A] text-xs line-clamp-1">{propertyTitle(b)}</span>
+          <div className="flex items-center gap-1">
+            <MapPin className="w-3 h-3 text-[#929292] shrink-0" />
+            <span className="text-[#929292] text-xs truncate">{propertyDistrict(b)}</span>
           </div>
-          <div className="flex flex-col items-start self-stretch">
-            <span className="text-[#6A6A6A] text-xs">
-              {propertyTitle(b)}
-            </span>
-          </div>
-          <div className="flex items-center self-stretch mb-[1px] gap-1">
-            <MapPin className="w-3 h-3 text-[#929292]" />
-            <span className="text-[#929292] text-xs">
-              {propertyDistrict(b)}
-            </span>
-          </div>
-          <div className="flex flex-col items-start self-stretch pt-0.5">
-            <span className="text-[#929292] text-xs">
-              {formatDate(b.startDate)} · {b.duration} tháng · {formatVnd(b.totalPrice)}
-            </span>
-          </div>
+          <span className="block text-[#929292] text-xs">
+            {formatDate(b.startDate)} · {b.duration} tháng · {formatVnd(b.totalPrice)}
+          </span>
         </div>
+
+        {/* Actions */}
         {!showRejectInput && (
-          <div className="flex shrink-0 items-center gap-[9px]">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setShowRejectInput(true)}
               disabled={busy}
-              className="flex shrink-0 items-center bg-white text-left py-[7px] px-[13px] gap-1.5 rounded-lg border border-solid border-[#FF5E00] hover:bg-orange-50 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 py-2 px-3 rounded-lg border border-[#FF5E00] text-[#FF5E00] text-[13px] font-bold hover:bg-orange-50 transition-colors disabled:opacity-50"
             >
-              <X className="w-3.5 h-3.5 text-[#FF5E00]" />
-              <span className="text-[#FF5E00] text-[13px] font-bold">Từ chối</span>
+              <X className="w-3.5 h-3.5" />
+              Từ chối
             </button>
             <button
               onClick={onConfirm}
               disabled={busy}
-              className="flex shrink-0 items-center bg-[#ffef3d] text-left py-[7px] px-3 gap-1.5 rounded-lg border-0 hover:shadow-lg transition-all disabled:opacity-50"
+              className="flex items-center gap-1.5 bg-[#ffef3d] py-2 px-3 rounded-lg text-[#1f1c00] text-[13px] font-bold hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {confirming ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#1f1c00]" />
-              ) : (
-                <Check className="w-3.5 h-3.5 text-[#1f1c00]" />
-              )}
-              <span className="text-[#1f1c00] text-[13px] font-bold">
-                {confirming ? 'Đang xử lý...' : 'Xác nhận'}
-              </span>
+              {confirming
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <Check className="w-3.5 h-3.5" />
+              }
+              {confirming ? 'Đang xử lý...' : 'Xác nhận'}
             </button>
           </div>
         )}
         {showRejectInput && (
           <button
             onClick={() => { setShowRejectInput(false); setRejectReason(''); }}
-            className="text-xs text-[#929292] hover:text-[#222222] transition-colors px-2 py-1"
+            className="self-start text-xs text-[#929292] hover:text-[#222222] transition-colors"
           >
             Hủy
           </button>

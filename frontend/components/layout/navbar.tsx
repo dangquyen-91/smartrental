@@ -89,7 +89,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
             </button>
 
             {dropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#dddddd] rounded-[12px] shadow-[0_4px_20px_rgba(0,0,0,0.08)] py-1 z-50">
+              <div className="absolute right-0 top-full mt-2 w-56 max-w-[calc(100vw-32px)] bg-white border border-[#dddddd] rounded-[12px] shadow-[0_4px_20px_rgba(0,0,0,0.08)] py-1 z-50">
                 {/* User info header */}
                 <div className="px-4 py-3 border-b border-[#dddddd]">
                   <p className="text-sm font-semibold text-[#222222] truncate">{user.name}</p>

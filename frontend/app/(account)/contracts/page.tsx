@@ -48,9 +48,9 @@ function ContractCard({
       {/* Property image */}
       <div className="shrink-0 rounded-[10px] overflow-hidden bg-[#F7F7F7]">
         {imgUrl ? (
-          <img src={imgUrl} alt={property?.title ?? ''} className="w-[120px] h-[120px] object-cover" loading="lazy" />
+          <img src={imgUrl} alt={property?.title ?? ''} className="w-16 h-16 sm:w-[120px] sm:h-[120px] object-cover" loading="lazy" />
         ) : (
-          <div className="w-[120px] h-[120px] flex items-center justify-center">
+          <div className="w-16 h-16 sm:w-[120px] sm:h-[120px] flex items-center justify-center">
             <Home className="size-8 text-[#929292]" />
           </div>
         )}
@@ -106,7 +106,7 @@ function ContractCard({
         </div>
 
         {/* Signature badges */}
-        <div className="flex gap-[9px] mb-[9px]">
+        <div className="flex flex-wrap gap-[9px] mb-[9px]">
           <button className={cn(
             "flex shrink-0 items-center text-left py-[5px] px-[11px] gap-[5px] rounded-lg border border-solid",
             contract.signedByTenant.signed

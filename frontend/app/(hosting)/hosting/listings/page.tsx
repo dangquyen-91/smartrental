@@ -234,21 +234,21 @@ function ListingCard({
         </div>
 
         {/* Specs */}
-        <div className="mt-1 flex items-center gap-3 text-xs font-medium text-ash-gray">
-          <span className="flex items-center gap-1">
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs font-medium text-ash-gray">
+          <span className="flex items-center gap-1 whitespace-nowrap">
             <Maximize2 className="size-3" />
             {property.area} m²
           </span>
           {property.bedrooms !== undefined && (
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1 whitespace-nowrap">
               <BedDouble className="size-3" />
-              {property.bedrooms} phòng ngủ
+              {property.bedrooms} PN
             </span>
           )}
           {property.bathrooms !== undefined && (
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1 whitespace-nowrap">
               <Bath className="size-3" />
-              {property.bathrooms} phòng tắm
+              {property.bathrooms} PT
             </span>
           )}
         </div>

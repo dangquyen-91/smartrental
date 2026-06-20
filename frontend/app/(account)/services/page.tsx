@@ -276,7 +276,7 @@ function CreateOrderModal({
             <p className="text-sm font-semibold text-[#222222] mb-3">
               Loại dịch vụ <span className="text-[#c13515]">*</span>
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {catalog.map((entry) => {
                 const meta = SERVICE_META[entry.type];
                 return (

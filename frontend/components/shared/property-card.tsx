@@ -100,7 +100,7 @@ export function PropertyCard({ property, className, rentedPropertyIds }: Propert
         <button
           onClick={handleToggleWishlist}
           disabled={isPending}
-          className="absolute top-3 right-3 flex size-8 items-center justify-center rounded-full bg-black/20 backdrop-blur-md border border-white/20 transition-transform active:scale-95 hover:bg-black/30 disabled:opacity-70"
+          className="absolute top-3 right-3 flex size-11 items-center justify-center rounded-full bg-black/20 backdrop-blur-md border border-white/20 transition-transform active:scale-95 hover:bg-black/30 disabled:opacity-70"
           aria-label="Thêm vào yêu thích"
         >
           <Heart
@@ -116,14 +116,14 @@ export function PropertyCard({ property, className, rentedPropertyIds }: Propert
           <>
             <button
               onClick={prev}
-              className="absolute left-2 top-1/2 -translate-y-1/2 flex size-8 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity active:scale-95"
+              className="absolute left-2 top-1/2 -translate-y-1/2 flex size-11 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity active:scale-95"
               aria-label="Ảnh trước"
             >
               <ChevronLeft className="size-4 text-white" />
             </button>
             <button
               onClick={next}
-              className="absolute right-2 top-1/2 -translate-y-1/2 flex size-8 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity active:scale-95"
+              className="absolute right-2 top-1/2 -translate-y-1/2 flex size-11 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity active:scale-95"
               aria-label="Ảnh tiếp"
             >
               <ChevronRight className="size-4 text-white" />

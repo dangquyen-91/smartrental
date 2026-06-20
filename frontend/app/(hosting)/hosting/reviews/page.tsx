@@ -467,18 +467,18 @@ export default function LandlordReviewsPage() {
 
       {/* Summary card */}
       <div className="bg-white rounded-card border border-hairline-gray p-5">
-        <div className="flex items-center gap-6">
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
           <div className="text-center shrink-0">
-            <p className="text-[#222222] text-4xl font-bold leading-none mb-1">
+            <p className="text-[#222222] text-5xl font-bold leading-none mb-1.5">
               {averageRating != null ? averageRating.toFixed(1) : '—'}
             </p>
-            <StarRating value={averageRating ?? 0} size={16} />
+            <StarRating value={averageRating ?? 0} size={18} />
             <p className="text-[#6A6A6A] text-xs mt-1.5">
               {totalReviews} lượt đánh giá
             </p>
           </div>
 
-          <div className="flex-1 space-y-1.5 min-w-0">
+          <div className="w-full sm:flex-1 space-y-1.5 min-w-0">
             {[5, 4, 3, 2, 1].map((star) => {
               const count = distribution[star as 1 | 2 | 3 | 4 | 5];
               const pct = allReviews.length > 0
@@ -507,13 +507,13 @@ export default function LandlordReviewsPage() {
       </div>
 
       {/* Filter chips */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      <div className="grid grid-cols-3 md:flex md:flex-wrap gap-2">
         {RATING_FILTERS.map((f) => (
           <button
             key={f.key}
             onClick={() => { setRatingFilter(f.key); setPage(1); }}
             className={
-              'shrink-0 px-4 py-1.5 text-[13px] font-medium rounded-full border transition-colors ' +
+              'px-4 py-2 text-[13px] font-medium rounded-full border transition-colors text-center ' +
               (ratingFilter === f.key
                 ? 'bg-[#ffef3d] text-[#1f1c00] border-[#ffef3d]'
                 : 'bg-white text-[#222222] border-[#DDDDDD] hover:border-[#ffef3d]')

@@ -203,7 +203,7 @@ export function PublicNavbar({ activeLink }: PublicNavbarProps) {
               {dropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-[220px] bg-white rounded-xl shadow-lg border border-[#ccc7ac] z-50 overflow-hidden">
+                  <div className="absolute right-0 top-full mt-2 w-[220px] max-w-[calc(100vw-32px)] bg-white rounded-xl shadow-lg border border-[#ccc7ac] z-50 overflow-hidden">
                     <UserMenu user={user} onClose={() => setDropdownOpen(false)} />
                   </div>
                 </>
@@ -253,44 +253,42 @@ export function PublicFooter() {
   return (
     <footer className="bg-[#FFED00] text-black py-12 px-4 md:px-8">
       <div className="mx-auto" style={{ maxWidth: '1280px' }}>
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 pb-12 text-left">
-          <div className="col-span-1 md:col-span-6 flex flex-col items-start gap-4">
-            <div className="flex items-center gap-2">
-              <Image
-                src="/logo/SmartRental_02.png"
-                alt="SmartRental"
-                width={160}
-                height={160}
-                className="h-12 w-auto object-contain"
-              />
-            </div>
-            <p className="text-black/80 max-w-sm font-medium leading-relaxed">
+        <div className="grid grid-cols-2 md:grid-cols-12 gap-8 pb-10 text-left">
+          <div className="col-span-2 md:col-span-6 flex flex-col items-start gap-3">
+            <Image
+              src="/logo/SmartRental_02.png"
+              alt="SmartRental"
+              width={160}
+              height={160}
+              className="h-10 w-auto object-contain"
+            />
+            <p className="text-black/80 text-sm font-medium leading-relaxed">
               Nền tảng thuê nhà thông minh cho thị trường Việt Nam.
             </p>
           </div>
 
           <div className="col-span-1 md:col-span-3">
-            <h4 className="font-bold uppercase tracking-wider mb-4 text-sm">Hỗ trợ</h4>
-            <ul className="flex flex-col gap-3 font-medium text-black/80">
-              <li><a href="#" className="hover:text-black hover:underline decoration-2 underline-offset-4 transition-all">Trung tâm trợ giúp</a></li>
-              <li><a href="#" className="hover:text-black hover:underline decoration-2 underline-offset-4 transition-all">Liên hệ</a></li>
-              <li><a href="#" className="hover:text-black hover:underline decoration-2 underline-offset-4 transition-all">Chính sách bảo mật</a></li>
-              <li><a href="#" className="hover:text-black hover:underline decoration-2 underline-offset-4 transition-all">Điều khoản sử dụng</a></li>
+            <h4 className="font-bold uppercase tracking-wider mb-3 text-xs">Hỗ trợ</h4>
+            <ul className="flex flex-col gap-2.5 text-sm font-medium text-black/80">
+              <li><a href="#" className="hover:text-black transition-colors">Trung tâm trợ giúp</a></li>
+              <li><a href="#" className="hover:text-black transition-colors">Liên hệ</a></li>
+              <li><a href="#" className="hover:text-black transition-colors">Chính sách bảo mật</a></li>
+              <li><a href="#" className="hover:text-black transition-colors">Điều khoản sử dụng</a></li>
             </ul>
           </div>
 
           <div className="col-span-1 md:col-span-3">
-            <h4 className="font-bold uppercase tracking-wider mb-4 text-sm">Dành cho chủ nhà</h4>
-            <ul className="flex flex-col gap-3 font-medium text-black/80">
-              <li><a href="#" className="hover:text-black hover:underline decoration-2 underline-offset-4 transition-all">Đăng tin cho thuê</a></li>
-              <li><a href="#" className="hover:text-black hover:underline decoration-2 underline-offset-4 transition-all">Quản lý đặt phòng</a></li>
-              <li><a href="#" className="hover:text-black hover:underline decoration-2 underline-offset-4 transition-all">Hợp đồng điện tử</a></li>
-              <li><a href="#" className="hover:text-black hover:underline decoration-2 underline-offset-4 transition-all">Gói dịch vụ</a></li>
+            <h4 className="font-bold uppercase tracking-wider mb-3 text-xs">Dành cho chủ nhà</h4>
+            <ul className="flex flex-col gap-2.5 text-sm font-medium text-black/80">
+              <li><a href="#" className="hover:text-black transition-colors">Đăng tin cho thuê</a></li>
+              <li><a href="#" className="hover:text-black transition-colors">Quản lý đặt phòng</a></li>
+              <li><a href="#" className="hover:text-black transition-colors">Hợp đồng điện tử</a></li>
+              <li><a href="#" className="hover:text-black transition-colors">Gói dịch vụ</a></li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-black/20 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm font-medium">
+        <div className="border-t border-black/20 pt-5 flex flex-row items-center justify-between gap-4 text-sm font-medium">
           <p className="text-black/80">
             © 2026 Smart Rental. Nền tảng thuê nhà thông minh.
           </p>

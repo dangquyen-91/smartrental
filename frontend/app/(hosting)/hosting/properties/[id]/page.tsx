@@ -99,7 +99,7 @@ function ImageGallery({ images, title }: { images: { url: string }[]; title: str
             <div className="w-full h-full flex items-center justify-center text-[#ccc]">No image</div>
           )}
         </div>
-        <div className="flex flex-col gap-2 w-[548px]">
+        <div className="hidden md:flex flex-col gap-2 w-[548px]">
           <div className="flex gap-2 flex-1">
             {count > 1 && <div className="flex-1 relative bg-[#f0f0f0]"><img src={urls[1]} alt={title} className="w-full h-full object-cover cursor-pointer" onClick={() => open(1)} /></div>}
             {count > 2 && <div className="flex-1 relative bg-[#f0f0f0]"><img src={urls[2]} alt={title} className="w-full h-full object-cover cursor-pointer" onClick={() => open(2)} /></div>}
@@ -158,7 +158,7 @@ function BookingPanel({ property, contactRevealed }: { property: Property; conta
       <div className="flex flex-col shrink-0 items-start p-6 rounded-[20px] border border-solid border-[#DDDDDD]">
         <div className="flex items-center mb-4">
           <span className="text-[#222222] text-lg mr-0.5">{formatVnd(property.price)}</span>
-          <span className="text-[#6A6A6A] text-sm mr-[219px]">/tháng</span>
+          <span className="text-[#6A6A6A] text-sm mr-1">/tháng</span>
         </div>
         <div className="text-center py-4">
           <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3"><Check className="w-6 h-6 text-emerald-600" /></div>
@@ -174,7 +174,7 @@ function BookingPanel({ property, contactRevealed }: { property: Property; conta
     <div className="flex flex-col shrink-0 items-start p-6 rounded-[20px] border border-solid border-[#DDDDDD]">
       <div className="flex items-center mb-[15px]">
         <span className="text-[#222222] text-lg mr-0.5">{formatVnd(property.price)}</span>
-        <span className="text-[#6A6A6A] text-sm mr-[219px]">/tháng</span>
+        <span className="text-[#6A6A6A] text-sm mr-1">/tháng</span>
       </div>
 
       {isOwner ? (
@@ -251,7 +251,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <div className="self-stretch bg-white pb-[1px]">
-          <div className="self-stretch bg-cover bg-center py-6 px-20 mb-[68px] bg-[#f0f0f0] animate-pulse" />
+          <div className="self-stretch bg-cover bg-center py-6 px-4 md:px-20 mb-[68px] bg-[#f0f0f0] animate-pulse" />
           <div className="max-w-[1104px] mb-8 mx-auto px-6">
             <div className="h-8 w-64 bg-[#f0f0f0] rounded animate-pulse mb-4" />
             <div className="h-48 bg-[#f0f0f0] rounded animate-pulse" />
@@ -281,7 +281,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     <div className="min-h-screen bg-white flex flex-col">
       <div className="self-stretch bg-white pb-[1px]">
         {/* Header */}
-        <div className="self-stretch bg-cover bg-center py-6 px-20" style={{ backgroundImage: 'url(https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/30ac8eae-07ac-4021-b386-ee5d8a4d8a53)' }}>
+        <div className="self-stretch bg-cover bg-center py-6 px-4 md:px-20" style={{ backgroundImage: 'url(https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/30ac8eae-07ac-4021-b386-ee5d8a4d8a53)' }}>
           <div className="flex justify-between items-center self-stretch">
             <Link href="/"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/a949daa0-a417-4cbf-91d7-3ac6756bb215" className="w-[182px] h-[26px] object-fill cursor-pointer" /></Link>
             <div className="flex shrink-0 items-center px-2 gap-2">
@@ -316,9 +316,9 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           <div className="flex items-center self-stretch pt-3 gap-2 rounded-[20px]"><ImageGallery images={p.images ?? []} title={p.title} /></div>
         </div>
 
-        <div className="flex items-start self-stretch max-w-[1106px] mb-[1px] mx-auto gap-12 px-6">
+        <div className="flex flex-col md:flex-row items-start self-stretch max-w-[1106px] mb-[1px] mx-auto gap-6 md:gap-12 px-4 md:px-6">
           <div className="flex-1">
-            <div className="flex items-start self-stretch border-b border-solid border-b-[#DDDDDD] pb-5">
+            <div className="flex flex-wrap items-start self-stretch border-b border-solid border-b-[#DDDDDD] pb-5 gap-y-3">
               <div className="flex shrink-0 items-center py-0.5 mb-7 mr-5 gap-2.5"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d027e3b0-765a-43c9-9150-83cd79b69cff" className="w-5 h-5" /><div className="flex flex-col shrink-0 items-center"><span className="text-black text-[15px]">Diện tích</span><span className="text-[#222222] text-[15px] font-bold">{p.area} m²</span></div></div>
               {p.bedrooms !== undefined && <div className="flex shrink-0 items-center py-0.5 mr-5 gap-2.5"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/0f0db104-5c14-4ced-a8a4-e81d72ca3610" className="w-5 h-5" /><div className="flex flex-col shrink-0 items-center"><span className="text-black text-[15px]">Phòng ngủ</span><span className="text-[#222222] text-[15px] font-bold">{p.bedrooms}</span></div></div>}
               <img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/8cc350da-f861-4d41-8357-4c73e2dd418e" className="w-5 h-5 mt-2.5 mr-2.5" />
@@ -354,14 +354,16 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             <PropertyReviewSection propertyId={p.id} />
 
             <span className="text-[#222222] text-xl font-bold mb-[19px] block">Những điều biết trước khi thuê</span>
-            <div className="flex items-start mb-[94px] gap-6">
+            <div className="flex flex-wrap items-start mb-[94px] gap-6">
               <div className="flex flex-col shrink-0 items-center pb-[19px] gap-[7px]"><span className="text-[#222222] text-base font-bold">Quy định</span><div className="flex flex-col items-center gap-[5px]"><div className="flex items-center"><div className="bg-[#DDDDDD] w-1 h-1 mr-1.5 rounded-full" /><span className="text-[#6A6A6A] text-[15px]">Không hút thuốc trong nhà</span></div><div className="flex items-center"><div className="bg-[#DDDDDD] w-1 h-1 mr-1.5 rounded-full" /><span className="text-[#6A6A6A] text-[15px]">Không nuôi thú cưng (hỏi chủ nhà)</span></div><div className="flex items-center"><div className="bg-[#DDDDDD] w-1 h-1 mr-1.5 rounded-full" /><span className="text-[#6A6A6A] text-[15px]">Giữ gìn vệ sinh chung</span></div></div></div>
               <div className="flex flex-col shrink-0 items-center pb-[39px] gap-[7px]"><span className="text-[#222222] text-base font-bold">An toàn</span><div className="flex flex-col items-center gap-[5px]"><div className="flex items-center"><div className="bg-[#DDDDDD] w-1 h-1 mr-1.5 rounded-full" /><span className="text-[#6A6A6A] text-[15px]">Có khóa cửa an toàn</span></div><div className="flex items-center"><div className="bg-[#DDDDDD] w-1 h-1 mr-1.5 rounded-full" /><span className="text-[#6A6A6A] text-[15px]">Hệ thống camera an ninh</span></div><div className="flex items-center"><div className="bg-[#DDDDDD] w-1 h-1 mr-1.5 rounded-full" /><span className="text-[#6A6A6A] text-[15px]">Phòng cháy chữa cháy</span></div></div></div>
               <div className="flex flex-col shrink-0 items-start"><span className="text-[#222222] text-base font-bold mb-2">Chính sách thanh toán</span><div className="flex items-start mb-1.5 gap-1.5"><div className="bg-[#DDDDDD] w-1 h-1 rounded-full mt-1.5 shrink-0" /><span className="text-[#6A6A6A] text-[15px]">Thanh toán tháng đầu qua nền tảng ({formatVnd(p.price)})</span></div><div className="flex items-center mb-1.5 gap-1.5"><div className="bg-[#DDDDDD] w-1 h-1 rounded-full shrink-0" /><span className="text-[#6A6A6A] text-[15px]">Phí dịch vụ 10% ({formatVnd(Math.round(p.price * 0.1))})</span></div><div className="flex items-start gap-1.5"><div className="bg-[#DDDDDD] w-1 h-1 rounded-full mt-1.5 shrink-0" /><span className="text-[#6A6A6A] text-[15px]">Các tháng tiếp theo thanh toán trực tiếp cho chủ nhà</span></div></div>
             </div>
           </div>
 
-          <BookingPanel property={p} contactRevealed={contactRevealed} />
+          <div className="w-full md:w-[320px] md:shrink-0">
+            <BookingPanel property={p} contactRevealed={contactRevealed} />
+          </div>
         </div>
 
         <PublicFooter />

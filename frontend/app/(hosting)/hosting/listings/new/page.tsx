@@ -602,7 +602,7 @@ export default function NewListingPage() {
             </InputField>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <InputField label="Phòng ngủ" error={errors.bedrooms?.message}>
               <input
                 {...register('bedrooms', { valueAsNumber: true })}

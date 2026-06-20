@@ -101,7 +101,7 @@ export default function AppNavbar({ center }: AppNavbarProps) {
               </button>
 
               {open && (
-                <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-[#dddddd] rounded-[16px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] py-2 z-50">
+                <div className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-32px)] bg-white border border-[#dddddd] rounded-[16px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] py-2 z-50">
                   {/* Role badge */}
                   <div className="px-4 py-3 border-b border-[#dddddd]">
                     <p className="text-sm font-semibold text-[#222222] wrap-break-word leading-snug">{user.name}</p>

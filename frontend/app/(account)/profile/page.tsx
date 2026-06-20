@@ -114,136 +114,60 @@ export default function ProfilePage() {
       </div>
 
       {/* Main content */}
-      <div className="flex items-start self-stretch gap-[23px]">
+      <div className="flex flex-col lg:flex-row items-start gap-6 w-full">
         {/* Left sidebar */}
-            <div className="flex flex-col shrink-0 items-center gap-[17px]">
-              {/* Avatar card */}
-              <div className="w-full bg-white py-6 px-5 rounded-[14px] border border-solid border-[#DDDDDD]">
-                <AvatarSection user={user} onUpdate={handleUpdate} />
+        <div className="flex flex-col w-full lg:w-[280px] lg:shrink-0 gap-4">
+          {/* Avatar card */}
+          <div className="bg-white py-6 px-5 rounded-[14px] border border-[#DDDDDD]">
+            <AvatarSection user={user} onUpdate={handleUpdate} />
+          </div>
+
+          {/* Stats card */}
+          <div className="grid grid-cols-2 gap-3 bg-white py-5 px-5 rounded-[14px] border border-[#DDDDDD]">
+            <div className="flex flex-col gap-1">
+              <div className="w-8 h-8 bg-[#FFF546] rounded-lg flex items-center justify-center mb-1">
+                <img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7b4faa10-e969-45fe-afb1-d235798913c0" className="w-4 h-4" />
               </div>
-
-              {/* Stats card */}
-              <div className="flex items-center bg-white py-[21px] px-5 gap-[17px] rounded-[14px] border border-solid border-[#DDDDDD]">
-                <div className="flex flex-col shrink-0 items-start">
-                  <div className="flex flex-col items-center pb-1 mb-1 mr-[83px]">
-                    <div className="flex flex-col items-start bg-[#FFF546] text-left py-[7px] px-2 rounded-lg border-0">
-                      <img
-                        src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7b4faa10-e969-45fe-afb1-d235798913c0"
-                        className="w-4 h-4 rounded-lg object-fill"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-start pr-[41px] mb-[3px]">
-                    <span className="text-black text-xs">Tổng đơn thuê</span>
-                  </div>
-                  <div className="flex flex-col items-start pr-[110px] mb-[3px]">
-                    <span className="text-[#222222] text-xl font-bold">{bookings.length}</span>
-                  </div>
-                  <div className="flex flex-col items-start pr-[58px]">
-                    <span className="text-[#929292] text-xs">{activeBookings} đang thuê</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col shrink-0 items-start">
-                  <div className="flex flex-col items-center pb-1 mb-1 mr-[83px]">
-                    <div className="flex flex-col items-start bg-[#FFF546] text-left py-[7px] px-2 rounded-lg border-0">
-                      <img
-                        src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9165324c-1e9d-4a03-a769-cfa167302603"
-                        className="w-4 h-4 rounded-lg object-fill"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-start pr-[66px] mb-[3px]">
-                    <span className="text-black text-xs">Hợp đồng</span>
-                  </div>
-                  <div className="flex flex-col items-start pr-[111px] mb-[3px]">
-                    <span className="text-[#222222] text-xl font-bold">{contracts.length}</span>
-                  </div>
-                  <div className="flex flex-col items-start pr-[79px]">
-                    <span className="text-[#929292] text-xs">{signedContracts} đã ký</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick links */}
-              <div className="flex flex-col items-start bg-white p-[1px] rounded-[14px] border border-solid border-[#DDDDDD]">
-                <div className="flex flex-col items-start self-stretch py-[13px] pl-5 pr-[161px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
-                  <span className="text-[#929292] text-xs font-bold">TRUY CẬP NHANH</span>
-                </div>
-
-                <Link href="/wishlist" className="flex items-center py-3.5 px-5 mb-[1px] gap-3 border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7] w-full">
-                  <div className="flex flex-col shrink-0 items-start bg-[#FFF546] text-left py-[7px] px-2 rounded-lg border border-solid border-[#00000000]">
-                    <img
-                      src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/33d240a6-bef1-4199-a291-34c99ed76960"
-                      className="w-4 h-4 rounded-lg object-fill"
-                    />
-                  </div>
-                  <div className="flex flex-col shrink-0 items-center">
-                    <div className="flex flex-col items-center">
-                      <div className="flex flex-col items-start pr-[121px]">
-                        <span className="text-[#222222] text-sm font-bold">Yêu thích</span>
-                      </div>
-                      <div className="flex flex-col items-start pr-[120px]">
-                        <span className="text-[#929292] text-xs">BĐS đã lưu</span>
-                      </div>
-                    </div>
-                  </div>
-                  <img
-                    src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/0ed6a620-cfa4-41ff-ad20-80d7d9ca9706"
-                    className="w-4 h-4 object-fill"
-                  />
-                </Link>
-
-                <Link href="/trips" className="flex items-center py-3.5 px-5 mb-[1px] gap-3 border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7] w-full">
-                  <div className="flex flex-col shrink-0 items-start bg-[#FFF546] text-left py-[7px] px-2 rounded-lg border border-solid border-[#00000000]">
-                    <img
-                      src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7c63feb9-5af1-4e35-b4fd-7883f8fc67ce"
-                      className="w-4 h-4 rounded-lg object-fill"
-                    />
-                  </div>
-                  <div className="flex flex-col shrink-0 items-center">
-                    <div className="flex flex-col items-center">
-                      <div className="flex flex-col items-start pr-[119px]">
-                        <span className="text-[#222222] text-sm font-bold">Đơn thuê</span>
-                      </div>
-                      <div className="flex flex-col items-start pr-[74px]">
-                        <span className="text-[#929292] text-xs">Xem lịch sử booking</span>
-                      </div>
-                    </div>
-                  </div>
-                  <img
-                    src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/aa5ebb2f-5b36-4529-b440-a412ec082c4c"
-                    className="w-4 h-4 object-fill"
-                  />
-                </Link>
-
-                <Link href="/contracts" className="flex items-center py-3.5 px-5 gap-3 w-full">
-                  <div className="flex flex-col shrink-0 items-start bg-[#FFF546] text-left py-[7px] px-2 rounded-lg border border-solid border-[#00000000]">
-                    <img
-                      src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9b9e3492-46ae-4e02-88be-26da2c6df897"
-                      className="w-4 h-4 rounded-lg object-fill"
-                    />
-                  </div>
-                  <div className="flex flex-col shrink-0 items-center">
-                    <div className="flex flex-col items-center">
-                      <div className="flex flex-col items-start pr-[116px]">
-                        <span className="text-[#222222] text-sm font-bold">Hợp đồng</span>
-                      </div>
-                      <div className="flex flex-col items-start pr-[84px]">
-                        <span className="text-[#929292] text-xs">Quản lý hợp đồng</span>
-                      </div>
-                    </div>
-                  </div>
-                  <img
-                    src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/5230220a-809d-498f-8edb-152788789081"
-                    className="w-4 h-4 object-fill"
-                  />
-                </Link>
-              </div>
+              <span className="text-black text-xs">Tổng đơn thuê</span>
+              <span className="text-[#222222] text-xl font-bold">{bookings.length}</span>
+              <span className="text-[#929292] text-xs">{activeBookings} đang thuê</span>
             </div>
+            <div className="flex flex-col gap-1">
+              <div className="w-8 h-8 bg-[#FFF546] rounded-lg flex items-center justify-center mb-1">
+                <img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9165324c-1e9d-4a03-a769-cfa167302603" className="w-4 h-4" />
+              </div>
+              <span className="text-black text-xs">Hợp đồng</span>
+              <span className="text-[#222222] text-xl font-bold">{contracts.length}</span>
+              <span className="text-[#929292] text-xs">{signedContracts} đã ký</span>
+            </div>
+          </div>
 
-            {/* Right content */}
-            <div className="flex-1">
+          {/* Quick links */}
+          <div className="bg-white rounded-[14px] border border-[#DDDDDD] overflow-hidden">
+            <div className="py-3 px-5 border-b border-[#DDDDDD]">
+              <span className="text-[#929292] text-xs font-bold tracking-wider">TRUY CẬP NHANH</span>
+            </div>
+            {[
+              { href: '/wishlist', label: 'Yêu thích', sub: 'BĐS đã lưu', icon: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/33d240a6-bef1-4199-a291-34c99ed76960', arrow: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/0ed6a620-cfa4-41ff-ad20-80d7d9ca9706' },
+              { href: '/trips',    label: 'Đơn thuê',  sub: 'Xem lịch sử booking', icon: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7c63feb9-5af1-4e35-b4fd-7883f8fc67ce', arrow: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/aa5ebb2f-5b36-4529-b440-a412ec082c4c' },
+              { href: '/contracts',label: 'Hợp đồng', sub: 'Quản lý hợp đồng', icon: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9b9e3492-46ae-4e02-88be-26da2c6df897', arrow: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/5230220a-809d-498f-8edb-152788789081' },
+            ].map(({ href, label, sub, icon, arrow }, i, arr) => (
+              <Link key={href} href={href} className={cn('flex items-center py-3.5 px-5 gap-3 w-full hover:bg-[#F7F7F7] transition-colors', i < arr.length - 1 && 'border-b border-[#F7F7F7]')}>
+                <div className="shrink-0 w-8 h-8 bg-[#FFF546] rounded-lg flex items-center justify-center">
+                  <img src={icon} className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[#222222] text-sm font-bold">{label}</p>
+                  <p className="text-[#929292] text-xs">{sub}</p>
+                </div>
+                <img src={arrow} className="w-4 h-4 shrink-0" />
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Right content */}
+        <div className="flex-1 min-w-0 w-full">
               {/* Account info */}
               <div className="self-stretch bg-white pt-[1px] mb-[21px] rounded-[14px] border border-solid border-[#DDDDDD]">
                 <div className="flex items-center self-stretch py-5 mb-[21px] mx-[1px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
@@ -255,10 +179,8 @@ export default function ProfilePage() {
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col shrink-0 items-center gap-[1px]">
-                    <div className="flex flex-col items-start pr-[45px]">
-                      <span className="text-[#222222] text-base font-bold">Thông tin tài khoản</span>
-                    </div>
+                  <div className="flex flex-col items-start gap-0.5 min-w-0">
+                    <span className="text-[#222222] text-base font-bold">Thông tin tài khoản</span>
                     <span className="text-[#929292] text-xs">Thông tin cơ bản của tài khoản bạn</span>
                   </div>
                 </div>
@@ -267,9 +189,9 @@ export default function ProfilePage() {
                     <span className="text-[#6A6A6A] text-sm">Họ và tên</span>
                     <span className="text-[#222222] text-sm font-bold">{user.name}</span>
                   </div>
-                  <div className="flex justify-between items-center self-stretch py-3.5 mb-[1px] border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7]">
-                    <span className="text-[#6A6A6A] text-sm">Email</span>
-                    <span className="text-[#222222] text-sm font-bold">{user.email}</span>
+                  <div className="flex justify-between items-center gap-3 self-stretch py-3.5 mb-[1px] border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7]">
+                    <span className="text-[#6A6A6A] text-sm shrink-0">Email</span>
+                    <span className="text-[#222222] text-sm font-bold truncate min-w-0">{user.email}</span>
                   </div>
                   <div className="flex justify-between items-center self-stretch py-3.5 border-b-[0.800000011920929px] border-solid border-b-[#F7F7F7]">
                     <span className="text-[#6A6A6A] text-sm">Loại tài khoản</span>
@@ -446,13 +368,9 @@ function SecuritySection({
             />
           </div>
         </div>
-        <div className="flex flex-col shrink-0 items-center gap-[1px]">
-          <div className="flex flex-col items-start pr-[110px]">
-            <span className="text-[#222222] text-base font-bold">Bảo mật tài khoản</span>
-          </div>
-          <span className="text-[#929292] text-xs">
-            Quản lý số điện thoại và phương thức xác thực
-          </span>
+        <div className="flex flex-col items-start gap-0.5 min-w-0">
+          <span className="text-[#222222] text-base font-bold">Bảo mật tài khoản</span>
+          <span className="text-[#929292] text-xs">Quản lý số điện thoại và phương thức xác thực</span>
         </div>
       </div>
 
@@ -591,13 +509,9 @@ function BankSection({
             />
           </div>
         </div>
-        <div className="flex flex-col shrink-0 items-center gap-[1px]">
-          <div className="flex flex-col items-start pr-[130px]">
-            <span className="text-[#222222] text-base font-bold">Tài khoản ngân hàng</span>
-          </div>
-          <span className="text-[#929292] text-xs">
-            Dùng để nhận thanh toán từ hợp đồng và đơn dịch vụ
-          </span>
+        <div className="flex flex-col items-start gap-0.5 min-w-0">
+          <span className="text-[#222222] text-base font-bold">Tài khoản ngân hàng</span>
+          <span className="text-[#929292] text-xs">Dùng để nhận thanh toán từ hợp đồng và đơn dịch vụ</span>
         </div>
       </div>
 
@@ -678,7 +592,7 @@ function BankSection({
             </span>
           </div>
           <div className="flex flex-col items-center pb-[5px] px-1.5">
-            <span className="text-[#6A6A6A] text-xs text-center w-[276px]">
+            <span className="text-[#6A6A6A] text-xs text-center w-full max-w-[276px]">
               Thêm tài khoản ngân hàng để nhận thanh toán khi hợp
               đồng hoàn thành hoặc dịch vụ được nghiệm thu.
             </span>
@@ -748,13 +662,9 @@ function NationalIdSection({
             />
           </div>
         </div>
-        <div className="flex flex-col shrink-0 items-center mr-[304px] gap-0.5">
-          <div className="flex flex-col items-start pr-[166px]">
-            <span className="text-[#222222] text-base font-bold">Giấy tờ tuỳ thân</span>
-          </div>
-          <span className="text-[#929292] text-xs">
-            Thông tin giấy tờ tuỳ thân dùng trong hợp đồng thuê nhà
-          </span>
+        <div className="flex flex-col items-start gap-0.5 min-w-0">
+          <span className="text-[#222222] text-base font-bold">Giấy tờ tuỳ thân</span>
+          <span className="text-[#929292] text-xs">Thông tin giấy tờ tuỳ thân dùng trong hợp đồng thuê nhà</span>
         </div>
       </div>
 
@@ -845,14 +755,14 @@ function NationalIdSection({
           </button>
         </div>
       ) : (
-        <div className="flex flex-col items-center py-8 px-[148px] mb-[21px]">
+        <div className="flex flex-col items-center py-8 px-6 mb-[21px]">
           <div className="flex flex-col items-center pb-[3px] mb-2">
             <span className="text-[#222222] text-sm font-bold">
               Chưa có thông tin giấy tờ tuỳ thân
             </span>
           </div>
           <div className="flex flex-col items-center px-2 mb-[7px]">
-            <span className="text-[#6A6A6A] text-xs text-center w-[303px]">
+            <span className="text-[#6A6A6A] text-xs text-center w-full max-w-[303px]">
               Bổ sung số CMND/CCCD để hợp đồng thuê nhà được
               điền đầy đủ thông tin pháp lý.
             </span>

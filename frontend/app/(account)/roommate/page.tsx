@@ -334,7 +334,7 @@ function ProfileTab() {
         {/* Section: house rules */}
         <div className="border-t border-[#dddddd] py-5 space-y-4">
           <p className="text-xs font-semibold text-[#6a6a6a] uppercase tracking-wide">Nội quy phòng</p>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FieldGroup label="Thú cưng" error={errors.pets?.message}>
               <PillRadioGroup
                 name="pets"
@@ -713,7 +713,7 @@ function ProfileModal({ userId, onClose }: { userId: string; onClose: () => void
               </div>
 
               {/* Info grid */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <InfoRow label="Ngân sách" value={`${formatVnd(profile.budget.min)} – ${formatVnd(profile.budget.max)}`} />
                 <InfoRow label="Lịch sinh hoạt" value={SCHEDULE_LABELS[profile.schedule]} />
                 <InfoRow label="Lối sống" value={LIFESTYLE_LABELS[profile.lifestyle]} />

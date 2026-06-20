@@ -109,23 +109,23 @@ function ServiceOrderCard({
         </div>
 
         {/* Date + location */}
-        <div className="flex items-center self-stretch gap-4">
-          <div className="flex shrink-0 items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <div className="flex items-center gap-1.5">
             <img
               src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/f73179bb-5094-4445-9351-88f6802cd03e"
-              className="w-3.5 h-3.5 object-fill"
+              className="w-3.5 h-3.5 object-fill shrink-0"
               alt=""
             />
             <span className="text-[#3F3F3F] text-sm">{fmtDateTime(order.scheduledAt)}</span>
           </div>
           {prop && (
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="flex items-center gap-1">
               <img
                 src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/802ffdb3-d50b-419b-8376-55de162eb412"
-                className="w-3.5 h-3.5 object-fill"
+                className="w-3.5 h-3.5 object-fill shrink-0"
                 alt=""
               />
-              <span className="text-[#6A6A6A] text-sm">
+              <span className="text-[#6A6A6A] text-sm truncate">
                 {[prop.address?.district, prop.address?.city].filter(Boolean).join(', ')}
               </span>
             </div>
@@ -133,12 +133,12 @@ function ServiceOrderCard({
         </div>
 
         {/* Footer: price + actions */}
-        <div className="flex justify-between items-start self-stretch pt-[13px] border-t border-solid border-t-[#DDDDDD]">
-          <div className="flex shrink-0 items-center gap-[7px]">
+        <div className="flex flex-wrap justify-between items-center gap-2 pt-3 border-t border-solid border-t-[#DDDDDD]">
+          <div className="flex items-center gap-2">
             <span className="text-[#222222] text-sm font-bold">{fmtPrice(order.price)}</span>
             <span className={cn('text-xs', pc.className)}>· {pc.label}</span>
           </div>
-          <div className="flex shrink-0 gap-2">
+          <div className="flex gap-2">
             {order.paymentStatus === 'unpaid' && order.status !== 'pending' && (
               <button
                 onClick={() => onPay(order.id)}
@@ -329,23 +329,23 @@ export default function HostingServicesPage() {
 
       {/* Service type cards */}
       {isCatalogLoading ? (
-        <div className="flex items-center self-stretch gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="flex-1 h-[105px] bg-[#ebebeb] rounded-xl animate-pulse" />
+            <div key={i} className="h-[105px] bg-[#ebebeb] rounded-xl animate-pulse" />
           ))}
         </div>
       ) : (
-        <div className="flex items-center self-stretch gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {(catalogData ?? []).map((entry: ServiceCatalogEntry) => (
             <button
               key={entry.type}
               type="button"
               onClick={() => router.push(`/hosting/services/request?type=${entry.type}`)}
-              className="flex flex-1 flex-col items-center text-left py-4 gap-[7px] rounded-xl border border-solid border-[#DDDDDD] last:mr-0 hover:border-[#ffef3d] hover:shadow-[0_0_0_1px_#ffef3d] transition-all cursor-pointer"
+              className="flex flex-col items-center text-center py-4 px-1 gap-1.5 rounded-xl border border-solid border-[#DDDDDD] hover:border-[#ffef3d] hover:shadow-[0_0_0_1px_#ffef3d] transition-all cursor-pointer"
             >
-              <span className="text-[#222222] text-3xl">{SERVICE_META[entry.type].emoji}</span>
-              <span className="text-[#6A6A6A] text-xs font-bold">{SERVICE_META[entry.type].label}</span>
-              <span className="text-[#929292] text-[11px]">{fmtPrice(entry.price)}/{entry.unit}</span>
+              <span className="text-[#222222] text-2xl">{SERVICE_META[entry.type].emoji}</span>
+              <span className="text-[#6A6A6A] text-[11px] font-bold leading-tight">{SERVICE_META[entry.type].label}</span>
+              <span className="text-[#929292] text-[10px]">{fmtPrice(entry.price)}/{entry.unit}</span>
             </button>
           ))}
         </div>

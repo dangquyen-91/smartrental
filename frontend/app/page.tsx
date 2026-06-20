@@ -199,59 +199,95 @@ function HeroSearchBar({ onSearch }: { onSearch: (s: SearchState) => void }) {
   });
 
   return (
-    <div className="flex items-stretch bg-[#ffef3d] rounded-full shadow-xl h-[72px]">
-      {/* Địa điểm */}
-      <div className="flex-1 px-6 flex flex-col justify-center text-left min-w-0 hover:bg-black/5 transition-colors cursor-text">
-        <span className="text-[10px] font-bold text-black/40 uppercase tracking-wide leading-none mb-1">
-          Địa điểm
-        </span>
-        <input
-          type="text"
-          value={state.location}
-          onChange={(e) => setState((s) => ({ ...s, location: e.target.value }))}
-          placeholder="Tìm quận, thành phố..."
-          className="w-full text-sm font-medium text-black placeholder:text-black/40 outline-none bg-transparent leading-tight"
-        />
-      </div>
+    <>
+      {/* Mobile layout */}
+      <div className="md:hidden flex flex-col bg-[#ffef3d] rounded-3xl shadow-xl p-4 gap-3">
+        {/* Địa điểm */}
+        <div className="flex flex-col bg-white/30 rounded-2xl px-4 py-3">
+          <span className="text-[10px] font-bold text-black/40 uppercase tracking-wide leading-none mb-1">Địa điểm</span>
+          <input
+            type="text"
+            value={state.location}
+            onChange={(e) => setState((s) => ({ ...s, location: e.target.value }))}
+            placeholder="Tìm quận, thành phố..."
+            className="w-full text-sm font-medium text-black placeholder:text-black/40 outline-none bg-transparent leading-tight"
+          />
+        </div>
 
-      {/* Divider */}
-      <div className="flex items-center">
-        <div className="w-px h-8 bg-black/10" />
-      </div>
+        {/* Khoảng giá + Loại phòng */}
+        <div className="flex gap-2">
+          <div className="flex-1 bg-white/30 rounded-2xl px-4 py-3">
+            <span className="text-[10px] font-bold text-black/40 uppercase tracking-wide leading-none block mb-1">Khoảng giá</span>
+            <select
+              value={state.priceIndex}
+              onChange={(e) => setState((s) => ({ ...s, priceIndex: Number(e.target.value) }))}
+              className="w-full text-sm font-medium text-black bg-transparent outline-none"
+            >
+              {PRICE_RANGES.map((r, i) => <option key={i} value={i}>{r.label}</option>)}
+            </select>
+          </div>
+          <div className="flex-1 bg-white/30 rounded-2xl px-4 py-3">
+            <span className="text-[10px] font-bold text-black/40 uppercase tracking-wide leading-none block mb-1">Loại phòng</span>
+            <select
+              value={state.type}
+              onChange={(e) => setState((s) => ({ ...s, type: e.target.value as SearchState['type'] }))}
+              className="w-full text-sm font-medium text-black bg-transparent outline-none"
+            >
+              {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+          </div>
+        </div>
 
-      {/* Khoảng giá */}
-      <DropdownField
-        label="Khoảng giá"
-        value={PRICE_RANGES[state.priceIndex].label}
-        options={PRICE_RANGES.map((r, i) => ({ label: r.label, value: String(i) }))}
-        onSelect={(v) => setState((s) => ({ ...s, priceIndex: Number(v) }))}
-      />
-
-      {/* Divider */}
-      <div className="flex items-center">
-        <div className="w-px h-8 bg-black/10" />
-      </div>
-
-      {/* Loại phòng */}
-      <DropdownField
-        label="Loại phòng"
-        value={CATEGORIES.find((c) => c.value === state.type)?.label ?? 'Tất cả'}
-        options={CATEGORIES.map((c) => ({ label: c.label, value: c.value, icon: c.icon }))}
-        onSelect={(v) => setState((s) => ({ ...s, type: v as SearchState['type'] }))}
-      />
-
-      {/* Nút tìm kiếm */}
-      <div className="p-2 shrink-0 flex items-center">
+        {/* Nút tìm */}
         <button
           type="button"
           onClick={() => onSearch(state)}
-          className="w-14 h-14 bg-black text-white rounded-full flex items-center justify-center hover:bg-[#4a4733] transition-all active:scale-95"
-          aria-label="Tìm kiếm"
+          className="w-full h-12 bg-black text-white rounded-2xl flex items-center justify-center gap-2 font-semibold text-sm hover:bg-[#4a4733] transition-all active:scale-95"
         >
-          <Search className="size-5" />
+          <Search className="size-4" />
+          Tìm kiếm
         </button>
       </div>
-    </div>
+
+      {/* Desktop layout */}
+      <div className="hidden md:flex items-stretch bg-[#ffef3d] rounded-full shadow-xl h-[72px]">
+        {/* Địa điểm */}
+        <div className="flex-1 px-6 flex flex-col justify-center text-left min-w-0 hover:bg-black/5 transition-colors cursor-text">
+          <span className="text-[10px] font-bold text-black/40 uppercase tracking-wide leading-none mb-1">Địa điểm</span>
+          <input
+            type="text"
+            value={state.location}
+            onChange={(e) => setState((s) => ({ ...s, location: e.target.value }))}
+            placeholder="Tìm quận, thành phố..."
+            className="w-full text-sm font-medium text-black placeholder:text-black/40 outline-none bg-transparent leading-tight"
+          />
+        </div>
+        <div className="flex items-center"><div className="w-px h-8 bg-black/10" /></div>
+        <DropdownField
+          label="Khoảng giá"
+          value={PRICE_RANGES[state.priceIndex].label}
+          options={PRICE_RANGES.map((r, i) => ({ label: r.label, value: String(i) }))}
+          onSelect={(v) => setState((s) => ({ ...s, priceIndex: Number(v) }))}
+        />
+        <div className="flex items-center"><div className="w-px h-8 bg-black/10" /></div>
+        <DropdownField
+          label="Loại phòng"
+          value={CATEGORIES.find((c) => c.value === state.type)?.label ?? 'Tất cả'}
+          options={CATEGORIES.map((c) => ({ label: c.label, value: c.value, icon: c.icon }))}
+          onSelect={(v) => setState((s) => ({ ...s, type: v as SearchState['type'] }))}
+        />
+        <div className="p-2 shrink-0 flex items-center">
+          <button
+            type="button"
+            onClick={() => onSearch(state)}
+            className="w-14 h-14 bg-black text-white rounded-full flex items-center justify-center hover:bg-[#4a4733] transition-all active:scale-95"
+            aria-label="Tìm kiếm"
+          >
+            <Search className="size-5" />
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -486,7 +522,7 @@ export default function HomePage() {
                 { value: '8.000+', label: 'Người thuê hài lòng', sub: 'Đánh giá 4.8/5' },
               ].map((s) => (
                 <div key={s.label} className="p-8 rounded-3xl bg-white shadow-sm">
-                  <p className="text-4xl font-bold text-[#676000] mb-2">{s.value}</p>
+                  <p className="text-2xl md:text-4xl font-bold text-[#676000] mb-2">{s.value}</p>
                   <p className="text-sm font-semibold text-[#191c1d]">{s.label}</p>
                   <p className="text-xs text-[#4a4733]">{s.sub}</p>
                 </div>
@@ -557,7 +593,7 @@ export default function HomePage() {
           <div className="mx-auto text-center" style={{ maxWidth: '896px' }}>
             <WaveText
               text="Bắt đầu ngay hôm nay!"
-              className="text-4xl md:text-5xl font-bold text-[#676000] mb-6 leading-tight"
+              className="text-2xl md:text-4xl lg:text-5xl font-bold text-[#676000] mb-6 leading-tight"
             />
             <p className="text-lg text-[#4a4733] mb-12">
               Tạo tài khoản miễn phí để lưu tin yêu thích, đặt phòng và nhận thông báo mới nhất.

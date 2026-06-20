@@ -93,7 +93,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-[#e2e5ea] rounded-xl shadow-lg py-1 z-50">
+              <div className="absolute right-0 top-full mt-2 w-52 max-w-[calc(100vw-32px)] bg-white border border-[#e2e5ea] rounded-xl shadow-lg py-1 z-50">
                 <div className="px-4 py-3 border-b border-[#e2e5ea]">
                   <p className="text-sm font-semibold text-[#222] truncate">{user?.name}</p>
                   <p className="text-xs text-[#9ca3af] truncate mt-0.5">{user?.email}</p>
@@ -110,6 +110,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
       </header>
+
+      {/* Mobile nav */}
+      <div className="lg:hidden flex overflow-x-auto gap-1 px-4 py-2 bg-[#1a1a2e] shrink-0">
+        {NAV_ITEMS.map(({ label, href, icon: Icon, exact }) => {
+          const isActive = exact ? pathname === href : pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-2 rounded-lg whitespace-nowrap text-sm shrink-0 transition-colors',
+                isActive ? 'bg-[#ff385c] text-white font-semibold' : 'text-white/50 hover:text-white/90',
+              )}
+            >
+              <Icon className="w-4 h-4 shrink-0" />
+              {label}
+            </Link>
+          );
+        })}
+      </div>
 
       {/* ── Body ── */}
       <div className="flex flex-1 overflow-hidden">

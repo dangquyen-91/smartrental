@@ -158,7 +158,7 @@ export default function AboutPage() {
                 tử có giá trị pháp lý. Tất cả trong một nền tảng duy nhất.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
               {[
                 { value: '10.000+', label: 'Tin đăng', sub: 'Toàn quốc' },
                 { value: '2.500+', label: 'Chủ nhà', sub: 'Đã xác minh' },

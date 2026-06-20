@@ -85,7 +85,7 @@ function CatalogGrid({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="h-[90px] bg-[#ebebeb] rounded-[12px] animate-pulse" />
         ))}
@@ -94,7 +94,7 @@ function CatalogGrid({
   }
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
       {catalog.map((entry) => (
         <ServiceTypeCard
           key={entry.type}

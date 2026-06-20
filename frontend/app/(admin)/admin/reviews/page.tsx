@@ -291,13 +291,13 @@ export default function AdminReviewsPage() {
       {/* Filter */}
       <div className="bg-white rounded-card border border-[#dddddd] p-4 flex flex-wrap gap-3 items-center">
         <span className="text-sm text-[#6a6a6a] font-medium">Lọc theo:</span>
-        <div className="flex items-center gap-1 bg-[#f7f7f7] rounded-[8px] p-1">
+        <div className="flex flex-wrap items-center gap-1 bg-[#f7f7f7] rounded-[8px] p-1">
           {TARGET_TYPE_OPTIONS.map(({ label, value }) => (
             <button
               key={value}
               onClick={() => handleFilterChange(value)}
               className={cn(
-                'px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-all',
+                'px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-all whitespace-nowrap',
                 targetType === value
                   ? 'bg-white text-[#222222] shadow-sm'
                   : 'text-[#929292] hover:text-[#6a6a6a]',

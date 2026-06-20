@@ -149,8 +149,8 @@ function PaymentDeadlineCountdown({ deadline }: { deadline: string }) {
 function ReservationCardSkeleton() {
   return (
     <div className="animate-pulse border border-hairline-gray rounded-card p-5 bg-white">
-      <div className="flex gap-4">
-        <div className="size-30 rounded-[10px] bg-[#ebebeb] shrink-0" />
+      <div className="flex gap-3">
+        <div className="size-16 sm:size-24 rounded-[10px] bg-[#ebebeb] shrink-0" />
         <div className="flex-1 space-y-2.5">
           <div className="flex justify-between items-start gap-2">
             <div className="h-4 bg-[#ebebeb] rounded w-2/3" />
@@ -219,11 +219,11 @@ function ReservationCard({
 
   return (
     <article className="border border-hairline-gray rounded-card p-4 sm:p-5 bg-white hover:shadow-[rgba(0,0,0,0.06)_0_2px_12px] transition-shadow">
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex gap-3">
         {/* Property image */}
         <Link
           href={property ? `/properties/${property.id}` : '#'}
-          className="block size-25 sm:size-30 rounded-[10px] overflow-hidden shrink-0 bg-soft-cloud"
+          className="block size-16 sm:size-24 rounded-[10px] overflow-hidden shrink-0 bg-soft-cloud"
         >
           {imgUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -304,7 +304,7 @@ function ReservationCard({
       </div>
 
       {/* Footer */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 mt-4 border-t border-hairline-gray">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-4 mt-4 border-t border-hairline-gray">
         {/* Price + payment + payout */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-baseline gap-1.5">
@@ -572,11 +572,11 @@ const EMPTY_CONFIG: Record<TabId, { message: string; sub: string }> = {
 function EmptyState({ tabId }: { tabId: TabId }) {
   const { message, sub } = EMPTY_CONFIG[tabId];
   return (
-    <div className="flex flex-col items-center py-20 text-center bg-white rounded-card border border-hairline-gray">
+    <div className="flex flex-col items-center py-20 px-4 text-center bg-white rounded-card border border-hairline-gray">
       <div className="size-16 bg-soft-cloud rounded-full flex items-center justify-center mb-4">
         <ClipboardList className="size-8 text-hairline-gray" />
       </div>
-      <h2 className="text-lg font-semibold text-ink-black mb-2">{message}</h2>
+      <h2 className="text-lg font-semibold text-ink-black mb-2 max-w-[260px]">{message}</h2>
       <p className="text-sm text-ash-gray max-w-xs leading-relaxed">{sub}</p>
     </div>
   );
@@ -639,16 +639,16 @@ export default function HostingReservationsPage() {
       <h1 className="text-2xl font-bold text-ink-black">Yêu cầu thuê phòng</h1>
 
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-hairline-gray overflow-x-auto">
+      <div className="flex flex-wrap gap-2">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'pb-3 px-2 text-sm font-semibold transition-colors whitespace-nowrap flex items-center gap-1.5 shrink-0',
+              'flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full border transition-colors',
               activeTab === tab.id
-                ? 'text-ink-black border-b-2 border-ink-black -mb-px'
-                : 'text-ash-gray hover:text-ink-black',
+                ? 'bg-ink-black text-white border-ink-black'
+                : 'bg-white text-ash-gray border-hairline-gray hover:border-ink-black hover:text-ink-black',
             )}
           >
             {tab.label}
@@ -657,7 +657,7 @@ export default function HostingReservationsPage() {
                 className={cn(
                   'text-[11px] font-semibold px-1.5 py-0.5 rounded-full',
                   activeTab === tab.id
-                    ? 'bg-ink-black text-white'
+                    ? 'bg-white/20 text-white'
                     : tab.id === 'pending'
                       ? 'bg-amber-500 text-white'
                       : 'bg-[#ebebeb] text-ash-gray',

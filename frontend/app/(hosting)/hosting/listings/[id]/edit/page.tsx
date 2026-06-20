@@ -564,7 +564,7 @@ export default function EditListingPage({
             </InputField>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <InputField label="Phòng ngủ" error={errors.bedrooms?.message}>
               <input {...register('bedrooms', { valueAsNumber: true })} type="number" min={0} max={20} placeholder="0" className={inputCls} />
             </InputField>

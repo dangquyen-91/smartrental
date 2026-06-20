@@ -40,13 +40,34 @@ export default function HostingLayout({ children }: { children: React.ReactNode 
   }, []);
 
   return (
-    <div className="flex flex-col bg-white">
+    <div className="flex flex-col bg-white min-h-screen">
       <PublicNavbar />
 
+      {/* Mobile horizontal nav */}
+      <div className="md:hidden flex overflow-x-auto gap-1 px-4 py-2 bg-white border-b border-[#DDDDDD] scrollbar-hide">
+        {NAV_ITEMS.map((item) => {
+          const { label, href, Icon } = item;
+          const active = isActive(pathname, item);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-2 rounded-lg whitespace-nowrap text-sm shrink-0',
+                active ? 'bg-[#F7F7F7] text-[#222222] font-semibold' : 'text-[#6A6A6A]',
+              )}
+            >
+              <Icon className="w-4 h-4 shrink-0" />
+              {label}
+            </Link>
+          );
+        })}
+      </div>
+
       {/* Main content with sidebar */}
-      <div className="flex self-stretch">
-        {/* Sidebar — fixed width, always visible */}
-        <aside ref={sidebarRef} className="w-[223px] shrink-0 flex flex-col items-start bg-white border-r border-[#DDDDDD]">
+      <div className="flex flex-1 min-h-[calc(100vh-128px)] md:min-h-[calc(100vh-80px)]">
+        {/* Sidebar — hidden on mobile, visible on md+ */}
+        <aside ref={sidebarRef} className="hidden md:flex w-[223px] shrink-0 flex-col items-start bg-white border-r border-[#DDDDDD]">
           <div className="flex items-center py-[21px] pl-[15px] gap-2 border-b border-solid border-b-[#DDDDDD] w-full">
             <span className="text-[#929292] text-xs font-bold uppercase tracking-widest">Quản lý cho thuê</span>
           </div>
@@ -81,15 +102,14 @@ export default function HostingLayout({ children }: { children: React.ReactNode 
           </nav>
         </aside>
 
-        {/* Main content area — min-h pushes footer below the fold when content is short */}
-        <div className="flex-1 flex flex-col items-start bg-[#F6F8FB] p-8 min-h-[calc(100vh-80px)]">
+        {/* Main content area */}
+        <div className="flex-1 flex flex-col items-start bg-[#F6F8FB] p-4 md:p-8">
           <div className="max-w-[976px] w-full mx-auto">
             {children}
           </div>
         </div>
       </div>
 
-      {/* Footer */}
       <PublicFooter />
     </div>
   );

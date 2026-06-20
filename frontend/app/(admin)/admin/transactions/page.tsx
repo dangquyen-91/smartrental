@@ -88,15 +88,14 @@ function BookingPayoutRow({ booking }: { booking: Booking }) {
   const platformFee   = (booking as Booking & { platformFee?: number }).platformFee ?? 0;
 
   return (
-    <div className="px-5 py-4 border-b border-[#dddddd] last:border-0 space-y-3">
-      <div className="flex items-start gap-4">
+    <div className="px-4 py-4 border-b border-[#dddddd] last:border-0 space-y-3">
+      <div className="flex items-start gap-3">
         <div className="w-9 h-9 rounded-full bg-[#fff0f3] flex items-center justify-center shrink-0 mt-0.5">
           <Banknote className="w-4 h-4 text-[#ff385c]" />
         </div>
-
         <div className="flex-1 min-w-0 space-y-1">
           <p className="text-sm font-semibold text-[#222222] truncate">{property?.title ?? '—'}</p>
-          <p className="text-xs text-[#6a6a6a]">
+          <p className="text-xs text-[#6a6a6a] break-all">
             Chủ trọ: <span className="font-medium text-[#222222]">{landlord?.name ?? '—'}</span>
             {landlord?.email && <span className="text-[#929292]"> · {landlord.email}</span>}
             {landlord?.phone && <span className="text-[#929292]"> · {landlord.phone}</span>}
@@ -104,19 +103,20 @@ function BookingPayoutRow({ booking }: { booking: Booking }) {
           <BankAccountCard bank={landlord?.bankAccount} />
           <p className="text-xs text-[#929292]">Khách thanh toán: {fmtDate(booking.paidDate)}</p>
         </div>
-
-        <div className="text-right shrink-0 space-y-0.5">
+      </div>
+      <div className="flex items-center justify-between gap-2 pl-12">
+        <div>
           <p className="text-base font-bold text-[#ff385c]">{fmt(landlordPayout)}</p>
           <p className="text-xs text-[#929292]">Platform: {fmt(platformFee)}</p>
-          <button
-            onClick={() => markPayout.mutate(booking.id)}
-            disabled={markPayout.isPending}
-            className="mt-2 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#ff385c] text-white hover:bg-[#e00b41] transition-colors disabled:opacity-50"
-          >
-            {markPayout.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-            Đã chuyển
-          </button>
         </div>
+        <button
+          onClick={() => markPayout.mutate(booking.id)}
+          disabled={markPayout.isPending}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#ff385c] text-white hover:bg-[#e00b41] transition-colors disabled:opacity-50"
+        >
+          {markPayout.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+          Đã chuyển
+        </button>
       </div>
     </div>
   );
@@ -128,18 +128,17 @@ function ServicePayoutRow({ order }: { order: ServiceOrder }) {
   const property = getProperty(order.property);
 
   return (
-    <div className="px-5 py-4 border-b border-[#dddddd] last:border-0 space-y-3">
-      <div className="flex items-start gap-4">
+    <div className="px-4 py-4 border-b border-[#dddddd] last:border-0 space-y-3">
+      <div className="flex items-start gap-3">
         <div className="w-9 h-9 rounded-full bg-[#fefce8] flex items-center justify-center shrink-0 mt-0.5">
           <Wrench className="w-4 h-4 text-[#ca8a04]" />
         </div>
-
         <div className="flex-1 min-w-0 space-y-1">
-          <p className="text-sm font-semibold text-[#222222]">
+          <p className="text-sm font-semibold text-[#222222] truncate">
             {SERVICE_TYPE_LABEL[order.type] ?? order.type}
             {property?.title && <span className="font-normal text-[#6a6a6a]"> · {property.title}</span>}
           </p>
-          <p className="text-xs text-[#6a6a6a]">
+          <p className="text-xs text-[#6a6a6a] break-all">
             Provider: <span className="font-medium text-[#222222]">{provider?.name ?? '—'}</span>
             {provider?.email && <span className="text-[#929292]"> · {provider.email}</span>}
             {provider?.phone && <span className="text-[#929292]"> · {provider.phone}</span>}
@@ -147,19 +146,20 @@ function ServicePayoutRow({ order }: { order: ServiceOrder }) {
           <BankAccountCard bank={provider?.bankAccount} />
           <p className="text-xs text-[#929292]">Lịch thực hiện: {fmtDate(order.scheduledAt)}</p>
         </div>
-
-        <div className="text-right shrink-0 space-y-0.5">
+      </div>
+      <div className="flex items-center justify-between gap-2 pl-12">
+        <div>
           <p className="text-base font-bold text-[#ca8a04]">{fmt(order.providerPayout ?? 0)}</p>
           <p className="text-xs text-[#929292]">Platform: {fmt(order.platformFee ?? 0)}</p>
-          <button
-            onClick={() => markPayout.mutate(order.id)}
-            disabled={markPayout.isPending}
-            className="mt-2 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#ca8a04] text-white hover:bg-[#a16207] transition-colors disabled:opacity-50"
-          >
-            {markPayout.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-            Đã chuyển
-          </button>
         </div>
+        <button
+          onClick={() => markPayout.mutate(order.id)}
+          disabled={markPayout.isPending}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#ca8a04] text-white hover:bg-[#a16207] transition-colors disabled:opacity-50"
+        >
+          {markPayout.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+          Đã chuyển
+        </button>
       </div>
     </div>
   );
@@ -171,15 +171,14 @@ function RefundRow({ booking }: { booking: Booking }) {
   const property = getProperty(booking.property);
 
   return (
-    <div className="px-5 py-4 border-b border-[#dddddd] last:border-0">
-      <div className="flex items-start gap-4">
+    <div className="px-4 py-4 border-b border-[#dddddd] last:border-0 space-y-3">
+      <div className="flex items-start gap-3">
         <div className="w-9 h-9 rounded-full bg-[#fff5f5] flex items-center justify-center shrink-0 mt-0.5">
           <RefreshCw className="w-4 h-4 text-[#c13515]" />
         </div>
-
         <div className="flex-1 min-w-0 space-y-1">
           <p className="text-sm font-semibold text-[#222222] truncate">{property?.title ?? '—'}</p>
-          <p className="text-xs text-[#6a6a6a]">
+          <p className="text-xs text-[#6a6a6a] break-all">
             Người thuê: <span className="font-medium text-[#222222]">{tenant?.name ?? '—'}</span>
             {tenant?.email && <span className="text-[#929292]"> · {tenant.email}</span>}
             {tenant?.phone && <span className="text-[#929292]"> · {tenant.phone}</span>}
@@ -190,19 +189,20 @@ function RefundRow({ booking }: { booking: Booking }) {
             {booking.cancelReason && <span> · &ldquo;{booking.cancelReason}&rdquo;</span>}
           </p>
         </div>
-
-        <div className="text-right shrink-0 space-y-0.5">
+      </div>
+      <div className="flex items-center justify-between gap-2 pl-12">
+        <div>
           <p className="text-base font-bold text-[#c13515]">{fmt(booking.totalPrice)}</p>
           <p className="text-xs text-[#929292]">Cọc: {fmt(booking.depositAmount ?? 0)}</p>
-          <button
-            onClick={() => markRefunded.mutate(booking.id)}
-            disabled={markRefunded.isPending}
-            className="mt-2 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#c13515] text-white hover:bg-[#b32505] transition-colors disabled:opacity-50"
-          >
-            {markRefunded.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-            Đã hoàn tiền
-          </button>
         </div>
+        <button
+          onClick={() => markRefunded.mutate(booking.id)}
+          disabled={markRefunded.isPending}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#c13515] text-white hover:bg-[#b32505] transition-colors disabled:opacity-50"
+        >
+          {markRefunded.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+          Đã hoàn tiền
+        </button>
       </div>
     </div>
   );

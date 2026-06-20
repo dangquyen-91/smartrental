@@ -127,19 +127,33 @@ function ImageGallery({ images, title }: { images: { url: string }[]; title: str
   // 3+ images: masonry-style grid
   return (
     <>
-      <div className="grid grid-cols-3 gap-4">
+      {/* Mobile: single image */}
+      <div className="md:hidden relative w-full h-[280px] rounded-2xl overflow-hidden bg-[#f0f0f0]">
+        <img src={urls[0]} alt={title} className="w-full h-full object-cover cursor-pointer" onClick={() => open(0)} />
+        {count > 1 && (
+          <button
+            onClick={() => open(0)}
+            className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm text-[#222] text-sm font-semibold px-3 py-1.5 rounded-lg shadow-sm hover:bg-white transition-colors"
+          >
+            Xem tất cả {count} ảnh
+          </button>
+        )}
+      </div>
+
+      {/* Desktop: masonry grid */}
+      <div className="hidden md:grid grid-cols-3 gap-4">
         {/* Left: large image (spans 2 cols + 2 rows) */}
-        <div className="col-span-2 row-span-2 relative h-[400px] md:h-[500px] rounded-2xl overflow-hidden bg-[#f0f0f0]">
+        <div className="col-span-2 row-span-2 relative h-[500px] rounded-2xl overflow-hidden bg-[#f0f0f0]">
           <img src={urls[0]} alt={title} className="w-full h-full object-cover cursor-pointer" onClick={() => open(0)} />
         </div>
 
         {/* Right: top small image */}
-        <div className="relative h-[195px] md:h-[245px] rounded-2xl overflow-hidden bg-[#f0f0f0]">
+        <div className="relative h-[245px] rounded-2xl overflow-hidden bg-[#f0f0f0]">
           <img src={urls[1]} alt={title} className="w-full h-full object-cover cursor-pointer" onClick={() => open(1)} />
         </div>
 
         {/* Right: bottom small image with overlay */}
-        <div className="relative h-[195px] md:h-[245px] rounded-2xl overflow-hidden bg-[#f0f0f0]">
+        <div className="relative h-[245px] rounded-2xl overflow-hidden bg-[#f0f0f0]">
           <img src={urls[2]} alt={title} className="w-full h-full object-cover cursor-pointer" onClick={() => open(2)} />
           {count > 3 && (
             <div
@@ -199,7 +213,7 @@ function BookingPanel({ property, effectiveStatus, contactRevealed, hasPendingBo
 
   if (justBooked || hasPendingBooking) {
     return (
-      <div className="shrink-0 w-[320px] p-6 rounded-2xl border border-gray-100 shadow-lg shadow-black/5 bg-white">
+      <div className="w-full p-6 rounded-2xl border border-gray-100 shadow-lg shadow-black/5 bg-white">
         <div className="text-center py-6">
           <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <Check className="w-7 h-7 text-emerald-500" />
@@ -220,7 +234,7 @@ function BookingPanel({ property, effectiveStatus, contactRevealed, hasPendingBo
   }
 
   return (
-    <div className="shrink-0 w-[320px] rounded-2xl border border-gray-100 shadow-lg shadow-black/5 bg-white overflow-hidden">
+    <div className="w-full rounded-2xl border border-gray-100 shadow-lg shadow-black/5 bg-white overflow-hidden">
       {/* Price header */}
       <div className="px-6 pt-6 pb-5 border-b border-gray-100">
         <div className="flex items-baseline gap-1.5">
@@ -329,7 +343,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <div className="self-stretch bg-white pb-[1px]">
-          <div className="self-stretch bg-cover bg-center py-6 px-20 mb-[68px] bg-[#f0f0f0] animate-pulse" />
+          <div className="self-stretch bg-cover bg-center py-6 px-4 md:px-20 mb-[68px] bg-[#f0f0f0] animate-pulse" />
           <div className="max-w-[1104px] mb-8 mx-auto px-6">
             <div className="h-8 w-64 bg-[#f0f0f0] rounded animate-pulse mb-4" />
             <div className="h-48 bg-[#f0f0f0] rounded animate-pulse" />
@@ -422,7 +436,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       </div>
 
       {/* Two-column layout */}
-      <div className="max-w-[1280px] mx-auto px-6 w-full flex gap-12 mt-8">
+      <div className="max-w-[1280px] mx-auto px-4 md:px-6 w-full flex flex-col md:flex-row gap-8 md:gap-12 mt-8">
         {/* Left: main content */}
         <div className="flex-1 min-w-0">
           {/* Quick info strip */}
@@ -459,11 +473,21 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             <div className="py-8 border-b border-gray-100">
               <h2 className="text-xl font-bold text-[#222222] mb-4">Chủ nhà</h2>
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-[#222222] rounded-full flex items-center justify-center shrink-0 overflow-hidden">
-                  {ownerUser.avatar
-                    ? <img src={ownerUser.avatar} alt={ownerUser.name ?? ''} className="w-full h-full rounded-full object-cover" />
-                    : <span className="text-white text-xl font-bold">{ownerUser.name?.charAt(0)?.toUpperCase() ?? '?'}</span>
-                  }
+                <div className="w-14 h-14 bg-[#222222] rounded-full flex items-center justify-center shrink-0 overflow-hidden relative">
+                  {ownerUser.avatar ? (
+                    <img
+                      src={ownerUser.avatar}
+                      alt={ownerUser.name ?? ''}
+                      className="w-full h-full rounded-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <span className={`text-white text-xl font-bold ${ownerUser.avatar ? 'hidden' : ''}`}>
+                    {ownerUser.name?.charAt(0)?.toUpperCase() ?? '?'}
+                  </span>
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-[#222222] text-lg font-bold">{ownerUser.name}</span>
@@ -539,8 +563,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
-        {/* Right: booking panel — outer div stretches full left-column height so sticky has full range */}
-        <div className="shrink-0 w-[320px]">
+        {/* Right: booking panel */}
+        <div className="w-full md:w-[320px] md:shrink-0">
           <div className="sticky top-24">
             <BookingPanel property={p} effectiveStatus={effectiveStatus} contactRevealed={contactRevealed} hasPendingBooking={hasPendingBooking} />
           </div>

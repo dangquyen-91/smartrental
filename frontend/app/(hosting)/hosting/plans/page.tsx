@@ -59,7 +59,7 @@ export default function PlansPage() {
       )}
 
       {/* Cards */}
-      <div className="grid grid-cols-3 gap-4 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
         {sorted.map((plan) => {
           const isCurrent = plan.key === currentPlanKey;
           const isPremium = plan.key === 'premium';

@@ -16,6 +16,7 @@ import {
   CalendarCheck,
   Loader2,
   Star,
+  CreditCard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMyBookings, useCancelBooking } from '@/hooks/use-bookings';
@@ -130,9 +131,9 @@ function BookingCard({
       <div className="flex flex-col shrink-0 items-center bg-[#F7F7F7] rounded-[10px] overflow-hidden">
         {imgUrl ? (
           <Image src={imgUrl} alt={property?.title ?? ''} width={120} height={120}
-            className="w-[120px] h-[120px] object-cover" />
+            className="w-16 h-16 sm:w-[120px] sm:h-[120px] object-cover" />
         ) : (
-          <div className="w-[120px] h-[120px] flex items-center justify-center">
+          <div className="w-16 h-16 sm:w-[120px] sm:h-[120px] flex items-center justify-center">
             <Home className="size-8 text-[#929292]" />
           </div>
         )}
@@ -178,8 +179,8 @@ function BookingCard({
             </div>
           )}
 
-        <div className="flex items-center mb-[7px] w-full">
-          <div className="flex shrink-0 items-center mr-4 gap-1.5">
+        <div className="flex flex-wrap items-center mb-[7px] w-full gap-x-4 gap-y-1">
+          <div className="flex shrink-0 items-center gap-1.5">
             <CalendarDays className="size-3.5 text-[#929292] shrink-0" />
             <span className="text-[#3F3F3F] text-sm">
               {formatDate(booking.startDate)} – {formatDate(booking.endDate)}
@@ -213,57 +214,59 @@ function BookingCard({
           </div>
         )}
 
-        <div className="flex items-center pt-3 pb-[1px] border-t border-solid border-t-[#DDDDDD] w-full">
-          <div className="flex shrink-0 items-center mr-auto gap-[7px]">
-            <span className="text-[#222222] text-sm font-bold">{formatVnd(booking.totalPrice)}</span>
-            <span className={cn('text-xs', paymentCfg.className)}>· {paymentCfg.label}</span>
+        <div className="pt-3 border-t border-solid border-t-[#DDDDDD] w-full space-y-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between w-full">
+            <div className="flex items-center gap-[7px] min-w-0">
+              <span className="text-[#222222] text-sm font-bold shrink-0">{formatVnd(booking.totalPrice)}</span>
+              <span className={cn('text-xs shrink-0', paymentCfg.className)}>· {paymentCfg.label}</span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {canPay && (
+                <button
+                  onClick={() => onPay(booking.id)}
+                  disabled={isPayingThis}
+                  className="flex shrink-0 items-center bg-[#ffef3d] text-left py-1.5 px-3 gap-1.5 rounded-lg border-0 disabled:opacity-60 hover:shadow-lg transition-all"
+                >
+                  {isPayingThis
+                    ? <Loader2 className="size-3.5 animate-spin text-black" />
+                    : <CreditCard className="size-3.5 text-black" />}
+                  <span className="text-black text-xs font-bold">Thanh toán</span>
+                </button>
+              )}
+              {canReview && (
+                <button
+                  onClick={() => onReview(booking.id)}
+                  className="flex shrink-0 items-center gap-1.5 py-1.5 px-3 text-xs font-semibold text-amber-600 border border-amber-200 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
+                >
+                  <Star className="size-3.5 fill-amber-400 text-amber-400" />
+                  Đánh giá
+                </button>
+              )}
+              {canCancel && (
+                <button
+                  onClick={() => onCancel(booking.id)}
+                  className="px-3 py-1.5 text-xs font-semibold text-[#6A6A6A] border border-[#DDDDDD] hover:border-[#222222] hover:text-[#222222] rounded-lg transition-colors"
+                >
+                  Huỷ
+                </button>
+              )}
+              {showContract && (
+                <Link
+                  href="/contracts"
+                  className="flex shrink-0 items-center gap-1 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#DDDDDD] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+                >
+                  Hợp đồng
+                  <ChevronRight className="size-3.5 text-[#6A6A6A]" />
+                </Link>
+              )}
+            </div>
           </div>
           {isAwaiting && (
-            <span className="flex items-center gap-1.5 text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 mr-2">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-100 w-full">
               <CalendarCheck className="size-3.5 shrink-0" />
               Đã xác nhận — chờ chủ nhà check-in
-            </span>
+            </div>
           )}
-          <div className="flex shrink-0 items-center gap-2">
-            {canPay && (
-              <button
-                onClick={() => onPay(booking.id)}
-                disabled={isPayingThis}
-                className="flex shrink-0 items-center bg-[#ffef3d] text-left py-1.5 px-3 gap-1.5 rounded-lg border-0 disabled:opacity-60 hover:shadow-lg transition-all"
-              >
-                {isPayingThis
-                  ? <Loader2 className="size-3.5 animate-spin text-[#1f1c00]" />
-                  : <img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/1faf59bd-5913-4ace-9519-0cc4a813f6de" className="w-3.5 h-3.5 object-fill" alt="" />}
-                <span className="text-[#1f1c00] text-xs font-bold">Thanh toán</span>
-              </button>
-            )}
-            {canReview && (
-              <button
-                onClick={() => onReview(booking.id)}
-                className="flex shrink-0 items-center gap-1.5 py-1.5 px-3 text-xs font-semibold text-amber-600 border border-amber-200 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
-              >
-                <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                Đánh giá
-              </button>
-            )}
-            {canCancel && (
-              <button
-                onClick={() => onCancel(booking.id)}
-                className="px-3 py-1.5 text-xs font-semibold text-[#6A6A6A] border border-[#DDDDDD] hover:border-[#222222] hover:text-[#222222] rounded-lg transition-colors"
-              >
-                Huỷ
-              </button>
-            )}
-            {showContract && (
-              <Link
-                href="/contracts"
-                className="flex shrink-0 items-center gap-1 px-3 py-1.5 text-xs font-semibold text-[#222222] border border-[#DDDDDD] rounded-lg hover:bg-[#f7f7f7] transition-colors"
-              >
-                Hợp đồng
-                <ChevronRight className="size-3.5 text-[#6A6A6A]" />
-              </Link>
-            )}
-          </div>
         </div>
       </div>
     </div>
