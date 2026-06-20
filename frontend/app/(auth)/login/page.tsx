@@ -272,9 +272,9 @@ function LoginForm() {
 /* ── Google Login Button + Role Picker Modal ── */
 import { googleLoginApi } from '@/lib/api/auth.api';
 
-function buildGoogleOAuthUrl(redirectPath: string) {
+function buildGoogleOAuthUrl() {
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
-  const redirectUri = `${window.location.origin}${redirectPath}`;
+  const redirectUri = window.location.origin; // use root — already registered in Google Console
   const scope = 'openid email profile';
   return `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
 }
@@ -363,12 +363,11 @@ function GoogleLoginButton({ onSuccess, onError }: { onSuccess: (redirectTo?: st
     }
   };
 
-  // Handle token returned via redirect (hash fragment)
+  // Handle token from sessionStorage (set by GoogleOAuthCallbackHandler in providers.tsx)
   useEffect(() => {
-    const params = new URLSearchParams(window.location.hash.substring(1));
-    const token = params.get('access_token');
+    const token = sessionStorage.getItem('google_pending_token');
     if (!token) return;
-    window.history.replaceState({}, '', window.location.pathname + window.location.search);
+    sessionStorage.removeItem('google_pending_token');
     handleGoogleToken(token);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -385,7 +384,10 @@ function GoogleLoginButton({ onSuccess, onError }: { onSuccess: (redirectTo?: st
 
       <button
         type="button"
-        onClick={() => { window.location.href = buildGoogleOAuthUrl('/login'); }}
+        onClick={() => {
+          sessionStorage.setItem('google_oauth_source', 'login');
+          window.location.href = buildGoogleOAuthUrl();
+        }}
         disabled={loading}
         className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl border transition-all hover:shadow-md active:scale-95 cursor-pointer"
         style={{ backgroundColor: '#ffffff', borderColor: '#ccc7ac', color: '#191c1d' }}

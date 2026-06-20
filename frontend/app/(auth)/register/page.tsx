@@ -147,12 +147,11 @@ function GoogleRegisterButton({
   const setAuth = useAuthStore((s) => s.setAuth);
   const router = useRouter();
 
-  // Handle token returned via redirect (hash fragment)
+  // Handle token from sessionStorage (set by GoogleOAuthCallbackHandler in providers.tsx)
   useEffect(() => {
-    const params = new URLSearchParams(window.location.hash.substring(1));
-    const token = params.get('access_token');
+    const token = sessionStorage.getItem('google_pending_token');
     if (!token) return;
-    window.history.replaceState({}, '', window.location.pathname + window.location.search);
+    sessionStorage.removeItem('google_pending_token');
     const savedRole = (sessionStorage.getItem('google_register_role') ?? role) as Role;
     sessionStorage.removeItem('google_register_role');
     const doLogin = async () => {
@@ -176,9 +175,10 @@ function GoogleRegisterButton({
     <button
       type="button"
       onClick={() => {
+        sessionStorage.setItem('google_oauth_source', 'register');
         sessionStorage.setItem('google_register_role', role);
         const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
-        const redirectUri = encodeURIComponent(`${window.location.origin}/register`);
+        const redirectUri = encodeURIComponent(window.location.origin);
         const scope = encodeURIComponent('openid email profile');
         window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
       }}
