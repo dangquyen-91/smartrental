@@ -180,7 +180,7 @@ function GoogleRegisterButton({
         const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
         const redirectUri = encodeURIComponent(window.location.origin);
         const scope = encodeURIComponent('openid email profile');
-        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
+        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&prompt=select_account`;
       }}
       disabled={loading}
       className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl border transition-all hover:shadow-md active:scale-95 cursor-pointer"

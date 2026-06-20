@@ -276,7 +276,7 @@ function buildGoogleOAuthUrl() {
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
   const redirectUri = window.location.origin; // use root — already registered in Google Console
   const scope = 'openid email profile';
-  return `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
+  return `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&prompt=select_account`;
 }
 
 function RolePickerModal({
