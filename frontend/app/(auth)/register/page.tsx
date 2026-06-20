@@ -167,6 +167,7 @@ function GoogleRegisterButton({
       }
     },
     onError: () => onError('Không thể kết nối Google.'),
+    ux_mode: 'redirect',
   });
 
   return (

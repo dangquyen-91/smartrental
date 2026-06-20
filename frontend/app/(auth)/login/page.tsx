@@ -361,6 +361,7 @@ function GoogleLoginButton({ onSuccess, onError }: { onSuccess: (redirectTo?: st
   const login = useGoogleLogin({
     onSuccess: (tokenResponse) => handleGoogleToken(tokenResponse.access_token),
     onError: () => onError('Không thể kết nối Google.'),
+    ux_mode: 'redirect',
   });
 
   return (
