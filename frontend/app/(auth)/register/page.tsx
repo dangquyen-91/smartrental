@@ -8,7 +8,6 @@ import { z } from 'zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { useGoogleLogin } from '@react-oauth/google';
 import { useAuthStore } from '@/stores/auth.store';
 import { registerApi, googleLoginApi } from '@/lib/api/auth.api';
 import { cn } from '@/lib/utils';
@@ -148,32 +147,41 @@ function GoogleRegisterButton({
   const setAuth = useAuthStore((s) => s.setAuth);
   const router = useRouter();
 
-  const login = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
+  // Handle token returned via redirect (hash fragment)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.substring(1));
+    const token = params.get('access_token');
+    if (!token) return;
+    window.history.replaceState({}, '', window.location.pathname + window.location.search);
+    const savedRole = (sessionStorage.getItem('google_register_role') ?? role) as Role;
+    sessionStorage.removeItem('google_register_role');
+    const doLogin = async () => {
       try {
         setLoading(true);
-        const data = await googleLoginApi(tokenResponse.access_token, role);
+        const data = await googleLoginApi(token, savedRole);
         setAuth(data.user as unknown as User, data.accessToken, data.refreshToken);
-        if (role === 'landlord') {
-          router.push('/hosting');
-        } else {
-          router.push('/');
-        }
+        router.push(savedRole === 'landlord' ? '/hosting' : '/');
       } catch (err: unknown) {
         const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
         onError(msg || 'Đăng nhập Google thất bại, vui lòng thử lại.');
       } finally {
         setLoading(false);
       }
-    },
-    onError: () => onError('Không thể kết nối Google.'),
-    ux_mode: 'redirect',
-  });
+    };
+    doLogin();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <button
       type="button"
-      onClick={() => login()}
+      onClick={() => {
+        sessionStorage.setItem('google_register_role', role);
+        const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
+        const redirectUri = encodeURIComponent(`${window.location.origin}/register`);
+        const scope = encodeURIComponent('openid email profile');
+        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
+      }}
       disabled={loading}
       className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl border transition-all hover:shadow-md active:scale-95 cursor-pointer"
       style={{ backgroundColor: '#ffffff', borderColor: '#ccc7ac', color: '#191c1d' }}
