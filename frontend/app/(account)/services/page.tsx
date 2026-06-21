@@ -26,6 +26,7 @@ import {
   useCreateServicePayment,
 } from '@/hooks/use-services';
 import { getServicePaymentStatusApi } from '@/lib/api/payment.api';
+import { useAuth } from '@/hooks/use-auth';
 import { ServiceOrderCardSkeleton } from '@/components/ui/skeleton';
 import type { ServiceOrder, ServiceCatalogEntry, Booking, Property, PaginatedResponse } from '@/types';
 
@@ -466,6 +467,7 @@ function EmptyState({ tabId, onRequest }: { tabId: TabId; onRequest: () => void 
 // ─── payment toast ────────────────────────────────────────────────────────────
 
 function PaymentToast() {
+  const { hasHydrated } = useAuth();
   const params  = useSearchParams();
   const router  = useRouter();
   const qc      = useQueryClient();
@@ -501,6 +503,9 @@ function PaymentToast() {
   };
 
   useEffect(() => {
+    // Đợi Zustand hydrate xong mới poll — tránh gọi API khi chưa có token
+    // dẫn đến clearAuth() trong interceptor và bị kick về /login
+    if (!hasHydrated) return;
     if (handled.current) return;
     const result = params.get('payment');
     const payosStatus = params.get('status'); // PAID, CANCELLED, etc.
@@ -535,7 +540,7 @@ function PaymentToast() {
       toast.info('Bạn đã huỷ thanh toán. Yêu cầu dịch vụ vẫn còn hiệu lực.');
       router.replace('/services');
     }
-  }, [params, router, qc]);
+  }, [params, router, qc, hasHydrated]);
 
   return null;
 }

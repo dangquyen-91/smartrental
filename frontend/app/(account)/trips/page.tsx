@@ -332,6 +332,7 @@ function EmptyState({ tabId }: { tabId: TabId }) {
 // ─── payment result toast ─────────────────────────────────────────────────────
 
 function PaymentToast() {
+  const { hasHydrated } = useAuth();
   const params = useSearchParams();
   const router = useRouter();
   const qc = useQueryClient();
@@ -367,6 +368,9 @@ function PaymentToast() {
   };
 
   useEffect(() => {
+    // Đợi Zustand hydrate xong mới poll — tránh gọi API khi chưa có token
+    // dẫn đến clearAuth() trong interceptor và bị kick về /login
+    if (!hasHydrated) return;
     if (handled.current) return;
     const result = params.get('payment');
     const payosStatus = params.get('status'); // PAID, CANCELLED, etc.
@@ -394,7 +398,7 @@ function PaymentToast() {
       toast.info('Bạn đã huỷ thanh toán. Đơn đặt phòng vẫn còn hiệu lực.');
       router.replace('/trips');
     }
-  }, [params, router, qc]);
+  }, [params, router, qc, hasHydrated]);
 
   return null;
 }
