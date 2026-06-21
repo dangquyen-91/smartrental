@@ -123,6 +123,15 @@ const updatePropertyStatus = async (req, res, next) => {
   }
 };
 
+const deleteProperty = async (req, res, next) => {
+  try {
+    const property = await adminService.deleteProperty(req.params.id);
+    return R.success(res, { property }, 'Property removed successfully');
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ─── Pending Actions ──────────────────────────────────────────────────────────
 
 const getPendingPayouts = async (req, res, next) => {
@@ -156,6 +165,7 @@ export {
   getProperties,
   togglePropertyFeatured,
   updatePropertyStatus,
+  deleteProperty,
   getPendingPayouts,
   getPendingRefunds,
 };

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, Search, Star } from 'lucide-react';
-import { useAdminProperties, useTogglePropertyFeatured, useUpdatePropertyStatusAdmin } from '@/hooks/use-admin';
+import { Loader2, Search, Star, Trash2 } from 'lucide-react';
+import { useAdminProperties, useTogglePropertyFeatured, useUpdatePropertyStatusAdmin, useDeletePropertyAdmin } from '@/hooks/use-admin';
 import type { Property, PropertyImage, User } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -53,6 +53,7 @@ export default function AdminPropertiesPage() {
   const [status, setStatus] = useState('');
   const [type, setType] = useState('');
   const [page, setPage] = useState(1);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -71,6 +72,11 @@ export default function AdminPropertiesPage() {
 
   const toggleFeatured = useTogglePropertyFeatured();
   const updateStatus = useUpdatePropertyStatusAdmin();
+  const deleteProperty = useDeletePropertyAdmin();
+
+  const confirmTarget = confirmDeleteId
+    ? properties.find((p) => p.id === confirmDeleteId)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -137,13 +143,14 @@ export default function AdminPropertiesPage() {
         ) : (
           <>
             {/* Column headers */}
-            <div className="hidden lg:grid grid-cols-[2fr_120px_120px_1fr_100px_80px] gap-4 px-5 py-2.5 border-b border-[#dddddd] bg-[#f7f7f7]">
+            <div className="hidden lg:grid grid-cols-[2fr_120px_120px_1fr_100px_80px_44px] gap-4 px-5 py-2.5 border-b border-[#dddddd] bg-[#f7f7f7]">
               <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">Tin đăng</p>
               <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">Loại</p>
               <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">Trạng thái</p>
               <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">Chủ nhà</p>
               <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider">Giá/tháng</p>
               <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider text-center">Nổi bật</p>
+              <p className="text-xs font-semibold text-[#929292] uppercase tracking-wider"></p>
             </div>
 
             {properties.map((property, i) => {
@@ -155,7 +162,7 @@ export default function AdminPropertiesPage() {
                 <div
                   key={property.id}
                   className={cn(
-                    'flex items-center gap-3 lg:grid lg:grid-cols-[2fr_120px_120px_1fr_100px_80px] lg:gap-4 lg:items-center px-5 py-4',
+                    'flex items-center gap-3 lg:grid lg:grid-cols-[2fr_120px_120px_1fr_100px_80px_44px] lg:gap-4 lg:items-center px-5 py-4',
                     i < properties.length - 1 ? 'border-b border-[#dddddd]' : '',
                   )}
                 >
@@ -224,6 +231,18 @@ export default function AdminPropertiesPage() {
                       <Star className="w-4 h-4" fill={property.isFeatured ? 'currentColor' : 'none'} />
                     </button>
                   </div>
+
+                  {/* Cell 7: Delete */}
+                  <div className="hidden lg:flex justify-center shrink-0">
+                    <button
+                      onClick={() => setConfirmDeleteId(property.id)}
+                      disabled={isPending || deleteProperty.isPending}
+                      title="Gỡ tin đăng"
+                      className="w-8 h-8 rounded-full flex items-center justify-center bg-[#f7f7f7] text-[#929292] hover:bg-[#fff0f3] hover:text-[#ba1a1a] transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -258,6 +277,47 @@ export default function AdminPropertiesPage() {
           </>
         )}
       </div>
+
+      {/* ── Confirm delete dialog ── */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#fff0f3] flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-[#ba1a1a]" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-[#222222]">Gỡ tin đăng?</p>
+                <p className="text-xs text-[#6a6a6a] mt-1 leading-relaxed">
+                  Tin đăng{confirmTarget ? ` "${confirmTarget.title}"` : ''} sẽ bị ẩn khỏi nền tảng.
+                  Dữ liệu đặt phòng liên quan vẫn được giữ nguyên.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                disabled={deleteProperty.isPending}
+                className="px-4 py-2 rounded-[8px] border border-[#dddddd] text-sm text-[#222222] hover:bg-[#f7f7f7] transition-colors disabled:opacity-50"
+              >
+                Huỷ
+              </button>
+              <button
+                onClick={() => {
+                  deleteProperty.mutate(confirmDeleteId, {
+                    onSettled: () => setConfirmDeleteId(null),
+                  });
+                }}
+                disabled={deleteProperty.isPending}
+                className="flex items-center gap-2 px-4 py-2 rounded-[8px] bg-[#ba1a1a] text-white text-sm font-semibold hover:bg-[#a31616] transition-colors disabled:opacity-60"
+              >
+                {deleteProperty.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Gỡ tin đăng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
