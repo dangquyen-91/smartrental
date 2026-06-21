@@ -83,44 +83,57 @@ function ServiceOrderCard({
         <div className="h-1 bg-amber-400" />
       )}
 
-      <div className="p-5 flex gap-4">
+      <div className="p-4 sm:p-5 flex gap-3 sm:gap-4">
         {/* Emoji tile */}
-        <div className="shrink-0 size-14 bg-[#f7f7f7] rounded-[10px] flex items-center justify-center text-2xl">
+        <div className="shrink-0 size-12 sm:size-14 bg-[#f7f7f7] rounded-[10px] flex items-center justify-center text-xl sm:text-2xl">
           {meta.emoji}
         </div>
 
         <div className="flex-1 min-w-0 flex flex-col gap-2">
-          {/* Header */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="text-[15px] font-bold text-[#222222]">{meta.label}</h3>
-              {prop && (
-                <p className="text-sm text-[#6a6a6a] flex items-center gap-1 mt-0.5 truncate">
-                  <MapPin className="size-3.5 shrink-0" />
-                  {prop.title}
-                  {prop.address ? ` — ${[prop.address.district, prop.address.city].filter(Boolean).join(', ')}` : ''}
-                </p>
-              )}
+          {/* Header: title + badge stacked on mobile */}
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+            <div className="flex items-start justify-between gap-2 sm:block">
+              <h3 className="text-[14px] sm:text-[15px] font-bold text-[#222222] leading-snug">{meta.label}</h3>
+              {/* Badge inline with title on mobile */}
+              <span className={cn('sm:hidden shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full', sc.className)}>
+                {sc.label}
+              </span>
             </div>
-            <span className={cn('shrink-0 text-[11px] font-bold px-2.5 py-0.5 rounded-full', sc.className)}>
+            {prop && (
+              <p className="text-xs sm:text-sm text-[#6a6a6a] flex items-center gap-1 truncate sm:hidden">
+                <MapPin className="size-3 shrink-0" />
+                {prop.title}
+              </p>
+            )}
+            {/* Badge on desktop */}
+            <span className={cn('hidden sm:inline-flex shrink-0 text-[11px] font-bold px-2.5 py-0.5 rounded-full', sc.className)}>
               {sc.label}
             </span>
           </div>
 
+          {/* Property — desktop only (already shown above on mobile) */}
+          {prop && (
+            <p className="hidden sm:flex text-sm text-[#6a6a6a] items-center gap-1 truncate">
+              <MapPin className="size-3.5 shrink-0" />
+              {prop.title}
+              {prop.address ? ` — ${[prop.address.district, prop.address.city].filter(Boolean).join(', ')}` : ''}
+            </p>
+          )}
+
           {/* Tenant info */}
           {tenant && (
-            <div className="flex items-center gap-3 py-2 px-3 bg-[#f7f7f7] rounded-[8px]">
+            <div className="flex items-center gap-2 sm:gap-3 py-2 px-3 bg-[#f7f7f7] rounded-[8px]">
               {tenant.avatar ? (
-                <img src={tenant.avatar} alt={tenant.name} className="size-7 rounded-full object-cover shrink-0" />
+                <img src={tenant.avatar} alt={tenant.name} className="size-6 sm:size-7 rounded-full object-cover shrink-0" />
               ) : (
-                <div className="size-7 rounded-full bg-[#dddddd] flex items-center justify-center shrink-0">
-                  <UserIcon className="size-4 text-[#929292]" />
+                <div className="size-6 sm:size-7 rounded-full bg-[#dddddd] flex items-center justify-center shrink-0">
+                  <UserIcon className="size-3.5 sm:size-4 text-[#929292]" />
                 </div>
               )}
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1 flex flex-wrap items-center gap-x-3 gap-y-0">
                 <p className="text-xs font-semibold text-[#222222] truncate">{tenant.name}</p>
                 {tenant.phone && (
-                  <p className="text-[11px] text-[#6a6a6a] flex items-center gap-1 mt-0.5">
+                  <p className="text-[11px] text-[#6a6a6a] flex items-center gap-1">
                     <Phone className="size-3 shrink-0" />
                     {tenant.phone}
                   </p>
@@ -130,7 +143,7 @@ function ServiceOrderCard({
           )}
 
           {/* Scheduled time */}
-          <div className="flex items-center gap-1.5 text-sm text-[#3f3f3f]">
+          <div className="flex items-center gap-1.5 text-xs sm:text-sm text-[#3f3f3f]">
             <CalendarDays className="size-3.5 text-[#6a6a6a] shrink-0" />
             {fmtDateTime(order.scheduledAt)}
           </div>
@@ -149,7 +162,7 @@ function ServiceOrderCard({
           )}
 
           {/* Footer */}
-          <div className="flex items-center justify-between gap-2 pt-3 border-t border-[#dddddd]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t border-[#dddddd]">
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-bold text-[#222222]">{fmtPrice(order.price)}</span>
               <span className={cn('text-xs', pc.className)}>· {pc.label}</span>
@@ -159,14 +172,14 @@ function ServiceOrderCard({
                 <button
                   onClick={() => onConfirm(order.id)}
                   disabled={isActing}
-                  className="px-3 py-1.5 text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 rounded-lg transition-colors"
+                  className="flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 rounded-lg transition-colors"
                 >
                   Xác nhận
                 </button>
                 <button
                   onClick={() => onCancel(order.id)}
                   disabled={isActing}
-                  className="px-3 py-1.5 text-xs font-bold text-[#6a6a6a] border border-[#dddddd] hover:border-[#222222] hover:text-[#222222] rounded-lg transition-colors"
+                  className="flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-xs font-bold text-[#6a6a6a] border border-[#dddddd] hover:border-[#222222] hover:text-[#222222] rounded-lg transition-colors"
                 >
                   Từ chối
                 </button>
