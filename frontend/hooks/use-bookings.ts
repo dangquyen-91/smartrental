@@ -71,7 +71,7 @@ export function useRentedPropertyIds(enabled = true) {
     select: (data) =>
       new Set(
         (data?.data ?? [])
-          .filter((b) => ['confirmed', 'active', 'completed'].includes(b.status))
+          .filter((b) => ['confirmed', 'active'].includes(b.status))
           .map((b) => (typeof b.property === 'string' ? b.property : b.property?.id))
           .filter(Boolean) as string[],
       ),
