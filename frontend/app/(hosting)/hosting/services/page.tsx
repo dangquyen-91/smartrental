@@ -1,16 +1,14 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { Wrench, CalendarDays, MapPin, User as UserIcon, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   useLandlordServiceOrders,
   useUpdateServiceStatus,
-  useServiceCatalog,
 } from '@/hooks/use-services';
-import type { ServiceOrder, ServiceCatalogEntry } from '@/types';
+import type { ServiceOrder, User, Property } from '@/types';
 
 type ServiceStatus = ServiceOrder['status'];
 
@@ -23,16 +21,12 @@ const SERVICE_META: Record<ServiceOrder['type'], { emoji: string; label: string 
   registration: { emoji: '📋', label: 'Đăng ký tạm trú' },
 };
 
-function fmtPrice(n: number) {
-  return n.toLocaleString('vi-VN') + '₫';
-}
-
 const STATUS_CONFIG: Record<ServiceOrder['status'], { label: string; className: string }> = {
-  pending:     { label: 'Chờ xác nhận',  className: 'bg-[#FF5E00] border-[#FF5E00] text-white' },
-  confirmed:   { label: 'Đã xác nhận',  className: 'bg-blue-50 text-blue-700 border-blue-200' },
-  in_progress: { label: 'Đang xử lý',   className: 'bg-violet-50 text-violet-700 border-violet-200' },
-  done:        { label: 'Hoàn thành',    className: 'bg-stone-100 text-stone-500 border-stone-200' },
-  cancelled:   { label: 'Đã huỷ',       className: 'bg-red-50 text-[#c13515] border-red-100' },
+  pending:     { label: 'Chờ xác nhận',  className: 'bg-amber-50 text-amber-700 border border-amber-200' },
+  confirmed:   { label: 'Đã xác nhận',   className: 'bg-blue-50 text-blue-700 border border-blue-200' },
+  in_progress: { label: 'Đang thực hiện', className: 'bg-violet-50 text-violet-700 border border-violet-200' },
+  done:        { label: 'Hoàn thành',    className: 'bg-stone-100 text-stone-500 border border-stone-200' },
+  cancelled:   { label: 'Đã huỷ',       className: 'bg-red-50 text-[#c13515] border border-red-100' },
 };
 
 const PAYMENT_CONFIG: Record<ServiceOrder['paymentStatus'], { label: string; className: string }> = {
@@ -42,12 +36,16 @@ const PAYMENT_CONFIG: Record<ServiceOrder['paymentStatus'], { label: string; cla
 };
 
 const TABS: { id: TabId; label: string; statuses: ServiceStatus[] }[] = [
-  { id: 'active',    label: 'Đang xử lý', statuses: ['pending', 'confirmed', 'in_progress'] as ServiceStatus[] },
-  { id: 'done',      label: 'Hoàn thành', statuses: ['done'] as ServiceStatus[] },
-  { id: 'cancelled', label: 'Đã huỷ',    statuses: ['cancelled'] as ServiceStatus[] },
+  { id: 'active',    label: 'Đang xử lý', statuses: ['pending', 'confirmed', 'in_progress'] },
+  { id: 'done',      label: 'Hoàn thành', statuses: ['done'] },
+  { id: 'cancelled', label: 'Đã huỷ',    statuses: ['cancelled'] },
 ];
 
 type TabId = 'active' | 'done' | 'cancelled';
+
+function fmtPrice(n: number) {
+  return n.toLocaleString('vi-VN') + '₫';
+}
 
 function fmtDateTime(dt: string) {
   return new Date(dt).toLocaleString('vi-VN', {
@@ -55,6 +53,8 @@ function fmtDateTime(dt: string) {
     hour: '2-digit', minute: '2-digit',
   });
 }
+
+// ─── Card ─────────────────────────────────────────────────────────────────────
 
 function ServiceOrderCard({
   order,
@@ -67,89 +67,110 @@ function ServiceOrderCard({
   onCancel: (id: string) => void;
   isActing: boolean;
 }) {
-  const meta       = SERVICE_META[order.type];
-  const sc         = STATUS_CONFIG[order.status];
-  const pc         = PAYMENT_CONFIG[order.paymentStatus];
-  const prop       = typeof order.property === 'object' ? order.property : null;
+  const meta      = SERVICE_META[order.type];
+  const sc        = STATUS_CONFIG[order.status];
+  const pc        = PAYMENT_CONFIG[order.paymentStatus];
+  const prop      = typeof order.property === 'object' ? (order.property as Property) : null;
+  const tenant    = typeof order.tenant === 'object' && order.tenant ? (order.tenant as User) : null;
+  const provider  = order.assignedProvider && typeof order.assignedProvider === 'object'
+    ? (order.assignedProvider as User)
+    : null;
 
   return (
-    <div className="flex items-start self-stretch bg-white py-[21px] px-5 gap-4 rounded-[14px] border border-solid border-[#DDDDDD]">
-      {/* Emoji icon */}
-      <div className="shrink-0 text-[#222222] bg-[#F7F7F7] text-3xl py-6 px-5 rounded-[10px] flex items-center justify-center">
-        {meta.emoji}
-      </div>
+    <div className="bg-white rounded-[14px] border border-[#DDDDDD] overflow-hidden">
+      {/* Top bar — status highlight for pending */}
+      {order.status === 'pending' && (
+        <div className="h-1 bg-amber-400" />
+      )}
 
-      <div className="flex flex-1 flex-col gap-[7px]">
-        {/* Title row + status badge */}
-        <div className="flex justify-between items-start self-stretch">
-          <div className="flex flex-col gap-1">
-            <span className="text-[#222222] text-[15px] font-bold">{meta.label}</span>
-            {prop && (
-              <div className="flex items-center gap-1">
-                <img
-                  src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/86935612-dbeb-427d-a19c-1ff89277d7bc"
-                  className="w-3.5 h-3.5 object-fill"
-                  alt=""
-                />
-                <span className="text-[#6A6A6A] text-sm truncate">{prop.title}</span>
-              </div>
-            )}
-          </div>
-          <div className={cn(
-            'flex shrink-0 items-start py-0.5 px-[11px] rounded-[26843550px] border text-[11px] font-bold',
-            sc.className,
-          )}>
-            {sc.label}
-          </div>
+      <div className="p-5 flex gap-4">
+        {/* Emoji tile */}
+        <div className="shrink-0 size-14 bg-[#f7f7f7] rounded-[10px] flex items-center justify-center text-2xl">
+          {meta.emoji}
         </div>
 
-        {/* Date + location */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <div className="flex items-center gap-1.5">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/f73179bb-5094-4445-9351-88f6802cd03e"
-              className="w-3.5 h-3.5 object-fill shrink-0"
-              alt=""
-            />
-            <span className="text-[#3F3F3F] text-sm">{fmtDateTime(order.scheduledAt)}</span>
+        <div className="flex-1 min-w-0 flex flex-col gap-2">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="text-[15px] font-bold text-[#222222]">{meta.label}</h3>
+              {prop && (
+                <p className="text-sm text-[#6a6a6a] flex items-center gap-1 mt-0.5 truncate">
+                  <MapPin className="size-3.5 shrink-0" />
+                  {prop.title}
+                  {prop.address ? ` — ${[prop.address.district, prop.address.city].filter(Boolean).join(', ')}` : ''}
+                </p>
+              )}
+            </div>
+            <span className={cn('shrink-0 text-[11px] font-bold px-2.5 py-0.5 rounded-full', sc.className)}>
+              {sc.label}
+            </span>
           </div>
-          {prop && (
-            <div className="flex items-center gap-1">
-              <img
-                src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/802ffdb3-d50b-419b-8376-55de162eb412"
-                className="w-3.5 h-3.5 object-fill shrink-0"
-                alt=""
-              />
-              <span className="text-[#6A6A6A] text-sm truncate">
-                {[prop.address?.district, prop.address?.city].filter(Boolean).join(', ')}
-              </span>
+
+          {/* Tenant info */}
+          {tenant && (
+            <div className="flex items-center gap-3 py-2 px-3 bg-[#f7f7f7] rounded-[8px]">
+              {tenant.avatar ? (
+                <img src={tenant.avatar} alt={tenant.name} className="size-7 rounded-full object-cover shrink-0" />
+              ) : (
+                <div className="size-7 rounded-full bg-[#dddddd] flex items-center justify-center shrink-0">
+                  <UserIcon className="size-4 text-[#929292]" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-[#222222] truncate">{tenant.name}</p>
+                {tenant.phone && (
+                  <p className="text-[11px] text-[#6a6a6a] flex items-center gap-1 mt-0.5">
+                    <Phone className="size-3 shrink-0" />
+                    {tenant.phone}
+                  </p>
+                )}
+              </div>
             </div>
           )}
-        </div>
 
-        {/* Footer: price + actions */}
-        <div className="flex flex-wrap justify-between items-center gap-2 pt-3 border-t border-solid border-t-[#DDDDDD]">
-          <div className="flex items-center gap-2">
-            <span className="text-[#222222] text-sm font-bold">{fmtPrice(order.price)}</span>
-            <span className={cn('text-xs', pc.className)}>· {pc.label}</span>
+          {/* Scheduled time */}
+          <div className="flex items-center gap-1.5 text-sm text-[#3f3f3f]">
+            <CalendarDays className="size-3.5 text-[#6a6a6a] shrink-0" />
+            {fmtDateTime(order.scheduledAt)}
           </div>
-          <div className="flex gap-2">
+
+          {/* Provider chip */}
+          {provider && (
+            <div className="flex items-center gap-1.5 text-xs font-medium text-violet-700 bg-violet-50 px-2.5 py-1 rounded-lg border border-violet-100 w-fit">
+              <UserIcon className="size-3.5 shrink-0" />
+              Nhân viên: {provider.name}
+            </div>
+          )}
+
+          {/* Note */}
+          {order.note && (
+            <p className="text-xs text-[#6a6a6a] italic">Ghi chú: {order.note}</p>
+          )}
+
+          {/* Footer */}
+          <div className="flex items-center justify-between gap-2 pt-3 border-t border-[#dddddd]">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-bold text-[#222222]">{fmtPrice(order.price)}</span>
+              <span className={cn('text-xs', pc.className)}>· {pc.label}</span>
+            </div>
             {order.status === 'pending' && (
-              <button
-                onClick={() => onConfirm(order.id)}
-                disabled={isActing}
-                className="flex shrink-0 items-center bg-emerald-500 hover:bg-emerald-600 transition-colors text-left py-1.5 px-3 rounded-lg border-0 disabled:opacity-60"
-              >
-                <span className="text-white text-xs font-bold">Xác nhận</span>
-              </button>
-            )}
-            {order.status === 'pending' && (
-              <button
-                onClick={() => onCancel(order.id)}
-                className="flex shrink-0 items-start bg-transparent text-left py-1.5 px-[13px] rounded-lg border border-solid border-[#DDDDDD]"
-              >
-                <span className="text-[#6A6A6A] text-xs font-bold">Huỷ</span>
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onConfirm(order.id)}
+                  disabled={isActing}
+                  className="px-3 py-1.5 text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 rounded-lg transition-colors"
+                >
+                  Xác nhận
+                </button>
+                <button
+                  onClick={() => onCancel(order.id)}
+                  disabled={isActing}
+                  className="px-3 py-1.5 text-xs font-bold text-[#6a6a6a] border border-[#dddddd] hover:border-[#222222] hover:text-[#222222] rounded-lg transition-colors"
+                >
+                  Từ chối
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -158,57 +179,70 @@ function ServiceOrderCard({
   );
 }
 
-function CancelModal({ onConfirm, onClose, isPending }: { onConfirm: () => void; onClose: () => void; isPending: boolean }) {
+// ─── Cancel Modal ──────────────────────────────────────────────────────────────
+
+function RejectModal({ onConfirm, onClose, isPending }: { onConfirm: () => void; onClose: () => void; isPending: boolean }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative bg-white rounded-[20px] p-6 w-full max-w-sm shadow-lg">
-        <button onClick={onClose} className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-[#F6F8FB] hover:bg-[#ebebeb] transition-colors">
-          <span className="text-[#222222] text-lg font-bold">×</span>
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full bg-[#f7f7f7] hover:bg-[#dddddd] transition-colors text-[#222222] text-lg font-bold"
+        >
+          ×
         </button>
         <div className="size-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-2xl">🧹</span>
+          <Wrench className="size-6 text-[#c13515]" />
         </div>
-        <h3 className="text-[17px] font-semibold text-[#222222] text-center mb-2">Huỷ yêu cầu dịch vụ?</h3>
-        <p className="text-sm text-[#6A6A6A] text-center mb-6">Yêu cầu này sẽ bị huỷ và không thể khôi phục.</p>
+        <h3 className="text-[17px] font-semibold text-[#222222] text-center mb-2">Từ chối yêu cầu?</h3>
+        <p className="text-sm text-[#6a6a6a] text-center mb-6">
+          Yêu cầu này sẽ bị huỷ. Người thuê sẽ thấy trạng thái &ldquo;Đã huỷ&rdquo;.
+        </p>
         <div className="flex gap-3">
-          <button onClick={onClose}
-            className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#DDDDDD] rounded-lg hover:bg-[#F6F8FB] transition-colors">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+          >
             Giữ lại
           </button>
-          <button onClick={onConfirm} disabled={isPending}
-            className="flex-1 py-2.5 text-sm font-semibold text-white bg-[#c13515] hover:bg-[#b32505] disabled:opacity-60 rounded-lg transition-colors">
-            {isPending ? 'Đang huỷ...' : 'Xác nhận huỷ'}
+          <button
+            onClick={onConfirm}
+            disabled={isPending}
+            className="flex-1 py-2.5 text-sm font-semibold text-white bg-[#c13515] hover:bg-[#b32505] disabled:opacity-60 rounded-lg transition-colors"
+          >
+            {isPending ? 'Đang huỷ...' : 'Xác nhận từ chối'}
           </button>
         </div>
       </div>
     </div>
   );
 }
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function SkeletonCard() {
   return (
-    <div className="flex items-start self-stretch bg-white py-[21px] px-5 gap-4 rounded-[14px] border border-solid border-[#DDDDDD] animate-pulse">
-      <div className="shrink-0 w-[90px] h-[90px] bg-[#ebebeb] rounded-[10px]" />
-      <div className="flex-1 space-y-3 pt-2">
-        <div className="h-5 bg-[#ebebeb] rounded w-1/3" />
-        <div className="h-4 bg-[#ebebeb] rounded w-1/2" />
-        <div className="h-4 bg-[#ebebeb] rounded w-2/3" />
-        <div className="h-8 bg-[#ebebeb] rounded w-1/4 mt-4" />
+    <div className="bg-white rounded-[14px] border border-[#dddddd] p-5 flex gap-4 animate-pulse">
+      <div className="size-14 bg-[#ebebeb] rounded-[10px] shrink-0" />
+      <div className="flex-1 space-y-3 pt-1">
+        <div className="h-4 bg-[#ebebeb] rounded w-1/3" />
+        <div className="h-3 bg-[#ebebeb] rounded w-1/2" />
+        <div className="h-8 bg-[#ebebeb] rounded w-full" />
+        <div className="h-3 bg-[#ebebeb] rounded w-2/5" />
       </div>
     </div>
   );
 }
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function HostingServicesPage() {
-  const router     = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>('active');
-  const [cancelId, setCancelId]   = useState<string | null>(null);
+  const [rejectId, setRejectId]   = useState<string | null>(null);
 
-  const { data, isLoading }             = useLandlordServiceOrders();
-  const { data: catalogData, isLoading: isCatalogLoading } = useServiceCatalog();
-  const { mutate: updateStatus, isPending: isUpdating } = useUpdateServiceStatus();
+  const { data, isLoading }                                   = useLandlordServiceOrders();
+  const { mutate: updateStatus, isPending: isUpdating }       = useUpdateServiceStatus();
 
   const allOrders = useMemo(() => data?.data ?? [], [data]);
 
@@ -232,114 +266,98 @@ export default function HostingServicesPage() {
     );
   };
 
-  const handleCancel = () => {
-    if (!cancelId) return;
+  const handleReject = () => {
+    if (!rejectId) return;
     updateStatus(
-      { id: cancelId, status: 'cancelled' },
-      { onSuccess: () => { setCancelId(null); toast.success('Đã huỷ yêu cầu dịch vụ.'); } },
+      { id: rejectId, status: 'cancelled' },
+      { onSuccess: () => { setRejectId(null); toast.success('Đã từ chối yêu cầu dịch vụ.'); } },
     );
   };
 
+  const pendingCount = tabCounts['active'];
+
   return (
     <div className="space-y-6">
-      {/* Title row */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-ink-black">Dịch vụ của tôi</h1>
-        <Link
-          href="/hosting/services/request"
-          className="flex flex-col shrink-0 items-start bg-[#ffef3d] hover:shadow-lg transition-all text-left py-2.5 px-5 rounded-lg border-0"
-        >
-          <span className="text-[#1f1c00] text-sm font-bold">+ Yêu cầu dịch vụ</span>
-        </Link>
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-[#222222]">Yêu cầu dịch vụ</h1>
+        <p className="text-sm text-[#6a6a6a] mt-1">
+          Quản lý các yêu cầu dịch vụ từ người thuê tại phòng của bạn.
+        </p>
       </div>
 
-      {/* Service type cards */}
-      {isCatalogLoading ? (
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-[105px] bg-[#ebebeb] rounded-xl animate-pulse" />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-          {(catalogData ?? []).map((entry: ServiceCatalogEntry) => (
-            <button
-              key={entry.type}
-              type="button"
-              onClick={() => router.push(`/hosting/services/request?type=${entry.type}`)}
-              className="flex flex-col items-center text-center py-4 px-1 gap-1.5 rounded-xl border border-solid border-[#DDDDDD] hover:border-[#ffef3d] hover:shadow-[0_0_0_1px_#ffef3d] transition-all cursor-pointer"
-            >
-              <span className="text-[#222222] text-2xl">{SERVICE_META[entry.type].emoji}</span>
-              <span className="text-[#6A6A6A] text-[11px] font-bold leading-tight">{SERVICE_META[entry.type].label}</span>
-              <span className="text-[#929292] text-[10px]">{fmtPrice(entry.price)}/{entry.unit}</span>
-            </button>
-          ))}
+      {/* Pending alert */}
+      {pendingCount > 0 && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-[10px]">
+          <span className="text-amber-500 text-lg leading-none">⏳</span>
+          <p className="text-sm text-amber-800 font-medium">
+            Có <span className="font-bold">{pendingCount}</span> yêu cầu đang chờ bạn xác nhận.
+          </p>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex items-center self-stretch gap-1 border-b border-solid border-b-[#DDDDDD]">
+      <div className="flex items-center gap-1 border-b border-[#dddddd]">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'flex shrink-0 items-center pb-3 px-2 gap-[7px] transition-colors',
-              activeTab === tab.id ? 'pb-[11px] border-b-2 border-[#222222] -mb-px' : '',
+              'flex shrink-0 items-center pb-3 px-2 gap-1.5 text-[15px] font-bold transition-colors',
+              activeTab === tab.id
+                ? 'text-[#222222] border-b-2 border-[#222222] -mb-px'
+                : 'text-[#6a6a6a] hover:text-[#222222]',
             )}
           >
-            {tabCounts[tab.id] > 0 && activeTab !== tab.id ? (
-              <div className="flex shrink-0 items-center gap-[7px]">
-                <span className="text-[15px] font-bold">{tab.label}</span>
-                <div className="flex flex-col shrink-0 items-start bg-[#222222] py-0.5 px-1.5 rounded-[26843550px]">
-                  <span className="text-white text-[11px] font-bold">{tabCounts[tab.id]}</span>
-                </div>
-              </div>
-            ) : (
+            {tab.label}
+            {tabCounts[tab.id] > 0 && (
               <span className={cn(
-                'text-[15px] font-bold',
-                activeTab === tab.id ? 'text-[#222222]' : 'text-[#6A6A6A]',
+                'text-[11px] font-bold px-1.5 py-0.5 rounded-full',
+                activeTab === tab.id ? 'bg-[#222222] text-white' : 'bg-[#ebebeb] text-[#6a6a6a]',
               )}>
-                {tab.label}
+                {tabCounts[tab.id]}
               </span>
             )}
           </button>
         ))}
       </div>
 
-      {/* Order list */}
+      {/* List */}
       {isLoading ? (
-        <div className="flex flex-col gap-4 self-stretch">
+        <div className="flex flex-col gap-4">
           <SkeletonCard />
           <SkeletonCard />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center py-16 self-stretch">
-          <div className="size-16 bg-white rounded-full flex items-center justify-center mb-4">
-            <span className="text-3xl">🔧</span>
+        <div className="flex flex-col items-center py-20 text-center">
+          <div className="size-16 bg-[#f7f7f7] rounded-full flex items-center justify-center mb-4">
+            <Wrench className="size-8 text-[#dddddd]" />
           </div>
-          <h3 className="text-base font-semibold text-[#222222] mb-1">Chưa có yêu cầu nào</h3>
-          <p className="text-sm text-[#6A6A6A]">Nhấn &ldquo;+ Yêu cầu dịch vụ&rdquo; để tạo mới.</p>
+          <h3 className="text-base font-semibold text-[#222222] mb-1">
+            {activeTab === 'active' ? 'Không có yêu cầu đang xử lý' : activeTab === 'done' ? 'Chưa có dịch vụ hoàn thành' : 'Không có yêu cầu bị từ chối'}
+          </h3>
+          <p className="text-sm text-[#6a6a6a]">
+            {activeTab === 'active' ? 'Người thuê chưa có yêu cầu dịch vụ nào.' : 'Lịch sử sẽ xuất hiện ở đây.'}
+          </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4 self-stretch">
+        <div className="flex flex-col gap-4">
           {filtered.map((order) => (
             <ServiceOrderCard
               key={order.id}
               order={order}
               onConfirm={handleConfirm}
-              onCancel={setCancelId}
+              onCancel={setRejectId}
               isActing={isUpdating}
             />
           ))}
         </div>
       )}
 
-      {/* Cancel modal */}
-      {cancelId && (
-        <CancelModal
-          onConfirm={handleCancel}
-          onClose={() => setCancelId(null)}
+      {rejectId && (
+        <RejectModal
+          onConfirm={handleReject}
+          onClose={() => setRejectId(null)}
           isPending={isUpdating}
         />
       )}
