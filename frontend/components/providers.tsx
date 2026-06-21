@@ -70,13 +70,16 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   // Zustand persist does NOT auto-rehydrate when skipHydration is true.
   // We must call rehydrate() explicitly AND listen for completion.
   useEffect(() => {
-    // If already hydrated (shouldn't happen with skipHydration, but safe-guard), do nothing.
     if (useAuthStore.getState()._hasHydrated) return;
     const unsub = useAuthStore.persist.onFinishHydration(() => {
       useAuthStore.getState().setHasHydrated(true);
     });
-    // Trigger rehydration (sync if already cached, async if not).
     useAuthStore.persist.rehydrate();
+    // Safety: localStorage is synchronous — hydration may complete inside
+    // rehydrate() before the callback above fires. Check the flag directly.
+    if (useAuthStore.persist.hasHydrated()) {
+      useAuthStore.getState().setHasHydrated(true);
+    }
     return () => unsub();
   }, []);
 
