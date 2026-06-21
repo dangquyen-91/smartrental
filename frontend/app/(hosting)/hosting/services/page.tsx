@@ -61,12 +61,14 @@ function fmtDateTime(dt: string) {
 
 function ServiceOrderCard({
   order,
+  onConfirm,
   onCancel,
   onPay,
   isActing,
   isPaying,
 }: {
   order: ServiceOrder;
+  onConfirm: (id: string) => void;
   onCancel: (id: string) => void;
   onPay: (id: string) => void;
   isActing: boolean;
@@ -139,13 +141,22 @@ function ServiceOrderCard({
             <span className={cn('text-xs', pc.className)}>· {pc.label}</span>
           </div>
           <div className="flex gap-2">
-            {order.paymentStatus === 'unpaid' && order.status !== 'pending' && (
+            {order.paymentStatus === 'unpaid' && order.status === 'confirmed' && (
               <button
                 onClick={() => onPay(order.id)}
                 disabled={isPaying}
                 className="flex shrink-0 items-center bg-[#ffef3d] hover:shadow-lg transition-all text-left py-1.5 px-3 gap-1.5 rounded-lg border-0 disabled:opacity-60"
               >
                 <span className="text-[#1f1c00] text-xs font-bold">Thanh toán</span>
+              </button>
+            )}
+            {order.status === 'pending' && (
+              <button
+                onClick={() => onConfirm(order.id)}
+                disabled={isActing}
+                className="flex shrink-0 items-center bg-emerald-500 hover:bg-emerald-600 transition-colors text-left py-1.5 px-3 rounded-lg border-0 disabled:opacity-60"
+              >
+                <span className="text-white text-xs font-bold">Xác nhận</span>
               </button>
             )}
             {order.status === 'pending' && (
@@ -304,6 +315,13 @@ export default function HostingServicesPage() {
     [allOrders],
   );
 
+  const handleConfirm = (id: string) => {
+    updateStatus(
+      { id, status: 'confirmed' },
+      { onSuccess: () => toast.success('Đã xác nhận yêu cầu dịch vụ.') },
+    );
+  };
+
   const handleCancel = () => {
     if (!cancelId) return;
     updateStatus(
@@ -401,6 +419,7 @@ export default function HostingServicesPage() {
             <ServiceOrderCard
               key={order.id}
               order={order}
+              onConfirm={handleConfirm}
               onCancel={setCancelId}
               onPay={(id) => createPayment(id)}
               isActing={isUpdating}
