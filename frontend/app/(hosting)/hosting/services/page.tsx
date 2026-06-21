@@ -1,18 +1,15 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef, Suspense } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
   useLandlordServiceOrders,
   useUpdateServiceStatus,
-  useCreateServicePayment,
   useServiceCatalog,
 } from '@/hooks/use-services';
-import { getServicePaymentStatusApi } from '@/lib/api/payment.api';
 import type { ServiceOrder, ServiceCatalogEntry } from '@/types';
 
 type ServiceStatus = ServiceOrder['status'];
@@ -63,16 +60,12 @@ function ServiceOrderCard({
   order,
   onConfirm,
   onCancel,
-  onPay,
   isActing,
-  isPaying,
 }: {
   order: ServiceOrder;
   onConfirm: (id: string) => void;
   onCancel: (id: string) => void;
-  onPay: (id: string) => void;
   isActing: boolean;
-  isPaying: boolean;
 }) {
   const meta       = SERVICE_META[order.type];
   const sc         = STATUS_CONFIG[order.status];
@@ -141,15 +134,6 @@ function ServiceOrderCard({
             <span className={cn('text-xs', pc.className)}>· {pc.label}</span>
           </div>
           <div className="flex gap-2">
-            {order.paymentStatus === 'unpaid' && order.status === 'confirmed' && (
-              <button
-                onClick={() => onPay(order.id)}
-                disabled={isPaying}
-                className="flex shrink-0 items-center bg-[#ffef3d] hover:shadow-lg transition-all text-left py-1.5 px-3 gap-1.5 rounded-lg border-0 disabled:opacity-60"
-              >
-                <span className="text-[#1f1c00] text-xs font-bold">Thanh toán</span>
-              </button>
-            )}
             {order.status === 'pending' && (
               <button
                 onClick={() => onConfirm(order.id)}
@@ -216,79 +200,6 @@ function SkeletonCard() {
   );
 }
 
-// ─── payment result toast ───────────────────────────────────────────────────────
-
-function PaymentToast() {
-  const params  = useSearchParams();
-  const router  = useRouter();
-  const qc      = useQueryClient();
-  const handled = useRef(false);
-  const [isPolling, setIsPolling] = useState(false);
-  const pollCountRef = useRef(0);
-  const MAX_POLLS = 20;
-  const POLL_INTERVAL = 2000;
-
-  const pollPaymentStatus = async (orderId: string) => {
-    if (pollCountRef.current >= MAX_POLLS) {
-      setIsPolling(false);
-      toast.error('Không thể xác nhận trạng thái thanh toán. Vui lòng kiểm tra lại.');
-      router.replace('/hosting/services');
-      return;
-    }
-    pollCountRef.current++;
-    try {
-      const data = await getServicePaymentStatusApi(orderId);
-      if (data.data?.status === 'PAID' || data.data?.paymentStatus === 'paid') {
-        setIsPolling(false);
-        toast.success('Thanh toán dịch vụ thành công!');
-        qc.invalidateQueries({ queryKey: ['services', 'landlord'] });
-        sessionStorage.removeItem('pendingPayment');
-        router.replace('/hosting/services');
-        return;
-      }
-    } catch {
-      // ignore single poll errors
-    }
-    setTimeout(() => pollPaymentStatus(orderId), POLL_INTERVAL);
-  };
-
-  useEffect(() => {
-    if (handled.current) return;
-    const result = params.get('payment');
-    const payosStatus = params.get('status');
-
-    if (result === 'success' || payosStatus === 'PAID') {
-      handled.current = true;
-
-      if (payosStatus === 'PAID') {
-        toast.success('Thanh toán dịch vụ thành công!');
-        qc.invalidateQueries({ queryKey: ['services', 'landlord'] });
-        sessionStorage.removeItem('pendingPayment');
-        router.replace('/hosting/services');
-        return;
-      }
-
-      const pending = sessionStorage.getItem('pendingPayment');
-      if (pending) {
-        const { type, id } = JSON.parse(pending);
-        if (type === 'service') {
-          setIsPolling(true);
-          pollCountRef.current = 0;
-          pollPaymentStatus(id);
-        }
-      }
-      setTimeout(() => qc.invalidateQueries({ queryKey: ['services', 'landlord'] }), 300);
-      router.replace('/hosting/services');
-    } else if (result === 'cancel') {
-      handled.current = true;
-      sessionStorage.removeItem('pendingPayment');
-      toast.info('Bạn đã huỷ thanh toán. Yêu cầu dịch vụ vẫn còn hiệu lực.');
-      router.replace('/hosting/services');
-    }
-  }, [params, router, qc]);
-
-  return null;
-}
 
 export default function HostingServicesPage() {
   const router     = useRouter();
@@ -298,7 +209,6 @@ export default function HostingServicesPage() {
   const { data, isLoading }             = useLandlordServiceOrders();
   const { data: catalogData, isLoading: isCatalogLoading } = useServiceCatalog();
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateServiceStatus();
-  const { mutate: createPayment, isPending: isCreatingPayment } = useCreateServicePayment();
 
   const allOrders = useMemo(() => data?.data ?? [], [data]);
 
@@ -332,8 +242,6 @@ export default function HostingServicesPage() {
 
   return (
     <div className="space-y-6">
-      <Suspense><PaymentToast /></Suspense>
-
       {/* Title row */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-ink-black">Dịch vụ của tôi</h1>
@@ -421,9 +329,7 @@ export default function HostingServicesPage() {
               order={order}
               onConfirm={handleConfirm}
               onCancel={setCancelId}
-              onPay={(id) => createPayment(id)}
               isActing={isUpdating}
-              isPaying={isCreatingPayment}
             />
           ))}
         </div>
