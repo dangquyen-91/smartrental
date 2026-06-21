@@ -182,6 +182,11 @@ export async function updatePropertyStatusAdminApi(id: string, status: string) {
   return res.data;
 }
 
+export async function deletePropertyAdminApi(id: string) {
+  const res = await api.delete<ApiResponse<Property>>(`/admin/properties/${id}`);
+  return res.data;
+}
+
 // ─── Pending Actions ──────────────────────────────────────────────────────────
 
 export interface PendingPayoutsData {

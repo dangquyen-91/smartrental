@@ -610,6 +610,14 @@ export const updatePropertyStatus = async (id, status) => {
   return property;
 };
 
+export const deleteProperty = async (id) => {
+  const property = await Property.findOne({ _id: id, isActive: true });
+  if (!property) throw new AppError('Property not found', 404);
+  property.isActive = false;
+  await property.save();
+  return property;
+};
+
 // ─── Pending Actions ──────────────────────────────────────────────────────────
 
 export const getPendingPayouts = async ({ page, limit } = {}) => {

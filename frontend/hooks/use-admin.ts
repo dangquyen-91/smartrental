@@ -12,6 +12,7 @@ import {
   getAdminPropertiesApi,
   togglePropertyFeaturedApi,
   updatePropertyStatusAdminApi,
+  deletePropertyAdminApi,
   getAdminPendingPayoutsApi,
   getAdminPendingRefundsApi,
   markBookingPayoutApi,
@@ -143,6 +144,19 @@ export function useUpdatePropertyStatusAdmin() {
       qc.invalidateQueries({ queryKey: ['admin', 'properties'] });
     },
     onError: (err) => toast.error(getApiErrorMessage(err, 'Không thể cập nhật trạng thái.')),
+  });
+}
+
+export function useDeletePropertyAdmin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deletePropertyAdminApi(id),
+    onSuccess: () => {
+      toast.success('Đã gỡ tin đăng khỏi nền tảng.');
+      qc.invalidateQueries({ queryKey: ['admin', 'properties'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+    },
+    onError: (err) => toast.error(getApiErrorMessage(err, 'Không thể gỡ tin đăng.')),
   });
 }
 

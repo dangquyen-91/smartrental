@@ -31,9 +31,11 @@ router.patch('/users/:id/role', adminController.updateUserRole);
 // GET    /api/admin/properties?page=1&limit=20&status=&type=&search=
 // PATCH  /api/admin/properties/:id/featured  (toggles isFeatured)
 // PATCH  /api/admin/properties/:id/status    body: { status: 'available'|'rented'|'maintenance' }
+// DELETE /api/admin/properties/:id           soft-delete (sets isActive: false)
 router.get('/properties', adminController.getProperties);
 router.patch('/properties/:id/featured', adminController.togglePropertyFeatured);
 router.patch('/properties/:id/status', adminController.updatePropertyStatus);
+router.delete('/properties/:id', adminController.deleteProperty);
 
 // ─── Pending Actions ──────────────────────────────────────────────────────────
 // GET /api/admin/pending/payouts?page=1&limit=20
