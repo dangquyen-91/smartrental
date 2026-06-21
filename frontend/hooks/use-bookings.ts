@@ -55,6 +55,29 @@ export function useAllMyBookings(enabled = true) {
   });
 }
 
+// Lightweight hook for checking which properties the tenant already rents.
+// select() means the component only re-renders when the rented Set changes,
+// not on every unrelated booking field update.
+export function useRentedPropertyIds(enabled = true) {
+  const { isTenant } = useAuth();
+  const active = enabled && isTenant;
+  return useQuery({
+    queryKey: bookingKeys.mine(),
+    queryFn: getAllMyBookingsApi,
+    enabled: active,
+    staleTime: 0,
+    retry: false,
+    refetchOnWindowFocus: true,
+    select: (data) =>
+      new Set(
+        (data?.data ?? [])
+          .filter((b) => ['confirmed', 'active', 'completed'].includes(b.status))
+          .map((b) => (typeof b.property === 'string' ? b.property : b.property?.id))
+          .filter(Boolean) as string[],
+      ),
+  });
+}
+
 export function useLandlordBookings(status?: Booking["status"]) {
   const { isLandlord } = useAuth();
   return useQuery({

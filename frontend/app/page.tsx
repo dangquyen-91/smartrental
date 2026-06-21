@@ -14,12 +14,13 @@ import { PublicNavbar, PublicFooter } from '@/components/layout/public-navbar';
 import { PropertyCard } from '@/components/shared/property-card';
 import { PropertyCardSkeleton } from '@/components/ui/skeleton';
 import { useProperties } from '@/hooks/use-properties';
-import { useMyBookings, useAllMyBookings } from '@/hooks/use-bookings';
+import { useRentedPropertyIds } from '@/hooks/use-bookings';
 import { useAuth } from '@/hooks/use-auth';
 import { WaveText } from '@/components/shared/wave-text';
 import type { Property } from '@/types';
 import type { PropertyFilters } from '@/lib/api/properties.api';
 import { gsap } from 'gsap';
+import { ErrorBoundary } from '@/components/shared/error-boundary';
 
 // ─── Auth-aware Link ────────────────────────────────────────────────────────
 // Nếu chưa đăng nhập, click sẽ chuyển sang /login thay vì href gốc.
@@ -393,13 +394,7 @@ export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState<Property['type'] | 'all'>('all');
   const [apiFilters, setApiFilters] = useState<PropertyFilters>({});
 
-  const { data: myBookings } = useAllMyBookings(hasHydrated && isAuthenticated);
-  const rentedPropertyIds = new Set(
-    (myBookings?.data ?? [])
-      .filter((b) => ['confirmed', 'active', 'completed'].includes(b.status))
-      .map((b) => (typeof b.property === 'string' ? b.property : b.property?.id))
-      .filter(Boolean) as string[],
-  );
+  const { data: rentedPropertyIds = new Set<string>() } = useRentedPropertyIds(hasHydrated && isAuthenticated);
   const excludedPropertyIds = Array.from(rentedPropertyIds);
 
   useEffect(() => {
@@ -465,6 +460,7 @@ export default function HomePage() {
 
         {/* ── Featured Properties ── */}
         <section className="py-24 px-4 md:px-10 mx-auto" style={{ maxWidth: '1280px' }}>
+          <ErrorBoundary>
           <PropertySection
             key={`featured-${activeCategory}-${JSON.stringify(apiFilters)}`}
             activeType={activeCategory}
@@ -476,6 +472,7 @@ export default function HomePage() {
             excludePropertyIds={excludedPropertyIds}
             rentedPropertyIds={rentedPropertyIds}
           />
+          </ErrorBoundary>
 
           <div className="mt-12 text-center">
           <Link

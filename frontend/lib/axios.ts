@@ -20,8 +20,11 @@ let failedQueue: Array<{
 }> = [];
 
 const processQueue = (error: unknown, token: string | null = null) => {
-  failedQueue.forEach((p) => (token ? p.resolve(token) : p.reject(error)));
+  // Capture and clear before resolving so any new 401s that arrive during
+  // resolution start a fresh cycle rather than being lost.
+  const queue = failedQueue;
   failedQueue = [];
+  queue.forEach((p) => (token ? p.resolve(token) : p.reject(error)));
 };
 
 api.interceptors.response.use(
@@ -69,10 +72,14 @@ api.interceptors.response.use(
       const newToken: string = data.data.accessToken;
       const newRefreshToken: string = data.data.refreshToken;
       setTokens(newToken, newRefreshToken);
+      // Reset flag before processQueue so any 401s that arrive during queue
+      // resolution can start a fresh refresh cycle instead of being dropped.
+      isRefreshing = false;
       processQueue(null, newToken);
       original.headers.Authorization = `Bearer ${newToken}`;
       return api(original);
     } catch (err) {
+      isRefreshing = false;
       processQueue(err, null);
       clearAuth();
       // Only redirect to /login for protected routes.
@@ -85,8 +92,6 @@ api.interceptors.response.use(
         if (isProtected) window.location.href = '/login';
       }
       return Promise.reject(err);
-    } finally {
-      isRefreshing = false;
     }
   },
 );

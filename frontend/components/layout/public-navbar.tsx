@@ -270,20 +270,20 @@ export function PublicFooter() {
           <div className="col-span-1 md:col-span-3">
             <h4 className="font-bold uppercase tracking-wider mb-3 text-xs">Hỗ trợ</h4>
             <ul className="flex flex-col gap-2.5 text-sm font-medium text-black/80">
-              <li><a href="#" className="hover:text-black transition-colors">Trung tâm trợ giúp</a></li>
-              <li><a href="#" className="hover:text-black transition-colors">Liên hệ</a></li>
-              <li><a href="#" className="hover:text-black transition-colors">Chính sách bảo mật</a></li>
-              <li><a href="#" className="hover:text-black transition-colors">Điều khoản sử dụng</a></li>
+              <li><Link href="/guide" className="hover:text-black transition-colors">Trung tâm trợ giúp</Link></li>
+              <li><Link href="/contact" className="hover:text-black transition-colors">Liên hệ</Link></li>
+              <li><Link href="/privacy" className="hover:text-black transition-colors">Chính sách bảo mật</Link></li>
+              <li><Link href="/terms" className="hover:text-black transition-colors">Điều khoản sử dụng</Link></li>
             </ul>
           </div>
 
           <div className="col-span-1 md:col-span-3">
             <h4 className="font-bold uppercase tracking-wider mb-3 text-xs">Dành cho chủ nhà</h4>
             <ul className="flex flex-col gap-2.5 text-sm font-medium text-black/80">
-              <li><a href="#" className="hover:text-black transition-colors">Đăng tin cho thuê</a></li>
-              <li><a href="#" className="hover:text-black transition-colors">Quản lý đặt phòng</a></li>
-              <li><a href="#" className="hover:text-black transition-colors">Hợp đồng điện tử</a></li>
-              <li><a href="#" className="hover:text-black transition-colors">Gói dịch vụ</a></li>
+              <li><Link href="/hosting/listings" className="hover:text-black transition-colors">Đăng tin cho thuê</Link></li>
+              <li><Link href="/hosting/reservations" className="hover:text-black transition-colors">Quản lý đặt phòng</Link></li>
+              <li><Link href="/hosting/contracts" className="hover:text-black transition-colors">Hợp đồng điện tử</Link></li>
+              <li><Link href="/hosting/plans" className="hover:text-black transition-colors">Gói dịch vụ</Link></li>
             </ul>
           </div>
         </div>
