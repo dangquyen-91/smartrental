@@ -84,6 +84,16 @@ const getServicePaymentStatus = async (orderId, tenantId) => {
 
   const info = await payos.paymentRequests.get(order.paymentCode);
 
+  // Tự đồng bộ từ trạng thái thật của PayOS (phòng khi webhook không tới — vd backend chạy localhost).
+  if (info.status === 'PAID' && order.paymentStatus !== 'paid') {
+    const { platformFee, providerPayout } = calcFees(order.price);
+    const result = await ServiceOrder.updateOne(
+      { _id: order._id, paymentStatus: { $ne: 'paid' } },
+      { $set: { paymentStatus: 'paid', platformFee, providerPayout, payoutStatus: 'pending' } },
+    );
+    if (result.modifiedCount > 0) order.paymentStatus = 'paid';
+  }
+
   return {
     orderCode:     info.orderCode,
     status:        info.status,
@@ -143,6 +153,20 @@ const getBookingPaymentStatus = async (bookingId, tenantId) => {
   if (!booking.paymentCode) throw new AppError('Payment not initiated yet', 400);
 
   const info = await payos.paymentRequests.get(booking.paymentCode);
+
+  // Tự đồng bộ từ trạng thái thật của PayOS (phòng khi webhook không tới — vd backend chạy localhost).
+  // Idempotent: chỉ cập nhật khi PayOS đã PAID mà DB chưa paid và booking còn ở trạng thái thanh toán được.
+  if (
+    info.status === 'PAID' &&
+    booking.paymentStatus !== 'paid' &&
+    ['confirmed', 'active'].includes(booking.status)
+  ) {
+    const result = await Booking.updateOne(
+      { _id: booking._id, paymentStatus: { $ne: 'paid' }, status: { $in: ['confirmed', 'active'] } },
+      { $set: { paymentStatus: 'paid', paidDate: new Date(), payoutStatus: 'pending' } },
+    );
+    if (result.modifiedCount > 0) booking.paymentStatus = 'paid';
+  }
 
   return {
     orderCode:      info.orderCode,
@@ -210,7 +234,10 @@ const handleWebhook = async (body) => {
     // Subscription payment
     const sub = await Subscription.findOne({ paymentCode: orderCode }).populate('landlord plan').session(session);
     if (sub) {
-      const paidPlan = await Plan.findOne({ price: data.amount }).session(session);
+      // Ưu tiên planKey đã lưu (chính xác), fallback match theo giá
+      const paidPlan = await Plan.findOne(
+        sub.pendingPlanKey ? { key: sub.pendingPlanKey } : { price: data.amount },
+      ).session(session);
       if (!paidPlan) {
         await session.abortTransaction();
         return { rspCode: '01', message: 'Plan not found for amount' };
@@ -221,7 +248,7 @@ const handleWebhook = async (body) => {
 
       await Subscription.updateOne(
         { _id: sub._id },
-        { $set: { plan: paidPlan._id, status: 'active', startDate: now, endDate, paymentCode: null } },
+        { $set: { plan: paidPlan._id, status: 'active', startDate: now, endDate, paymentCode: null, pendingPlanKey: null } },
         { session },
       );
       await session.commitTransaction();
@@ -266,14 +293,49 @@ const createSubscriptionPaymentLink = async (planKey, landlordId, landlordUser) 
     ttlMinutes:  30,
   });
 
-  // Lưu orderCode vào subscription (pending) để webhook biết map về đâu
+  // Lưu orderCode + planKey vào subscription (pending) để webhook/self-sync biết kích hoạt gói nào
   await Subscription.findOneAndUpdate(
     { landlord: landlordId },
-    { paymentCode: orderCode },
+    { paymentCode: orderCode, pendingPlanKey: plan.key },
     { upsert: false },
   );
 
   return { checkoutUrl: response.checkoutUrl, orderCode, planKey, amount: plan.price };
+};
+
+// ─── SUBSCRIPTION — Kiểm tra trạng thái + tự kích hoạt ──────────────────────
+// Tự đồng bộ từ PayOS (phòng khi webhook không tới — vd backend chạy localhost).
+// Idempotent: chỉ kích hoạt khi PayOS đã PAID và subscription còn paymentCode đang chờ.
+const getSubscriptionPaymentStatus = async (landlordId) => {
+  const sub = await Subscription.findOne({ landlord: landlordId });
+  if (!sub) throw new AppError('Subscription not found', 404);
+  if (!sub.paymentCode) {
+    return { status: 'NO_PENDING', activated: false };
+  }
+
+  const info = await payos.paymentRequests.get(sub.paymentCode);
+  let activated = false;
+
+  if (info.status === 'PAID') {
+    const paidPlan = await Plan.findOne(
+      sub.pendingPlanKey ? { key: sub.pendingPlanKey } : { price: info.amount },
+    );
+    if (paidPlan) {
+      const now     = new Date();
+      const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const result  = await Subscription.updateOne(
+        { _id: sub._id, paymentCode: sub.paymentCode },
+        { $set: { plan: paidPlan._id, status: 'active', startDate: now, endDate, paymentCode: null, pendingPlanKey: null } },
+      );
+      if (result.modifiedCount > 0) {
+        activated = true;
+        await restoreHiddenListings(landlordId);
+        if (paidPlan.listingLimit !== -1) await hideExcessListings(landlordId, paidPlan.listingLimit);
+      }
+    }
+  }
+
+  return { orderCode: info.orderCode, status: info.status, amount: info.amount, activated };
 };
 
 export {
@@ -282,5 +344,6 @@ export {
   createBookingPaymentLink,
   getBookingPaymentStatus,
   createSubscriptionPaymentLink,
+  getSubscriptionPaymentStatus,
   handleWebhook,
 };

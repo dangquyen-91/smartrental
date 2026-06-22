@@ -7,7 +7,11 @@ const generateContractPdf = async (contractData) => {
 
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
+    // Docker/production: dùng Chromium hệ thống qua env. Local (Windows): bỏ trống để
+    // Puppeteer tự dùng Chromium nó tải sẵn -> tránh lỗi '/usr/bin/chromium-browser' không tồn tại.
+    ...(process.env.PUPPETEER_EXECUTABLE_PATH
+      ? { executablePath: process.env.PUPPETEER_EXECUTABLE_PATH }
+      : {}),
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   });
 

@@ -8,6 +8,7 @@ const subscriptionSchema = new mongoose.Schema(
     startDate:   { type: Date, required: true },
     endDate:     { type: Date, default: null },   // null = free (không hết hạn)
     paymentCode: { type: Number, default: null },
+    pendingPlanKey: { type: String, enum: ['free', 'basic', 'premium', null], default: null }, // gói đang chờ thanh toán
   },
   {
     timestamps: true,

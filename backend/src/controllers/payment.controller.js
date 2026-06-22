@@ -79,11 +79,19 @@ const createSubscriptionPaymentLink = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+const getSubscriptionPaymentStatus = async (req, res, next) => {
+  try {
+    const result = await paymentService.getSubscriptionPaymentStatus(req.user.id);
+    return R.success(res, result);
+  } catch (err) { next(err); }
+};
+
 export {
   createServicePaymentLink,
   getServicePaymentStatus,
   createBookingPaymentLink,
   getBookingPaymentStatus,
   createSubscriptionPaymentLink,
+  getSubscriptionPaymentStatus,
   handleWebhook,
 };

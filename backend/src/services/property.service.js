@@ -50,7 +50,17 @@ const getProperties = async ({
     if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
   }
 
-  if (search) filter.title = { $regex: escapeRegex(search), $options: 'i' };
+  // Tìm kiếm tự do: khớp tiêu đề HOẶC địa chỉ (thành phố/quận/phường/địa chỉ đầy đủ)
+  if (search) {
+    const rx = { $regex: escapeRegex(search), $options: 'i' };
+    filter.$or = [
+      { title: rx },
+      { 'address.city': rx },
+      { 'address.district': rx },
+      { 'address.ward': rx },
+      { 'address.fullAddress': rx },
+    ];
+  }
 
   const sortMap = {
     price_asc: { price: 1 },
