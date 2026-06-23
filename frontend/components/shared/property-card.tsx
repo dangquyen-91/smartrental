@@ -23,9 +23,10 @@ interface PropertyCardProps {
   property: Property;
   className?: string;
   rentedPropertyIds?: Set<string>;
+  matchScore?: number;
 }
 
-export function PropertyCard({ property, className, rentedPropertyIds }: PropertyCardProps) {
+export function PropertyCard({ property, className, rentedPropertyIds, matchScore }: PropertyCardProps) {
   const [imgIndex, setImgIndex] = useState(0);
   const router = useRouter();
   const { isAuthenticated } = useAuth();
@@ -73,8 +74,22 @@ export function PropertyCard({ property, className, rentedPropertyIds }: Propert
           loading="lazy"
         />
 
-        {/* Owner plan badge — top left */}
-        {property.ownerBadge && (
+        {/* Match score badge — top left (AI recommendation) */}
+        {matchScore !== undefined && (
+          <div className="absolute top-3 left-3 z-10">
+            <span className={cn(
+              "inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full",
+              matchScore >= 80 ? "bg-green-500 text-white" :
+              matchScore >= 60 ? "bg-yellow-400 text-black" :
+              "bg-orange-400 text-white"
+            )}>
+              {matchScore}% phù hợp
+            </span>
+          </div>
+        )}
+
+        {/* Owner plan badge — top left (only when no matchScore) */}
+        {!matchScore && property.ownerBadge && (
           <div className="absolute top-3 left-3">
             <span className="inline-flex items-center gap-1 bg-[#FFF546] text-black text-[10px] font-bold px-2 py-0.5 rounded-full">
               ★ {property.ownerBadge}

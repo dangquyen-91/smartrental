@@ -4,6 +4,8 @@ import User from '../models/user.model.js';
 import Subscription from '../models/subscription.model.js';
 import AppError from '../utils/app-error.js';
 import { getActiveSubscription } from './subscription.service.js';
+import { explainPropertyRecommendations } from './ai.service.js';
+import { getMyPreference, scorePropertyAgainstPreference } from './preference.service.js';
 
 // Batch-lookup badge cho danh sách ownerIds — 1 query duy nhất
 const getBadgeMap = async (ownerIds) => {
@@ -222,6 +224,85 @@ const deleteProperty = async (id, userId, userRole) => {
   await property.save();
 };
 
+// ─── AI Recommendations (dựa trên hồ sơ tìm phòng) ──────────────────────────
+
+const getRecommendedProperties = async (userId) => {
+  // 1. Load preference profile — nếu không có thì trả về null để FE hiển thị form
+  const preference = await getMyPreference(userId);
+  if (!preference) return { properties: [], explanation: null, preference: null };
+
+  // 2. Exclude properties user already has active bookings on
+  const activeBookings = await Booking.find({
+    tenant: userId,
+    status: { $in: ['confirmed', 'active'] },
+  }).select('property');
+  const excludedIds = new Set(activeBookings.map((b) => b.property.toString()));
+
+  // 3. Pre-filter candidates bằng MongoDB (tối ưu hiệu năng)
+  const baseFilter = {
+    isActive: true,
+    status: 'available',
+    ...(excludedIds.size && { _id: { $nin: [...excludedIds] } }),
+  };
+
+  // Giới hạn giá tối đa 130% budget (để còn tính điểm partial match)
+  if (preference.budget?.max) {
+    baseFilter.price = { $lte: preference.budget.max * 1.3 };
+  }
+  if (preference.preferredCity) {
+    baseFilter['address.city'] = { $regex: escapeRegex(preference.preferredCity), $options: 'i' };
+  }
+
+  let candidates = await Property.find(baseFilter)
+    .populate('owner', 'name phone avatar')
+    .sort({ isFeatured: -1, createdAt: -1 })
+    .limit(30);
+
+  // Fallback: bỏ bộ lọc thành phố nếu quá ít kết quả
+  if (candidates.length < 5 && preference.preferredCity) {
+    const relaxed = { ...baseFilter };
+    delete relaxed['address.city'];
+    candidates = await Property.find(relaxed)
+      .populate('owner', 'name phone avatar')
+      .sort({ isFeatured: -1, createdAt: -1 })
+      .limit(30);
+  }
+
+  if (!candidates.length) return { properties: [], explanation: null, preference };
+
+  // 4. Chấm điểm từng phòng và lọc thấp hơn 40%
+  const scored = candidates
+    .map((p) => ({ property: p, matchScore: scorePropertyAgainstPreference(p, preference) }))
+    .filter((s) => s.matchScore >= 40)
+    .sort((a, b) => b.matchScore - a.matchScore)
+    .slice(0, 5);
+
+  if (!scored.length) return { properties: [], explanation: null, preference };
+
+  // 5. AI explanation — non-blocking
+  let explanation = null;
+  try {
+    explanation = await explainPropertyRecommendations(
+      userId,
+      preference,
+      scored.map((s) => ({ ...s.property.toObject(), matchScore: s.matchScore })),
+    );
+  } catch (err) {
+    console.warn('[property] AI explanation skipped:', err.message);
+  }
+
+  // 6. Attach badges + gắn matchScore vào từng property
+  const rawProps = scored.map((s) => s.property);
+  const ownerIds = [...new Set(rawProps.map((p) => p.owner?._id?.toString()).filter(Boolean))];
+  const badgeMap = await getBadgeMap(ownerIds);
+  const properties = attachBadges(rawProps, badgeMap).map((p, i) => ({
+    ...p,
+    matchScore: scored[i].matchScore,
+  }));
+
+  return { properties, explanation, preference };
+};
+
 export {
   getProperties,
   getMyProperties,
@@ -229,4 +310,5 @@ export {
   createProperty,
   updateProperty,
   deleteProperty,
+  getRecommendedProperties,
 };

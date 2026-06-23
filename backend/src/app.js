@@ -20,6 +20,7 @@ import paymentRoutes from './routes/payment.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import reviewRoutes from './routes/review.routes.js';
 import subscriptionRoutes from './routes/subscription.routes.js';
+import preferenceRoutes from './routes/preference.routes.js';
 import errorHandler from './middleware/error-handler.middleware.js';
 import ServiceCatalog from './models/service-catalog.model.js';
 import Plan from './models/plan.model.js';
@@ -66,6 +67,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/preferences', preferenceRoutes);
 
 app.use((_req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
 app.use(errorHandler);

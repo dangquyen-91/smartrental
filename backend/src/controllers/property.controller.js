@@ -1,6 +1,15 @@
 import * as propertyService from '../services/property.service.js';
 import * as R from '../utils/response.js';
 
+const getRecommendations = async (req, res, next) => {
+  try {
+    const result = await propertyService.getRecommendedProperties(req.user.id);
+    return R.success(res, result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 const getProperties = async (req, res, next) => {
   try {
     const { properties, pagination } = await propertyService.getProperties(req.query);
@@ -67,4 +76,5 @@ export {
   createProperty,
   updateProperty,
   deleteProperty,
+  getRecommendations,
 };

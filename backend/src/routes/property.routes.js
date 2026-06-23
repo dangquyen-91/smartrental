@@ -6,6 +6,7 @@ import {
   createProperty,
   updateProperty,
   deleteProperty,
+  getRecommendations,
 } from '../controllers/property.controller.js';
 import { protect, authorizeRoles, optionalProtect } from '../middleware/auth.middleware.js';
 import validate from '../middleware/validate.middleware.js';
@@ -20,6 +21,10 @@ const router = express.Router();
 
 // Public
 router.get('/', getPropertiesValidation, getProperties);
+
+// Tenant: AI recommendations (must be before /:id)
+router.get('/recommendations', protect, authorizeRoles('tenant'), getRecommendations);
+
 router.get('/:id', optionalProtect, validate([mongoId('id')]), getPropertyById);
 
 // Landlord: manage own listings

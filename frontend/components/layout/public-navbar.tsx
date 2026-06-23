@@ -4,9 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { LogOut, User, LayoutDashboard, ChevronDown, Menu, X } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, ChevronDown, Menu, X, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
+import { AIRecommendationDrawer } from '@/components/shared/ai-recommendation-drawer';
 
 function UserMenu({
   user,
@@ -86,7 +87,9 @@ export function PublicNavbar({ activeLink }: PublicNavbarProps) {
   const navRef = useRef<HTMLElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isTenant = user?.role === 'tenant';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -165,6 +168,15 @@ export function PublicNavbar({ activeLink }: PublicNavbarProps) {
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
+          {isAuthenticated && isTenant && (
+            <button
+              onClick={() => setAiDrawerOpen(true)}
+              className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-[#676000] border border-[#ccc7ac] hover:bg-[#fffbea] hover:border-[#676000] transition-all active:scale-95"
+            >
+              <Sparkles className="size-4" />
+              AI Gợi ý
+            </button>
+          )}
           {isAuthenticated && user?.role === 'landlord' && (
             <Link
               href="/hosting/listings/new"
@@ -203,7 +215,7 @@ export function PublicNavbar({ activeLink }: PublicNavbarProps) {
               {dropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-[220px] max-w-[calc(100vw-32px)] bg-white rounded-xl shadow-lg border border-[#ccc7ac] z-50 overflow-hidden">
+                  <div className="absolute right-0 top-full mt-2 w-55 max-w-[calc(100vw-32px)] bg-white rounded-xl shadow-lg border border-[#ccc7ac] z-50 overflow-hidden">
                     <UserMenu user={user} onClose={() => setDropdownOpen(false)} />
                   </div>
                 </>
@@ -234,6 +246,15 @@ export function PublicNavbar({ activeLink }: PublicNavbarProps) {
           <Link href="/news" className={linkCls(activeLink === 'news')} onClick={() => setMobileOpen(false)}>
             Tin tức
           </Link>
+          {isAuthenticated && isTenant && (
+            <button
+              onClick={() => { setMobileOpen(false); setAiDrawerOpen(true); }}
+              className="flex items-center gap-2 text-sm font-semibold text-[#676000]"
+            >
+              <Sparkles className="size-4" />
+              AI Gợi ý phòng
+            </button>
+          )}
           {isAuthenticated && user?.role === 'landlord' && (
             <Link
               href="/hosting/listings/new"
@@ -245,6 +266,8 @@ export function PublicNavbar({ activeLink }: PublicNavbarProps) {
           )}
         </div>
       )}
+
+      <AIRecommendationDrawer open={aiDrawerOpen} onClose={() => setAiDrawerOpen(false)} />
     </nav>
   );
 }

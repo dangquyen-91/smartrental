@@ -7,6 +7,7 @@ import {
   createPropertyApi,
   updatePropertyApi,
   deletePropertyApi,
+  getRecommendationsApi,
   type PropertyFilters,
 } from "@/lib/api/properties.api";
 import { getApiErrorMessage } from "@/lib/api-error";
@@ -19,6 +20,7 @@ export const propertyKeys = {
   details: () => [...propertyKeys.all, "detail"] as const,
   detail: (id: string) => [...propertyKeys.details(), id] as const,
   mine: () => [...propertyKeys.all, "mine"] as const,
+  recommendations: () => [...propertyKeys.all, "recommendations"] as const,
 };
 
 export function useProperties(filters?: PropertyFilters) {
@@ -67,6 +69,15 @@ export function useUpdateProperty() {
       qc.invalidateQueries({ queryKey: propertyKeys.mine() });
     },
     onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể cập nhật bất động sản.')),
+  });
+}
+
+export function useRecommendations(enabled: boolean) {
+  return useQuery({
+    queryKey: propertyKeys.recommendations(),
+    queryFn: getRecommendationsApi,
+    enabled,
+    staleTime: 60 * 60 * 1000, // 1 hour — matches backend AI cache TTL
   });
 }
 
