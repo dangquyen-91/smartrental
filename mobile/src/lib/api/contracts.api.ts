@@ -23,7 +23,10 @@ export async function generateContractApi(input: {
   paymentMethod?: string | null;
 }) {
   const { data } = await api.post('/contracts/generate', input);
-  return (data.data?.contract ?? data.data) as Contract;
+  const c = (data.data?.contract ?? data.data) as Contract & { _id?: string };
+  // BE generate trả về lean nên có thể thiếu `id` (chỉ có _id) → bổ sung để điều hướng đúng
+  if (c && !c.id && c._id) c.id = String(c._id);
+  return c as Contract;
 }
 
 export async function signContractApi(id: string) {

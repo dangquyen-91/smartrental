@@ -84,7 +84,7 @@ const generateContract = async (bookingId, landlordId, terms, extras = {}) => {
   contract.pdfUrl = pdfUrl;
   await contract.save();
 
-  return populateContract(Contract.findById(contract._id)).lean({ virtuals: false }).then((c) => c);
+  return populateContract(Contract.findById(contract._id));
 };
 
 // ─── Sign Contract ───────────────────────────────────────────────────────────
