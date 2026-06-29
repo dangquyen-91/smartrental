@@ -15,9 +15,13 @@ import {
 import { FONT_FAMILY } from '@/constants/theme';
 import { useAuthStore } from '@/stores/auth.store';
 import { tokenStorage } from '@/lib/token-storage';
+import { configureGoogleSignin } from '@/lib/google';
 import ToastHost from '@/components/ui/toast';
 
 const queryClient = new QueryClient();
+
+// Cấu hình Google Sign-In 1 lần khi nạp app (cần webClientId để signIn() hoạt động)
+configureGoogleSignin();
 
 // Lần đầu mở app (chưa xem onboarding) → chuyển sang màn giới thiệu
 function OnboardingGate() {

@@ -21,6 +21,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import IconInput from '@/components/ui/icon-input';
 import PressableScale from '@/components/ui/pressable-scale';
 import FadeIn from '@/components/fade-in';
+import GoogleButton from '@/components/google-button';
 
 type Role = 'tenant' | 'landlord';
 
@@ -191,6 +192,14 @@ export default function Register() {
                   )}
                 </PressableScale>
 
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>hoặc</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <GoogleButton role={role} onError={setError} />
+
                 <View style={styles.footer}>
                   <Text style={styles.footerText}>Đã có tài khoản? </Text>
                   <Link href="/(auth)/login" style={styles.link}>Đăng nhập</Link>
@@ -248,6 +257,9 @@ const styles = StyleSheet.create({
     ...shadow.soft,
   },
   buttonText: { color: colors.accentText, fontWeight: '800', fontSize: 16 },
+  divider: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#e5e7eb' },
+  dividerText: { color: colors.muted, fontSize: 13, fontWeight: '600' },
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   footerText: { fontSize: 14, color: colors.muted },
   link: { fontSize: 14, color: colors.brand, fontWeight: '800' },

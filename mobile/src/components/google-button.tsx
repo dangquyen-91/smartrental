@@ -10,7 +10,13 @@ import {
 import { googleLoginApi } from '@/lib/api/auth.api';
 import { useAuthStore } from '@/stores/auth.store';
 
-export default function GoogleButton({ onError }: { onError?: (msg: string) => void }) {
+export default function GoogleButton({
+  role,
+  onError,
+}: {
+  role?: 'tenant' | 'landlord';
+  onError?: (msg: string) => void;
+}) {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
   const [loading, setLoading] = useState(false);
@@ -20,11 +26,15 @@ export default function GoogleButton({ onError }: { onError?: (msg: string) => v
       setLoading(true);
       onError?.('');
       await GoogleSignin.hasPlayServices();
+      // Đăng xuất phiên Google cũ để LUÔN hiện bảng chọn tài khoản
+      // (nếu không, signIn() tự dùng lại account đã đăng nhập trước đó).
+      await GoogleSignin.signOut();
       const response = await GoogleSignin.signIn();
       if (!isSuccessResponse(response)) return; // người dùng bấm hủy
 
       const { accessToken } = await GoogleSignin.getTokens();
-      const data = await googleLoginApi(accessToken);
+      // role chỉ có ở màn Đăng ký → cho phép tạo tài khoản Google mới
+      const data = await googleLoginApi(accessToken, role);
       await setAuth(data.user, data.accessToken, data.refreshToken);
       router.replace('/');
     } catch (err) {

@@ -3,7 +3,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 // Web OAuth Client ID (dùng chung với frontend web).
 // Lấy ở Google Cloud Console > Credentials > OAuth 2.0 Client (loại Web).
 export const GOOGLE_WEB_CLIENT_ID =
-  '1012954717888-9ph2ro0v0dki6p831dhv20nvfv3qd8o8.apps.googleusercontent.com';
+  '583041981620-bijinsmhcrb1apr9dpc7bq6lhedsotg4.apps.googleusercontent.com';
 
 // Gọi 1 lần khi app khởi động (trong app/_layout.tsx)
 export function configureGoogleSignin() {

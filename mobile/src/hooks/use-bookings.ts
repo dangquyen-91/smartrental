@@ -10,6 +10,10 @@ import {
   rejectBookingApi,
 } from '@/lib/api/bookings.api';
 import { useAuthStore } from '@/stores/auth.store';
+import { toast } from '@/stores/toast.store';
+
+const errMsg = (e: unknown, fallback: string) =>
+  (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? fallback;
 
 export function useMyBookings() {
   const accessToken = useAuthStore((s) => s.accessToken);
@@ -25,6 +29,7 @@ export function useCreateBooking() {
   return useMutation({
     mutationFn: createBookingApi,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my-bookings'] }),
+    onError: (e) => toast.error(errMsg(e, 'Đặt phòng thất bại')),
   });
 }
 
@@ -33,6 +38,7 @@ export function useCancelBooking() {
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason?: string }) => cancelBookingApi(id, reason),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my-bookings'] }),
+    onError: (e) => toast.error(errMsg(e, 'Hủy đặt phòng thất bại')),
   });
 }
 
@@ -67,5 +73,6 @@ export function useBookingAction() {
       qc.invalidateQueries({ queryKey: ['landlord-bookings'] });
       qc.invalidateQueries({ queryKey: ['my-bookings'] });
     },
+    onError: (e) => toast.error(errMsg(e, 'Thao tác thất bại')),
   });
 }

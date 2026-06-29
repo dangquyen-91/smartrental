@@ -8,6 +8,10 @@ import {
   updatePropertyApi,
 } from '@/lib/api/properties.api';
 import type { Property, PropertyFilters } from '@/types/property';
+import { toast } from '@/stores/toast.store';
+
+const errMsg = (e: unknown, fallback: string) =>
+  (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? fallback;
 
 export function useProperties(filters: PropertyFilters = {}) {
   return useQuery({
@@ -39,6 +43,7 @@ export function useDeleteProperty() {
       qc.invalidateQueries({ queryKey: ['my-listings'] });
       qc.invalidateQueries({ queryKey: ['properties'] });
     },
+    onError: (e) => toast.error(errMsg(e, 'Xóa tin thất bại')),
   });
 }
 
@@ -57,5 +62,6 @@ export function useUpdateProperty() {
       qc.invalidateQueries({ queryKey: ['properties'] });
       qc.invalidateQueries({ queryKey: ['property', vars.id] });
     },
+    onError: (e) => toast.error(errMsg(e, 'Cập nhật tin thất bại')),
   });
 }

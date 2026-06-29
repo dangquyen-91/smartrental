@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
@@ -30,6 +30,17 @@ export default function Search() {
     maxPrice: undefined,
   });
   const [showFilter, setShowFilter] = useState(false);
+
+  // Màn search là tab giữ mount sẵn -> useState chỉ chạy lúc mount đầu.
+  // Khi bấm category khác ở Home (param đổi), đồng bộ lại loại + ô tìm kiếm.
+  useEffect(() => {
+    setFilters((f) => ({ ...f, type: (params.type as PropertyType) ?? 'all' }));
+  }, [params.type]);
+
+  useEffect(() => {
+    setSearch(params.search ?? '');
+    setApplied(params.search ?? '');
+  }, [params.search]);
 
   const { data, isLoading, refetch, isRefetching } = useProperties({
     status: 'available',

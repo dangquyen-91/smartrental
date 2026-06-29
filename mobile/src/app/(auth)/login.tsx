@@ -21,12 +21,14 @@ import { useAuthStore } from '@/stores/auth.store';
 import IconInput from '@/components/ui/icon-input';
 import PressableScale from '@/components/ui/pressable-scale';
 import FadeIn from '@/components/fade-in';
+import GoogleButton from '@/components/google-button';
 
 export default function Login() {
   const router = useRouter();
   const qc = useQueryClient();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [googleErr, setGoogleErr] = useState('');
   const setAuth = useAuthStore((s) => s.setAuth);
 
   const mutation = useMutation({
@@ -124,6 +126,21 @@ export default function Login() {
                   )}
                 </PressableScale>
 
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>hoặc</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <GoogleButton onError={setGoogleErr} />
+
+                {!!googleErr && (
+                  <View style={styles.errorBox}>
+                    <Ionicons name="alert-circle" size={16} color={colors.danger} />
+                    <Text style={styles.errorText}>{googleErr}</Text>
+                  </View>
+                )}
+
                 <View style={styles.footer}>
                   <Text style={styles.footerText}>Chưa có tài khoản? </Text>
                   <Link href="/(auth)/register" style={styles.link}>Đăng ký ngay</Link>
@@ -172,6 +189,9 @@ const styles = StyleSheet.create({
     ...shadow.soft,
   },
   buttonText: { color: colors.accentText, fontWeight: '800', fontSize: 16 },
+  divider: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#e5e7eb' },
+  dividerText: { color: colors.muted, fontSize: 13, fontWeight: '600' },
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 2 },
   footerText: { fontSize: 14, color: colors.muted },
   link: { fontSize: 14, color: colors.brand, fontWeight: '800' },

@@ -144,7 +144,7 @@ export default function Home() {
                 key={c.value}
                 style={styles.cat}
                 haptic
-                onPress={() => goSearch(isAll ? {} : { type: c.value })}
+                onPress={() => goSearch({ type: c.value })}
               >
                 <View style={[styles.catIcon, isAll && styles.catIconActive]}>
                   <Ionicons name={c.icon} size={22} color={isAll ? colors.accentText : colors.brand} />

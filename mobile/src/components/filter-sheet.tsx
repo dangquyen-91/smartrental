@@ -113,16 +113,15 @@ export default function FilterSheet({
         </View>
 
         <View style={styles.actions}>
-          <PressableScale style={styles.resetBtn} haptic onPress={reset}>
+          <Pressable style={styles.resetBtn} onPress={reset}>
             <Text style={styles.resetText}>Đặt lại</Text>
-          </PressableScale>
-          <PressableScale
+          </Pressable>
+          <Pressable
             style={styles.applyBtn}
-            haptic="medium"
             onPress={() => onApply({ type, minPrice: min, maxPrice: max })}
           >
             <Text style={styles.applyText}>Áp dụng</Text>
-          </PressableScale>
+          </Pressable>
         </View>
       </View>
     </Modal>

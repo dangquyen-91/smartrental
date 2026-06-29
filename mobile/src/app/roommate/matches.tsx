@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, FlatList, Image, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/colors';
@@ -151,14 +151,13 @@ function MatchCard({ match }: { match: RoommateMatch }) {
             <Text style={styles.sentText}>Đã gửi lời mời</Text>
           </View>
         ) : (
-          <PressableScale
+          <Pressable
             style={styles.sendBtn}
-            haptic="medium"
             disabled={send.isPending || !uid}
             onPress={() => send.mutate({ userId: uid })}
           >
             <Text style={styles.sendText}>Gửi lời mời</Text>
-          </PressableScale>
+          </Pressable>
         )}
       </View>
     </View>

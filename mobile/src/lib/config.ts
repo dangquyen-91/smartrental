@@ -19,11 +19,11 @@ const BACKEND_PORT = 5000;
 
 // URL backend khi đã deploy thật. Sửa lại khi bạn deploy (Render/Railway/VPS...).
 // LƯU Ý: phải là https:// thì bản release Android mới gọi được.
-const PROD_API_URL = 'https://api.smartrental.com/api';
+const PROD_API_URL = 'https://smartrental-be.wonderfulriver-96edf0dc.southeastasia.azurecontainerapps.io/api';
 
 // IP dự phòng khi không tự lấy được IP từ Expo (hiếm khi xảy ra).
 // Lấy IP hiện tại bằng lệnh: ipconfig  (dòng IPv4)
-const FALLBACK_DEV_IP = '10.87.30.151';
+const FALLBACK_DEV_IP = '172.31.99.194';
 
 /** Lấy IP của máy đang chạy Expo dev server (Metro) */
 function getDevHost(): string | null {

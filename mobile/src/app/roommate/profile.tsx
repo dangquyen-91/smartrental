@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -89,6 +89,24 @@ export default function RoommateProfileForm() {
   const [city, setCity] = useState(existing?.city ?? '');
   const [bio, setBio] = useState(existing?.bio ?? '');
   const [error, setError] = useState('');
+
+  // Dữ liệu hồ sơ về từ server (async) sau khi mount -> nạp lại vào form,
+  // vì useState chỉ chạy lần mount đầu (lúc đó existing còn undefined).
+  useEffect(() => {
+    if (!existing) return;
+    setMin(String(existing.budget?.min ?? 2000000));
+    setMax(String(existing.budget?.max ?? 4000000));
+    setGender(existing.gender ?? 'any');
+    setSchedule(existing.schedule ?? 'flexible');
+    setLifestyle(existing.lifestyle ?? 'mixed');
+    setCleanliness(existing.cleanliness ?? 'average');
+    setDuration(existing.duration ?? 'flexible');
+    setPets(existing.pets ?? 'no');
+    setSmoking(existing.smoking ?? 'no');
+    setLooking(existing.looking ?? true);
+    setCity(existing.city ?? '');
+    setBio(existing.bio ?? '');
+  }, [existing]);
 
   const submit = () => {
     setError('');

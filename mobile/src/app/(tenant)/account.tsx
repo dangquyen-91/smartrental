@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, type Href } from 'expo-router';
@@ -47,7 +47,7 @@ function StatItem({
   onPress: () => void;
 }) {
   return (
-    <PressableScale style={styles.statItem} haptic onPress={onPress}>
+    <Pressable style={styles.statItem} onPress={onPress}>
       <Ionicons name={icon} size={20} color={colors.brand} />
       {loading ? (
         <ActivityIndicator color={colors.brand} style={{ height: 24 }} />
@@ -55,7 +55,7 @@ function StatItem({
         <Text style={styles.statValue}>{value}</Text>
       )}
       <Text style={styles.statLabel}>{label}</Text>
-    </PressableScale>
+    </Pressable>
   );
 }
 
@@ -136,15 +136,19 @@ export default function Account() {
   if (!accessToken) {
     return (
       <SafeAreaView edges={['top']} style={styles.center}>
-        <Ionicons name="person-circle-outline" size={72} color={colors.brand} />
+        <View style={styles.guestIconWrap}>
+          <Ionicons name="person-circle-outline" size={64} color={colors.brand} />
+        </View>
         <Text style={styles.guestTitle}>Chào mừng đến SmartRental</Text>
         <Text style={styles.guestSub}>Đăng nhập để đặt phòng, lưu tin và quản lý tài khoản.</Text>
-        <PressableScale style={styles.primary} haptic="medium" onPress={() => router.push('/(auth)/login')}>
-          <Text style={styles.primaryText}>Đăng nhập</Text>
-        </PressableScale>
-        <PressableScale style={styles.secondary} haptic onPress={() => router.push('/(auth)/register')}>
-          <Text style={styles.secondaryText}>Tạo tài khoản</Text>
-        </PressableScale>
+        <View style={styles.guestActions}>
+          <PressableScale style={styles.primary} haptic="medium" onPress={() => router.push('/(auth)/login')}>
+            <Text style={styles.primaryText}>Đăng nhập</Text>
+          </PressableScale>
+          <PressableScale style={styles.secondary} haptic onPress={() => router.push('/(auth)/register')}>
+            <Text style={styles.secondaryText}>Tạo tài khoản</Text>
+          </PressableScale>
+        </View>
       </SafeAreaView>
     );
   }
@@ -362,11 +366,22 @@ const styles = StyleSheet.create({
   footerVersion: { fontSize: 11, color: colors.muted },
 
   // Guest + loading
-  center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: 28, gap: 10 },
-  guestTitle: { fontSize: 20, fontWeight: '800', color: colors.text, marginTop: 8 },
-  guestSub: { fontSize: 14, color: colors.muted, textAlign: 'center', marginBottom: 12 },
-  primary: { backgroundColor: colors.accent, paddingVertical: 15, borderRadius: 999, alignItems: 'center', width: '100%' },
-  primaryText: { fontSize: 15, fontWeight: '700', color: colors.accentText },
-  secondary: { borderWidth: 1, borderColor: colors.muted, paddingVertical: 15, borderRadius: 999, alignItems: 'center', width: '100%' },
-  secondaryText: { fontSize: 15, fontWeight: '700', color: colors.text },
+  center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: 28 },
+  guestIconWrap: {
+    width: 104,
+    height: 104,
+    borderRadius: 999,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 18,
+    ...shadow.soft,
+  },
+  guestTitle: { fontSize: 22, fontWeight: '800', color: colors.text, textAlign: 'center' },
+  guestSub: { fontSize: 14.5, color: colors.muted, textAlign: 'center', lineHeight: 21, marginTop: 8, maxWidth: 300 },
+  guestActions: { width: '100%', maxWidth: 360, gap: 12, marginTop: 28 },
+  primary: { backgroundColor: colors.accent, paddingVertical: 16, borderRadius: radius.pill, alignItems: 'center', ...shadow.soft },
+  primaryText: { fontSize: 16, fontWeight: '800', color: colors.accentText },
+  secondary: { borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface, paddingVertical: 16, borderRadius: radius.pill, alignItems: 'center' },
+  secondaryText: { fontSize: 16, fontWeight: '700', color: colors.text },
 });
