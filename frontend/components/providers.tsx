@@ -28,7 +28,12 @@ function GoogleOAuthCallbackHandler() {
     window.history.replaceState({}, '', window.location.pathname + window.location.search);
 
     const source = sessionStorage.getItem('google_oauth_source') ?? 'login';
-    const role = sessionStorage.getItem('google_register_role') as 'tenant' | 'landlord' | null;
+    // Only trust google_register_role when coming from the register page — on the
+    // login flow this key may be stale from a previous abandoned register attempt,
+    // which would silently bypass the role-picker for new accounts.
+    const role = source === 'register'
+      ? (sessionStorage.getItem('google_register_role') as 'tenant' | 'landlord' | null)
+      : null;
     sessionStorage.removeItem('google_oauth_source');
     sessionStorage.removeItem('google_register_role');
 
