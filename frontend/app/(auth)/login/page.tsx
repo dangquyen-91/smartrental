@@ -349,7 +349,7 @@ function GoogleLoginButton({ onSuccess, onError }: { onSuccess: (redirectTo?: st
       const gUser = data.user as unknown as User;
       setAuth(gUser, data.accessToken, data.refreshToken);
       setPendingToken(null);
-      onSuccess(gUser.role === 'admin' ? '/admin' : undefined);
+      onSuccess(gUser.role === 'admin' ? '/admin' : gUser.role === 'landlord' ? '/hosting' : undefined);
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status === 404 && !role) {
@@ -386,6 +386,7 @@ function GoogleLoginButton({ onSuccess, onError }: { onSuccess: (redirectTo?: st
         type="button"
         onClick={() => {
           sessionStorage.setItem('google_oauth_source', 'login');
+          sessionStorage.removeItem('google_register_role');
           window.location.href = buildGoogleOAuthUrl();
         }}
         disabled={loading}

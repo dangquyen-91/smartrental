@@ -61,3 +61,14 @@ export async function deletePropertyApi(id: string) {
   const res = await api.delete<ApiResponse<null>>(`/properties/${id}`);
   return res.data;
 }
+
+export interface RecommendationsData {
+  properties: (Property & { matchScore: number })[];
+  explanation: string | null;
+  preference: import("@/lib/api/preferences.api").TenantPreference | null;
+}
+
+export async function getRecommendationsApi() {
+  const res = await api.get<ApiResponse<RecommendationsData>>("/properties/recommendations");
+  return res.data;
+}

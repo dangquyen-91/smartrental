@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getMeApi, updatePhoneApi } from '@/lib/api/auth.api';
-import { updateBankAccountApi, updateUserApi } from '@/lib/api/users.api';
+import { changePasswordApi, updateBankAccountApi, updateUserApi } from '@/lib/api/users.api';
 import { uploadImagesApi } from '@/lib/api/upload.api';
 import { useAuthStore } from '@/stores/auth.store';
 import { useMyBookings } from '@/hooks/use-bookings';
@@ -27,6 +27,15 @@ const phoneSchema = z.object({
   phone: z
     .string()
     .refine((v) => /^(0|\+84)\d{9}$/.test(v), 'Số điện thoại không hợp lệ'),
+});
+
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, 'Vui lòng nhập mật khẩu hiện tại'),
+  newPassword: z.string().min(6, 'Mật khẩu mới ít nhất 6 ký tự'),
+  confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu mới'),
+}).refine((d) => d.newPassword === d.confirmPassword, {
+  message: 'Mật khẩu xác nhận không khớp',
+  path: ['confirmPassword'],
 });
 
 const bankSchema = z.object({
@@ -46,6 +55,7 @@ const nationalIdSchema = z.object({
 });
 
 type PhoneForm = z.infer<typeof phoneSchema>;
+type PasswordForm = z.infer<typeof passwordSchema>;
 type BankForm = z.infer<typeof bankSchema>;
 type NationalIdForm = z.infer<typeof nationalIdSchema>;
 
@@ -62,7 +72,7 @@ function FieldError({ msg }: { msg?: string }) {
   ) : null;
 }
 
-type PhoneStep = 'view' | 'phone';
+type PhoneStep = 'view' | 'phone' | 'password';
 
 export default function ProfilePage() {
   const storedUser = useAuthStore((s) => s.user);
@@ -339,6 +349,7 @@ function SecuritySection({
   const [step, setStep] = useState<PhoneStep>('view');
 
   const phoneForm = useForm<PhoneForm>({ resolver: zodResolver(phoneSchema) });
+  const passwordForm = useForm<PasswordForm>({ resolver: zodResolver(passwordSchema) });
 
   const submitPhone = async ({ phone }: PhoneForm) => {
     try {
@@ -352,9 +363,21 @@ function SecuritySection({
     }
   };
 
+  const submitPassword = async ({ currentPassword, newPassword }: PasswordForm) => {
+    try {
+      await changePasswordApi(user.id, { currentPassword, newPassword });
+      toast.success('Đổi mật khẩu thành công');
+      setStep('view');
+      passwordForm.reset();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Đổi mật khẩu thất bại, vui lòng thử lại.'));
+    }
+  };
+
   const cancelEdit = () => {
     setStep('view');
     phoneForm.reset();
+    passwordForm.reset();
   };
 
   return (
@@ -428,6 +451,76 @@ function SecuritySection({
               </button>
             </div>
           </div>
+        )}
+
+        {/* Password row — only for email/password accounts */}
+        {user.authProvider !== 'google' && (
+          <>
+            <div className="flex justify-between items-center self-stretch py-4 border-b border-[#F7F7F7]">
+              <span className="text-[#6A6A6A] text-sm">Mật khẩu</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[#222222] text-sm font-bold tracking-widest">••••••••</span>
+                <button
+                  onClick={() => setStep('password')}
+                  className="flex shrink-0 items-center bg-transparent py-1.5 px-3 gap-1.5 rounded-lg border border-[#dddddd] hover:bg-[#f7f7f7] transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-[#6a6a6a]" />
+                  <span className="text-[#222222] text-xs font-semibold">Đổi mật khẩu</span>
+                </button>
+              </div>
+            </div>
+
+            {step === 'password' && (
+              <div className="bg-[#f7f7f7] rounded-[10px] p-4 mt-3 space-y-3">
+                <p className="text-xs text-[#6a6a6a]">Nhập mật khẩu hiện tại và mật khẩu mới của bạn.</p>
+                <div>
+                  <Input
+                    type="password"
+                    placeholder="Mật khẩu hiện tại"
+                    autoFocus
+                    className="h-12 border-[#dddddd] focus-visible:border-[#222222] focus-visible:ring-2 focus-visible:ring-[#222222]/20 text-[#222222] placeholder:text-[#929292]"
+                    {...passwordForm.register('currentPassword')}
+                  />
+                  <FieldError msg={passwordForm.formState.errors.currentPassword?.message} />
+                </div>
+                <div>
+                  <Input
+                    type="password"
+                    placeholder="Mật khẩu mới (ít nhất 6 ký tự)"
+                    className="h-12 border-[#dddddd] focus-visible:border-[#222222] focus-visible:ring-2 focus-visible:ring-[#222222]/20 text-[#222222] placeholder:text-[#929292]"
+                    {...passwordForm.register('newPassword')}
+                  />
+                  <FieldError msg={passwordForm.formState.errors.newPassword?.message} />
+                </div>
+                <div>
+                  <Input
+                    type="password"
+                    placeholder="Xác nhận mật khẩu mới"
+                    className="h-12 border-[#dddddd] focus-visible:border-[#222222] focus-visible:ring-2 focus-visible:ring-[#222222]/20 text-[#222222] placeholder:text-[#929292]"
+                    {...passwordForm.register('confirmPassword')}
+                  />
+                  <FieldError msg={passwordForm.formState.errors.confirmPassword?.message} />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={passwordForm.handleSubmit(submitPassword)}
+                    disabled={passwordForm.formState.isSubmitting}
+                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#1f1c00] bg-[#ffef3d] hover:shadow-lg disabled:opacity-50 rounded-lg transition-all"
+                  >
+                    {passwordForm.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
+                    Lưu
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelEdit}
+                    className="px-4 py-2 text-sm font-semibold text-[#222222] border border-[#dddddd] rounded-lg hover:bg-[#f7f7f7] transition-colors"
+                  >
+                    Huỷ
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Auth method */}

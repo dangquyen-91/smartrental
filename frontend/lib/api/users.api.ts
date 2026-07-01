@@ -17,6 +17,13 @@ export const updateBankAccountApi = async (
   return data.data.user;
 };
 
+export const changePasswordApi = async (
+  userId: string,
+  payload: { currentPassword: string; newPassword: string },
+): Promise<void> => {
+  await api.put(`/users/${userId}/password`, payload);
+};
+
 export const toggleWishlistApi = async (
   propertyId: string,
 ): Promise<{ saved: boolean; count: number }> => {
