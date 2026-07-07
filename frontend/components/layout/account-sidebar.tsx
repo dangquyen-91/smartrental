@@ -30,7 +30,7 @@ export default function AccountSidebar() {
       <div className="h-16 flex items-center px-4 border-b border-[#dddddd] shrink-0">
         <Link href="/">
           <img
-            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/34538423-5348-42bb-bb85-fa3cb65dcafe"
+            src="/logo/SmartRental_02.png"
             alt="SmartRental"
             className="h-[26px] w-auto object-contain cursor-pointer"
           />

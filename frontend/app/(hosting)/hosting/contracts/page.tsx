@@ -13,6 +13,12 @@ import {
   ChevronDown,
   Banknote,
   Hourglass,
+  MapPin,
+  User,
+  CalendarDays,
+  CheckCircle2,
+  Circle,
+  Clock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -96,11 +102,7 @@ function ContractCard({
         {/* Address */}
         {property && (
           <div className="flex items-center self-stretch mb-[7px] gap-1">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7f6bc1cc-13f8-4bb4-889f-ba66de342a6b"
-              className="w-3.5 h-3.5 object-fill"
-              alt=""
-            />
+            <MapPin className="w-3.5 h-3.5 text-[#6A6A6A]" />
             <span className="text-[#6A6A6A] text-sm">
               {[property.address?.district, property.address?.city].filter(Boolean).join(', ')}
             </span>
@@ -110,11 +112,7 @@ function ContractCard({
         {/* Tenant */}
         {tenant && (
           <div className="flex items-center self-stretch mb-[7px] gap-1.5">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/5daf3aac-0839-4237-b7ae-8800698c0a40"
-              className="w-3.5 h-3.5 object-fill"
-              alt=""
-            />
+            <User className="w-3.5 h-3.5 text-[#6A6A6A]" />
             <span className="text-[#6A6A6A] text-sm mr-2">Khách thuê:</span>
             <span className="text-[#222222] text-sm">{tenant.name}</span>
           </div>
@@ -122,11 +120,7 @@ function ContractCard({
 
         {/* Date */}
         <div className="flex items-center self-stretch mb-[7px] gap-1.5">
-          <img
-            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/daefa182-046c-4686-8dfd-f2f38cf31ba0"
-            className="w-3.5 h-3.5 object-fill"
-            alt=""
-          />
+          <CalendarDays className="w-3.5 h-3.5 text-[#6A6A6A]" />
           <span className="text-[#6A6A6A] text-sm">Tạo ngày {formatDate(contract.createdAt)}</span>
         </div>
 
@@ -138,11 +132,9 @@ function ContractCard({
               ? "bg-emerald-50 border-emerald-200"
               : "bg-[#F7F7F7] border-[#DDDDDD]",
           )}>
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d85e7988-abae-422f-8280-7ac0748fbf12"
-              className="w-3.5 h-3.5 object-fill"
-              alt=""
-            />
+            {contract.signedByLandlord.signed
+              ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+              : <Circle className="w-3.5 h-3.5 text-[#6A6A6A]" />}
             <span className={cn("text-xs", contract.signedByLandlord.signed ? "text-emerald-700 font-medium" : "text-[#6A6A6A]")}>
               Bạn · {contract.signedByLandlord.signed ? 'Đã ký' : 'Chưa ký'}
             </span>
@@ -153,11 +145,9 @@ function ContractCard({
               ? "bg-emerald-50 border-emerald-200"
               : "bg-[#F7F7F7] border-[#DDDDDD]",
           )}>
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9d3e07d5-15b7-4725-9c61-e7fbf37a73cb"
-              className="w-3.5 h-3.5 object-fill"
-              alt=""
-            />
+            {contract.signedByTenant.signed
+              ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+              : <Circle className="w-3.5 h-3.5 text-[#6A6A6A]" />}
             <span className={cn("text-xs", contract.signedByTenant.signed ? "text-emerald-700 font-medium" : "text-[#6A6A6A]")}>
               Khách thuê · {contract.signedByTenant.signed ? 'Đã ký' : 'Chưa ký'}
             </span>
@@ -170,11 +160,7 @@ function ContractCard({
             {booking?.paymentStatus === 'paid' ? (
               <Banknote className="size-3.5 text-emerald-600 shrink-0" />
             ) : (
-              <img
-                src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/cec79b00-4c3c-4f41-a518-a61aeca37613"
-                className="w-3.5 h-3.5 object-fill shrink-0"
-                alt=""
-              />
+              <Clock className={cn('size-3.5 shrink-0', paymentCfg.className)} />
             )}
             <span className={cn('text-xs font-medium', paymentCfg.className)}>
               {paymentCfg.label}
@@ -209,11 +195,7 @@ function ContractCard({
               {isDownloading ? (
                 <Loader2 className="size-3.5 animate-spin" />
               ) : (
-                <img
-                  src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/afb97ec9-29f4-4b60-b73f-c882ee134f2c"
-                  className="w-3.5 h-3.5 object-fill"
-                  alt=""
-                />
+                <Download className="w-3.5 h-3.5 text-[#2683EB]" />
               )}
               <span className="text-[#222222] text-xs font-bold">Tải PDF</span>
             </button>

@@ -9,6 +9,8 @@ import Link from 'next/link';
 import {
   Loader2, Phone, CheckCircle2,
   Pencil,
+  CalendarDays, FileText, Heart, ChevronRight,
+  User, ShieldCheck, CreditCard, IdCard,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
@@ -136,7 +138,7 @@ export default function ProfilePage() {
           <div className="grid grid-cols-2 gap-3 bg-white py-5 px-5 rounded-[14px] border border-[#DDDDDD]">
             <div className="flex flex-col gap-1">
               <div className="w-8 h-8 bg-[#FFF546] rounded-lg flex items-center justify-center mb-1">
-                <img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7b4faa10-e969-45fe-afb1-d235798913c0" className="w-4 h-4" />
+                <CalendarDays className="w-4 h-4 text-[#222222]" />
               </div>
               <span className="text-black text-xs">Tổng đơn thuê</span>
               <span className="text-[#222222] text-xl font-bold">{bookings.length}</span>
@@ -144,7 +146,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex flex-col gap-1">
               <div className="w-8 h-8 bg-[#FFF546] rounded-lg flex items-center justify-center mb-1">
-                <img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9165324c-1e9d-4a03-a769-cfa167302603" className="w-4 h-4" />
+                <FileText className="w-4 h-4 text-[#222222]" />
               </div>
               <span className="text-black text-xs">Hợp đồng</span>
               <span className="text-[#222222] text-xl font-bold">{contracts.length}</span>
@@ -158,19 +160,19 @@ export default function ProfilePage() {
               <span className="text-[#929292] text-xs font-bold tracking-wider">TRUY CẬP NHANH</span>
             </div>
             {[
-              { href: '/wishlist', label: 'Yêu thích', sub: 'BĐS đã lưu', icon: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/33d240a6-bef1-4199-a291-34c99ed76960', arrow: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/0ed6a620-cfa4-41ff-ad20-80d7d9ca9706' },
-              { href: '/trips',    label: 'Đơn thuê',  sub: 'Xem lịch sử booking', icon: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7c63feb9-5af1-4e35-b4fd-7883f8fc67ce', arrow: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/aa5ebb2f-5b36-4529-b440-a412ec082c4c' },
-              { href: '/contracts',label: 'Hợp đồng', sub: 'Quản lý hợp đồng', icon: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9b9e3492-46ae-4e02-88be-26da2c6df897', arrow: 'https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/5230220a-809d-498f-8edb-152788789081' },
-            ].map(({ href, label, sub, icon, arrow }, i, arr) => (
+              { href: '/wishlist', label: 'Yêu thích', sub: 'BĐS đã lưu', icon: Heart },
+              { href: '/trips',    label: 'Đơn thuê',  sub: 'Xem lịch sử booking', icon: CalendarDays },
+              { href: '/contracts',label: 'Hợp đồng', sub: 'Quản lý hợp đồng', icon: FileText },
+            ].map(({ href, label, sub, icon: Icon }, i, arr) => (
               <Link key={href} href={href} className={cn('flex items-center py-3.5 px-5 gap-3 w-full hover:bg-[#F7F7F7] transition-colors', i < arr.length - 1 && 'border-b border-[#F7F7F7]')}>
                 <div className="shrink-0 w-8 h-8 bg-[#FFF546] rounded-lg flex items-center justify-center">
-                  <img src={icon} className="w-4 h-4" />
+                  <Icon className="w-4 h-4 text-[#222222]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[#222222] text-sm font-bold">{label}</p>
                   <p className="text-[#929292] text-xs">{sub}</p>
                 </div>
-                <img src={arrow} className="w-4 h-4 shrink-0" />
+                <ChevronRight className="w-4 h-4 shrink-0 text-[#929292]" />
               </Link>
             ))}
           </div>
@@ -183,10 +185,7 @@ export default function ProfilePage() {
                 <div className="flex items-center self-stretch py-5 mb-[21px] mx-[1px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
                   <div className="flex flex-col shrink-0 items-center pt-0.5 ml-6 mr-3">
                     <div className="flex flex-col items-start bg-[#FFF546] text-left py-[9px] px-2.5 rounded-[26843500px] border-0">
-                      <img
-                        src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/76016c50-ce1b-4034-a3c8-9df55d7beb2f"
-                        className="w-4 h-4 rounded-[26843500px] object-fill"
-                      />
+                      <User className="w-4 h-4 text-[#222222]" />
                     </div>
                   </div>
                   <div className="flex flex-col items-start gap-0.5 min-w-0">
@@ -385,10 +384,7 @@ function SecuritySection({
       <div className="flex items-center self-stretch py-5 mb-5 mx-[1px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
         <div className="flex flex-col shrink-0 items-center pt-0.5 ml-6 mr-3">
           <div className="flex flex-col items-start bg-[#FFF546] text-left py-[9px] px-2.5 rounded-[26843500px] border-0">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9a6ae306-d739-465b-b70a-f7e843066225"
-              className="w-4 h-4 rounded-[26843500px] object-fill"
-            />
+            <ShieldCheck className="w-4 h-4 text-[#222222]" />
           </div>
         </div>
         <div className="flex flex-col items-start gap-0.5 min-w-0">
@@ -531,16 +527,15 @@ function SecuritySection({
           <div className="flex items-center self-stretch">
             {user.authProvider === 'google' ? (
               <>
-                <img
-                  src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/75bcb3f6-17ea-43df-b3e1-2e6938719f04"
-                  className="w-5 h-5 mr-[7px] object-fill"
-                />
+                <svg className="w-5 h-5 mr-[7px]" viewBox="0 0 24 24">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                </svg>
                 <span className="text-[#222222] text-sm mr-2">Google Account</span>
                 <div className="flex shrink-0 items-center bg-[#EBFCF4] text-left py-[3px] px-[9px] gap-1 rounded-[26843500px] border border-solid border-[#D0FAE4]">
-                  <img
-                    src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/4f8feaa7-4ec0-4be9-bb3c-2b9747abe1f2"
-                    className="w-3 h-3 rounded-[26843500px] object-fill"
-                  />
+                  <CheckCircle2 className="w-3 h-3 text-[#009865]" />
                   <span className="text-[#009865] text-xs font-bold">Đã liên kết</span>
                 </div>
               </>
@@ -596,10 +591,7 @@ function BankSection({
       <div className="flex items-center self-stretch py-5 mb-[21px] mx-[1px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
         <div className="flex flex-col shrink-0 items-center pt-0.5 ml-6 mr-3">
           <div className="flex flex-col items-start bg-[#FFF546] text-left py-[9px] px-2.5 rounded-[26843500px] border-0">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d790544b-57f3-4c39-9782-2e9e496fe56a"
-              className="w-4 h-4 rounded-[26843500px] object-fill"
-            />
+            <CreditCard className="w-4 h-4 text-[#222222]" />
           </div>
         </div>
         <div className="flex flex-col items-start gap-0.5 min-w-0">
@@ -749,10 +741,7 @@ function NationalIdSection({
       <div className="flex items-center self-stretch py-5 mb-[21px] mx-[1px] border-b-[0.800000011920929px] border-solid border-b-[#DDDDDD]">
         <div className="flex flex-col shrink-0 items-center pt-0.5 ml-6 mr-3">
           <div className="flex flex-col items-start bg-[#FFF546] text-left p-2.5 rounded-[26843500px] border-0">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/c5b21e65-73fe-4f07-86d5-cb0fe2ea2cc6"
-              className="w-4 h-4 rounded-[26843500px] object-fill"
-            />
+            <IdCard className="w-4 h-4 text-[#222222]" />
           </div>
         </div>
         <div className="flex flex-col items-start gap-0.5 min-w-0">
