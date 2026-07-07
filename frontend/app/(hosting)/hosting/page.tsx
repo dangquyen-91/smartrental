@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Star,
   MapPin, Pencil, Check, X, Loader2, Plus, ArrowRight,
+  Building2, Inbox, FileSignature, Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -119,10 +120,7 @@ export default function HostingPage() {
         {/* Tin đăng */}
         <div className="flex flex-col items-start bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD]">
           <div className="flex items-center justify-center bg-[#FFF546] w-10 h-10 rounded-[10px] mb-3">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/6604c1e7-2829-4a5a-b8aa-0a38bfaa2f2b"
-              className="w-5 h-5"
-            />
+            <Building2 className="w-5 h-5 text-[#222222]" />
           </div>
           <span className="text-[#222222] text-[25px] font-bold">
             {isLoading ? '—' : activeListings}
@@ -134,10 +132,7 @@ export default function HostingPage() {
         {/* Yêu cầu mới */}
         <div className="flex flex-col items-start bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD]">
           <div className="flex items-center justify-center bg-[#FFF546] w-10 h-10 rounded-[10px] mb-3">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/eb80edd1-27d8-43e8-99b2-24f6d1134620"
-              className="w-5 h-5"
-            />
+            <Inbox className="w-5 h-5 text-[#222222]" />
           </div>
           <span className="text-[#222222] text-[25px] font-bold">
             {isLoading ? '—' : pendingBookings.length}
@@ -149,10 +144,7 @@ export default function HostingPage() {
         {/* Hợp đồng */}
         <div className="flex flex-col items-start bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD]">
           <div className="flex items-center justify-center bg-[#FFF546] w-10 h-10 rounded-[10px] mb-3">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/35719e8d-aac5-4d3f-9092-b50f3ecbabf2"
-              className="w-5 h-5"
-            />
+            <FileSignature className="w-5 h-5 text-[#222222]" />
           </div>
           <span className="text-[#222222] text-[25px] font-bold">
             {isLoading ? '—' : activeContracts}
@@ -164,10 +156,7 @@ export default function HostingPage() {
         {/* Doanh thu */}
         <div className="flex flex-col items-start bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD]">
           <div className="flex items-center justify-center bg-[#FFF546] w-10 h-10 rounded-[10px] mb-3">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/a16acdd7-8ee3-4af2-89e1-4df5c8aa0248"
-              className="w-4 h-4"
-            />
+            <Wallet className="w-4 h-4 text-[#222222]" />
           </div>
           <span className="text-[#222222] text-[25px] font-bold">
             {loadingRevenue
@@ -319,36 +308,24 @@ export default function HostingPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Link href="/hosting/listings/new" className="flex items-center bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD] hover:border-[#ffef3d] transition-colors">
           <div className="flex items-center justify-center bg-black w-10 h-10 rounded-[10px] mr-4">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/6f2ef548-2935-44f3-bebe-1d685810286d"
-              className="w-5 h-5"
-            />
+            <Plus className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1">
             <p className="text-[#222222] text-[15px] font-bold">Đăng tin mới</p>
             <p className="text-[#6A6A6A] text-[13px]">Thêm phòng trọ, căn hộ vào danh sách</p>
           </div>
-          <img
-            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/b777aef4-890d-4c59-b792-b10152d003c5"
-            className="w-4 h-4"
-          />
+          <ArrowRight className="w-4 h-4 text-[#929292]" />
         </Link>
 
         <Link href="/hosting/reservations" className="flex items-center bg-white py-5 px-5 rounded-[14px] border border-solid border-[#DDDDDD] hover:border-[#ffef3d] transition-colors">
           <div className="flex items-center justify-center bg-black w-10 h-10 rounded-[10px] mr-4">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/495abffe-7056-4f67-8362-507572babe5e"
-              className="w-5 h-5"
-            />
+            <Inbox className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1">
             <p className="text-[#222222] text-[15px] font-bold">Xem yêu cầu thuê</p>
             <p className="text-[#6A6A6A] text-[13px]">Xử lý yêu cầu thuê phòng từ người thuê</p>
           </div>
-          <img
-            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/93adfafb-b831-4e03-bd60-fb8d8d020369"
-            className="w-4 h-4"
-          />
+          <ArrowRight className="w-4 h-4 text-[#929292]" />
         </Link>
       </div>
     </div>

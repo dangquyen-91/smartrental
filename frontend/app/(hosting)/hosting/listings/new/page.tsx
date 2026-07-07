@@ -444,6 +444,11 @@ export default function NewListingPage() {
         if (!freshUser.bankAccount?.bankName) setShowBankModal(true);
       })
       .catch(() => {
+        // Nếu accessToken đã bị clearAuth() xoá (refresh token cũng hết hạn),
+        // phiên đăng nhập đã chết và axios interceptor sẽ tự chuyển về /login —
+        // không hiện modal bằng data cũ, tránh trạng thái "trang vẫn dùng được"
+        // giả tạo trước khi bị đá ra ngoài ở lần điều hướng kế tiếp.
+        if (!useAuthStore.getState().accessToken) return;
         if (!user.bankAccount?.bankName) setShowBankModal(true);
       });
   }, [hasHydrated]); // eslint-disable-line react-hooks/exhaustive-deps

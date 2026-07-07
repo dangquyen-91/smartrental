@@ -194,22 +194,14 @@ function BookingCard({
 
         {isActiveUnpaid && booking.paymentDeadline && (
           <div className="flex items-center mb-[7px] w-full">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/cec79b00-4c3c-4f41-a518-a61aeca37613"
-              className="w-3.5 h-3.5 mr-1 object-fill"
-              alt=""
-            />
+            <Clock className="w-3.5 h-3.5 mr-1 text-[#E17100]" />
             <span className="text-[#E17100] text-xs">Còn {getTimeLeft(booking.paymentDeadline)} để thanh toán</span>
           </div>
         )}
 
         {booking.status === 'active' && booking.paymentStatus === 'unpaid' && !booking.paymentDeadline && (
           <div className="flex items-center mb-[7px] w-full">
-            <img
-              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/cec79b00-4c3c-4f41-a518-a61aeca37613"
-              className="w-3.5 h-3.5 mr-1 object-fill"
-              alt=""
-            />
+            <Clock className="w-3.5 h-3.5 mr-1 text-amber-600" />
             <span className="text-amber-600 text-xs">Đang chờ thanh toán...</span>
           </div>
         )}

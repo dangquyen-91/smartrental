@@ -9,6 +9,7 @@ import {
   Sofa, Camera, Flame, Droplets, Zap, Dog, Dumbbell, Tv,
   UtensilsCrossed, Sun, Package, Lock, AirVent, WashingMachine,
   ParkingCircle, ArrowUpDown, LockKeyhole, Check, Star, ArrowLeft, Heart,
+  CheckCircle2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PriceDisplay } from '@/components/ui/price-display';
@@ -281,9 +282,9 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     <div className="min-h-screen bg-white flex flex-col">
       <div className="self-stretch bg-white pb-[1px]">
         {/* Header */}
-        <div className="self-stretch bg-cover bg-center py-6 px-4 md:px-20" style={{ backgroundImage: 'url(https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/30ac8eae-07ac-4021-b386-ee5d8a4d8a53)' }}>
+        <div className="self-stretch bg-white border-b border-[#DDDDDD] py-6 px-4 md:px-20">
           <div className="flex justify-between items-center self-stretch">
-            <Link href="/"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/a949daa0-a417-4cbf-91d7-3ac6756bb215" className="w-[182px] h-[26px] object-fill cursor-pointer" /></Link>
+            <Link href="/"><img src="/logo/SmartRental_02.png" alt="Smart Rental" className="w-[182px] h-[26px] object-contain cursor-pointer" /></Link>
             <div className="flex shrink-0 items-center px-2 gap-2">
               {isAuthenticated ? (
                 <Link href="/profile" className="flex flex-col shrink-0 items-start bg-[#222222] text-left py-2 px-4 rounded-[20px] border-0"><span className="text-white text-sm font-bold">{user?.name?.charAt(0)?.toUpperCase() ?? 'N'}</span></Link>
@@ -297,9 +298,9 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         {/* Content */}
         <div className="self-stretch max-w-[1104px] mb-8 mx-auto px-6">
           <div className="flex justify-between items-center self-stretch mb-2">
-            <Link href="/" className="flex shrink-0 items-center gap-1.5 hover:opacity-80 transition-opacity"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/14b739cb-da37-494f-9d45-6266b1ef9ea6" className="w-4 h-4" /><span className="text-[#222222] text-[15px]">Quay lại</span></Link>
+            <Link href="/" className="flex shrink-0 items-center gap-1.5 hover:opacity-80 transition-opacity"><ArrowLeft className="w-4 h-4 text-[#222222]" /><span className="text-[#222222] text-[15px]">Quay lại</span></Link>
             <div className="flex shrink-0 items-center gap-[9px]">
-              <button className="flex shrink-0 items-center bg-transparent text-left py-1.5 px-[13px] gap-[5px] rounded-lg border border-solid border-[#DDDDDD] hover:bg-[#f7f7f7] transition-colors"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/5fce7812-788a-4412-b4ac-2a3641cc4662" className="w-4 h-4" /><span className="text-[#222222] text-sm">Chia sẻ</span></button>
+              <button className="flex shrink-0 items-center bg-transparent text-left py-1.5 px-[13px] gap-[5px] rounded-lg border border-solid border-[#DDDDDD] hover:bg-[#f7f7f7] transition-colors"><Camera className="w-4 h-4 text-[#222222]" /><span className="text-[#222222] text-sm">Chia sẻ</span></button>
               <button onClick={toggleSaved} className={cn("flex shrink-0 items-center bg-transparent text-left py-1.5 px-[13px] gap-[5px] rounded-lg border border-solid border-[#DDDDDD] hover:bg-[#f7f7f7] transition-colors", heartAnim && "scale-110")}><Heart className={cn("w-4 h-4", saved ? "fill-red-500 text-red-500" : "text-[#222222]")} /><span className="text-[#222222] text-sm">{saved ? 'Đã lưu' : 'Lưu'}</span></button>
             </div>
           </div>
@@ -307,7 +308,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           <div className="flex flex-col items-start self-stretch pt-3 mb-2"><span className="text-[#222222] text-[25px] font-bold">{p.title}</span></div>
 
           <div className="flex items-center self-stretch mb-[7px] gap-2 flex-wrap">
-            <div className="flex shrink-0 items-center gap-1"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/09083633-fdc4-468d-8ea1-cbd03c1eec93" className="w-3.5 h-3.5" /><span className="text-[#6A6A6A] text-[15px]">{address}</span></div>
+            <div className="flex shrink-0 items-center gap-1"><MapPin className="w-3.5 h-3.5 text-[#6A6A6A]" /><span className="text-[#6A6A6A] text-[15px]">{address}</span></div>
             <span className="text-[#DDDDDD] text-base">·</span>
             <span className="text-[#6A6A6A] text-[15px]">{TYPE_LABEL[p.type]}</span>
             <div className="flex flex-col shrink-0 items-start bg-[#FFF546] py-[1px] px-2 rounded-full"><span className="text-black text-[13px] font-bold">{statusLabel}</span></div>
@@ -319,11 +320,11 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         <div className="flex flex-col md:flex-row items-start self-stretch max-w-[1106px] mb-[1px] mx-auto gap-6 md:gap-12 px-4 md:px-6">
           <div className="flex-1">
             <div className="flex flex-wrap items-start self-stretch border-b border-solid border-b-[#DDDDDD] pb-5 gap-y-3">
-              <div className="flex shrink-0 items-center py-0.5 mb-7 mr-5 gap-2.5"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d027e3b0-765a-43c9-9150-83cd79b69cff" className="w-5 h-5" /><div className="flex flex-col shrink-0 items-center"><span className="text-black text-[15px]">Diện tích</span><span className="text-[#222222] text-[15px] font-bold">{p.area} m²</span></div></div>
-              {p.bedrooms !== undefined && <div className="flex shrink-0 items-center py-0.5 mr-5 gap-2.5"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/0f0db104-5c14-4ced-a8a4-e81d72ca3610" className="w-5 h-5" /><div className="flex flex-col shrink-0 items-center"><span className="text-black text-[15px]">Phòng ngủ</span><span className="text-[#222222] text-[15px] font-bold">{p.bedrooms}</span></div></div>}
-              <img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/8cc350da-f861-4d41-8357-4c73e2dd418e" className="w-5 h-5 mt-2.5 mr-2.5" />
+              <div className="flex shrink-0 items-center py-0.5 mb-7 mr-5 gap-2.5"><Maximize2 className="w-5 h-5 text-[#222222]" /><div className="flex flex-col shrink-0 items-center"><span className="text-black text-[15px]">Diện tích</span><span className="text-[#222222] text-[15px] font-bold">{p.area} m²</span></div></div>
+              {p.bedrooms !== undefined && <div className="flex shrink-0 items-center py-0.5 mr-5 gap-2.5"><BedDouble className="w-5 h-5 text-[#222222]" /><div className="flex flex-col shrink-0 items-center"><span className="text-black text-[15px]">Phòng ngủ</span><span className="text-[#222222] text-[15px] font-bold">{p.bedrooms}</span></div></div>}
+              <Bath className="w-5 h-5 mt-2.5 mr-2.5 text-[#222222]" />
               {p.bathrooms !== undefined && <div className="flex flex-col shrink-0 items-center mt-0.5 mr-4"><span className="text-black text-[15px]">Phòng tắm</span><span className="text-[#222222] text-[15px] font-bold">{p.bathrooms}</span></div>}
-              {p.pricePerM2 && <><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/8390c653-26b3-43a3-b252-f227e3175e53" className="w-4 h-[11px] mt-4 mr-2" /><div className="flex flex-col shrink-0 items-center mt-0.5"><span className="text-black text-[15px]">Giá/m²</span><span className="text-[#222222] text-[15px] font-bold">{formatVnd(p.pricePerM2)}</span></div></>}
+              {p.pricePerM2 && <><MapPin className="w-4 h-4 mt-4 mr-2 text-[#222222]" /><div className="flex flex-col shrink-0 items-center mt-0.5"><span className="text-black text-[15px]">Giá/m²</span><span className="text-[#222222] text-[15px] font-bold">{formatVnd(p.pricePerM2)}</span></div></>}
             </div>
 
             {p.description && <div className="flex flex-col self-stretch py-[27px] gap-[11px] border-b border-solid border-b-[#DDDDDD]"><span className="text-[#222222] text-xl font-bold">Mô tả</span><span className="text-[#3F3F3F] text-[15px] whitespace-pre-line">{p.description}</span></div>}
@@ -344,8 +345,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                   <div className="flex flex-col shrink-0 items-center bg-[#222222] rounded-full">{ownerUser.avatar ? <img src={ownerUser.avatar} alt={ownerUser.name ?? ''} className="w-14 h-14 rounded-full object-cover" /> : <span className="w-14 h-14 flex items-center justify-center text-white text-xl font-bold">{ownerUser.name?.charAt(0)?.toUpperCase() ?? '?'}</span>}</div>
                   <div className="flex flex-col shrink-0 items-center gap-[1px]">
                     <span className="text-[#222222] text-lg font-bold">{ownerUser.name}</span>
-                    <div className="flex items-center gap-1.5"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/1dbfcd7e-40d1-467d-a9ea-f59ac7751e4f" className="w-3.5 h-3.5" /><span className="text-[#6A6A6A] text-[15px]">{contactRevealed && ownerUser.phone ? ownerUser.phone : 'Thông tin sẽ hiển thị sau khi đặt phòng và thanh toán'}</span></div>
-                    <div className="flex items-center py-0.5"><img src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9da1cc90-056b-457b-957b-bf4adfa8e51f" className="w-3 h-3 mr-1.5" /><span className="text-[#C1C1C1] text-[15px]">Chủ nhà này đã được xác minh</span></div>
+                    <div className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-[#6A6A6A]" /><span className="text-[#6A6A6A] text-[15px]">{contactRevealed && ownerUser.phone ? ownerUser.phone : 'Thông tin sẽ hiển thị sau khi đặt phòng và thanh toán'}</span></div>
+                    <div className="flex items-center py-0.5"><CheckCircle2 className="w-3 h-3 mr-1.5 text-green-600" /><span className="text-[#C1C1C1] text-[15px]">Chủ nhà này đã được xác minh</span></div>
                   </div>
                 </div>
               </div>
