@@ -6,6 +6,7 @@ import AppError from '../utils/app-error.js';
 import { getActiveSubscription } from './subscription.service.js';
 import { explainPropertyRecommendations } from './ai.service.js';
 import { getMyPreference, scorePropertyAgainstPreference } from './preference.service.js';
+import { attachMarketComparison } from './market-comparison.service.js';
 
 // Batch-lookup badge cho danh sách ownerIds — 1 query duy nhất
 const getBadgeMap = async (ownerIds) => {
@@ -295,10 +296,13 @@ const getRecommendedProperties = async (userId) => {
   const rawProps = scored.map((s) => s.property);
   const ownerIds = [...new Set(rawProps.map((p) => p.owner?._id?.toString()).filter(Boolean))];
   const badgeMap = await getBadgeMap(ownerIds);
-  const properties = attachBadges(rawProps, badgeMap).map((p, i) => ({
+  const withBadges = attachBadges(rawProps, badgeMap).map((p, i) => ({
     ...p,
     matchScore: scored[i].matchScore,
   }));
+
+  // 7. So sánh giá với thị trường — chỉ trong luồng AI Gợi ý, không dùng ở listing công khai
+  const properties = await attachMarketComparison(withBadges);
 
   return { properties, explanation, preference };
 };

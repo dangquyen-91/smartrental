@@ -1,9 +1,28 @@
 import * as propertyService from '../services/property.service.js';
+import * as pricePredictionService from '../services/price-prediction.service.js';
 import * as R from '../utils/response.js';
 
 const getRecommendations = async (req, res, next) => {
   try {
     const result = await propertyService.getRecommendedProperties(req.user.id);
+    return R.success(res, result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const predictPrice = async (req, res, next) => {
+  try {
+    const { area, bedrooms, furniture, condition, amenities, address } = req.body;
+    const result = await pricePredictionService.predictPrice({
+      area,
+      city: address.city,
+      district: address.district,
+      bedrooms,
+      furniture,
+      condition,
+      amenities,
+    });
     return R.success(res, result);
   } catch (err) {
     next(err);
@@ -77,4 +96,5 @@ export {
   updateProperty,
   deleteProperty,
   getRecommendations,
+  predictPrice,
 };

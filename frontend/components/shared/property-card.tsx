@@ -8,6 +8,7 @@ import { Heart, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type Property } from "@/types";
 import { PriceDisplay } from "@/components/ui/price-display";
+import { MarketComparisonBadge } from "@/components/shared/market-comparison-badge";
 import { Badge } from "@/components/ui/badge";
 import { useWishlist, useToggleWishlist } from "@/hooks/use-wishlist";
 import { useAuth } from "@/hooks/use-auth";
@@ -175,8 +176,11 @@ export function PropertyCard({ property, className, rentedPropertyIds, matchScor
         </div>
 
         {/* Price — prominent, navy accent, anchored to bottom */}
-        <div className="mt-auto">
+        <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1">
           <PriceDisplay amount={property.price} period="month" size="lg" highlight />
+          {property.marketComparison && (
+            <MarketComparisonBadge marketComparison={property.marketComparison} />
+          )}
         </div>
       </div>
     </Link>

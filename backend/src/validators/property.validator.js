@@ -154,8 +154,38 @@ const getPropertiesValidation = validate([
     .withMessage('sort must be newest, price_asc, or price_desc'),
 ]);
 
+const predictPriceValidation = validate([
+  body('area')
+    .notEmpty().withMessage('Area is required')
+    .isFloat({ gt: 0, lt: 500 }).withMessage('Area must be a positive number under 500'),
+
+  body('address.city')
+    .trim()
+    .notEmpty().withMessage('City is required'),
+
+  body('address.district')
+    .trim()
+    .notEmpty().withMessage('District is required'),
+
+  body('bedrooms')
+    .optional({ nullable: true })
+    .isInt({ min: 0, max: 10 }).withMessage('Bedrooms must be 0–10'),
+
+  body('furniture')
+    .optional({ nullable: true })
+    .isIn(['full', 'basic', 'unknown']).withMessage('Invalid furniture value'),
+
+  body('condition')
+    .optional({ nullable: true })
+    .isIn(['newly_built', 'unknown']).withMessage('Invalid condition value'),
+
+  body('amenities').optional({ nullable: true }).isArray().withMessage('Amenities must be an array'),
+  body('amenities.*').optional().isString().withMessage('Each amenity must be a string'),
+]);
+
 export {
   getPropertiesValidation,
   createPropertyValidation,
   updatePropertyValidation,
+  predictPriceValidation,
 };

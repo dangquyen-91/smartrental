@@ -24,8 +24,10 @@ import { uploadImagesApi, deleteUploadedImageApi } from '@/lib/api/upload.api';
 import { updateBankAccountApi } from '@/lib/api/users.api';
 import { getMeApi } from '@/lib/api/auth.api';
 import { useAuthStore } from '@/stores/auth.store';
+import { AMENITY_OPTIONS } from '@/lib/constants/amenities';
 import { cn } from '@/lib/utils';
 import type { Property } from '@/types';
+import { PricePredictionPanel } from '@/components/shared/price-prediction-panel';
 
 // ─── bank account schema ─────────────────────────────────────────────────────
 
@@ -144,12 +146,6 @@ const PROPERTY_TYPES: { value: Property['type']; label: string; icon: React.Elem
   { value: 'apartment', label: 'Căn hộ', icon: Hotel },
   { value: 'house', label: 'Nhà nguyên căn', icon: Building2 },
   { value: 'studio', label: 'Studio', icon: Box },
-];
-
-const AMENITY_OPTIONS = [
-  'WiFi', 'Máy lạnh', 'Bãi đỗ xe', 'Bảo vệ 24/7', 'Camera an ninh',
-  'Máy giặt', 'Tủ lạnh', 'Bếp riêng', 'Ban công', 'Thang máy',
-  'Nội thất đầy đủ', 'Điện nước riêng', 'Sân phơi', 'Gần chợ/siêu thị',
 ];
 
 const MAX_FILES = 10;
@@ -463,6 +459,10 @@ export default function NewListingPage() {
   } = useForm<FormValues>({ resolver: zodResolver(schema) as any, defaultValues: { type: 'room' } });
 
   const selectedType = watch('type');
+  const watchedArea = watch('area');
+  const watchedCity = watch('address.city');
+  const watchedDistrict = watch('address.district');
+  const watchedBedrooms = watch('bedrooms');
 
   const toggleAmenity = (name: string) =>
     setAmenities((prev) =>
@@ -651,6 +651,15 @@ export default function NewListingPage() {
               <input {...register('address.street')} placeholder="123 Nguyễn Huệ" className={inputCls} />
             </InputField>
           </div>
+
+          <PricePredictionPanel
+            area={watchedArea}
+            city={watchedCity}
+            district={watchedDistrict}
+            bedrooms={watchedBedrooms}
+            amenities={amenities}
+            onApply={(price) => setValue('price', price, { shouldValidate: true })}
+          />
         </div>
       </SectionCard>
 

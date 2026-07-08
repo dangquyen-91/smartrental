@@ -1,0 +1,51 @@
+{
+  "best_model": "xgboost",
+  "trained_at": "2026-07-08T03:41:54.081100+00:00",
+  "n_samples": 13065,
+  "numeric_cols": [
+    "area",
+    "bedrooms",
+    "amenity_count",
+    "amenity__Máy lạnh",
+    "amenity__WiFi",
+    "amenity__Bãi đỗ xe",
+    "amenity__Bảo vệ 24/7",
+    "amenity__Camera an ninh",
+    "amenity__Bếp riêng",
+    "amenity__Ban công",
+    "amenity__Thang máy",
+    "amenity__Gác lửng",
+    "amenity__Toilet riêng",
+    "amenity__Nóng lạnh"
+  ],
+  "categorical_cols": [
+    "city",
+    "district",
+    "furniture",
+    "condition",
+    "season"
+  ],
+  "metrics": {
+    "random_forest": {
+      "cv_mae_mean": 718892.7212679462,
+      "cv_mae_std": 9222.345982455805,
+      "test_mae": 731636.7684188744,
+      "test_rmse": 982485.2808986629,
+      "test_r2": 0.42473234037709084
+    },
+    "xgboost": {
+      "cv_mae_mean": 689480.1985986078,
+      "cv_mae_std": 10620.351233438389,
+      "test_mae": 697895.7297168006,
+      "test_rmse": 934767.3757764035,
+      "test_r2": 0.47925519321917265
+    },
+    "lightgbm": {
+      "cv_mae_mean": 694753.7105580675,
+      "cv_mae_std": 9293.47892341925,
+      "test_mae": 705420.7135639834,
+      "test_rmse": 938301.7694942316,
+      "test_r2": 0.47530983364232815
+    }
+  }
+}

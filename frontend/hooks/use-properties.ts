@@ -8,6 +8,7 @@ import {
   updatePropertyApi,
   deletePropertyApi,
   getRecommendationsApi,
+  predictPriceApi,
   type PropertyFilters,
 } from "@/lib/api/properties.api";
 import { getApiErrorMessage } from "@/lib/api-error";
@@ -78,6 +79,13 @@ export function useRecommendations(enabled: boolean) {
     queryFn: getRecommendationsApi,
     enabled,
     staleTime: 60 * 60 * 1000, // 1 hour — matches backend AI cache TTL
+  });
+}
+
+export function usePredictPrice() {
+  return useMutation({
+    mutationFn: predictPriceApi,
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Không thể gợi ý giá thuê lúc này.')),
   });
 }
 
