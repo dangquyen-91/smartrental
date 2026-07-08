@@ -28,6 +28,21 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const from = searchParams.get('from') ?? '/';
   const setAuth = useAuthStore((s) => s.setAuth);
+  const hasHydrated = useAuthStore((s) => s._hasHydrated);
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const resyncSessionCookie = useAuthStore((s) => s.resyncSessionCookie);
+
+  // proxy.ts redirects here whenever the has_session cookie is missing —
+  // but that cookie can desync from the real session (e.g. browser/extension
+  // clears it) while our token in localStorage is still valid. If so, this
+  // isn't a real logout: restore the cookie and bounce straight back instead
+  // of forcing the user to log in again.
+  useEffect(() => {
+    if (!hasHydrated || !accessToken) return;
+    resyncSessionCookie();
+    router.replace(from);
+  }, [hasHydrated, accessToken, from, resyncSessionCookie, router]);
+
   const headingRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const heroTitleRef = useRef<HTMLHeadingElement>(null);
