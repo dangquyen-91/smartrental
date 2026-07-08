@@ -1,0 +1,49 @@
+raw rows: 13785
+rows after cleaning: 13065
+dropped: 720
+
+furniture distribution:
+furniture
+unknown    11295
+full        1600
+basic        170
+
+condition distribution:
+condition
+unknown        12063
+newly_built     1002
+
+season distribution:
+season
+hạ      4834
+xuân    3489
+đông    2682
+thu     2060
+
+city distribution:
+city
+Hồ Chí Minh    9309
+Hà Nội         3040
+Đà Nẵng         716
+
+unique districts: 231
+
+price_vnd describe:
+count    1.306500e+04
+mean     3.081607e+06
+std      1.294386e+06
+min      7.500000e+05
+25%      2.000000e+06
+50%      3.000000e+06
+75%      3.900000e+06
+max      7.500000e+06
+
+area describe:
+count    13065.000000
+mean        24.595567
+std          9.791702
+min          9.000000
+25%         20.000000
+50%         25.000000
+75%         30.000000
+max         90.000000

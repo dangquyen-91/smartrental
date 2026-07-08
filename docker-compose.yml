@@ -10,14 +10,35 @@ services:
       - ./backend/.env
     environment:
       - NODE_ENV=${NODE_ENV:-development}
+      # override .env's localhost value — bên trong docker network phải gọi qua tên service
+      - ML_SERVICE_URL=http://ml:8001
     ports:
       - "${PORT:-5000}:5000"
+    depends_on:
+      - ml
     volumes:
       # hot-reload in dev: mount source, exclude node_modules
       - ./backend/src:/app/src
       - ./backend/swagger.yaml:/app/swagger.yaml
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - smartrental-net
+
+  # ─── ML Price Prediction Service ─────────────────────────────────────────
+  ml:
+    build:
+      context: ./ml-service
+    container_name: smartrental-ml
+    restart: unless-stopped
+    ports:
+      - "${ML_SERVICE_PORT:-8001}:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
       interval: 15s
       timeout: 5s
       retries: 3

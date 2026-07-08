@@ -7,6 +7,7 @@ import {
   updateProperty,
   deleteProperty,
   getRecommendations,
+  predictPrice,
 } from '../controllers/property.controller.js';
 import { protect, authorizeRoles, optionalProtect } from '../middleware/auth.middleware.js';
 import validate from '../middleware/validate.middleware.js';
@@ -15,6 +16,7 @@ import {
   getPropertiesValidation,
   createPropertyValidation,
   updatePropertyValidation,
+  predictPriceValidation,
 } from '../validators/property.validator.js';
 
 const router = express.Router();
@@ -24,6 +26,9 @@ router.get('/', getPropertiesValidation, getProperties);
 
 // Tenant: AI recommendations (must be before /:id)
 router.get('/recommendations', protect, authorizeRoles('tenant'), getRecommendations);
+
+// Landlord: AI price prediction (must be before /:id)
+router.post('/predict-price', protect, authorizeRoles('landlord', 'admin'), predictPriceValidation, predictPrice);
 
 router.get('/:id', optionalProtect, validate([mongoId('id')]), getPropertyById);
 

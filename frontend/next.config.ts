@@ -9,6 +9,16 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Các route được gate bởi cookie has_session trong proxy.ts (middleware).
+    // Client Router Cache mặc định giữ redirect/RSC cũ tới 5 phút, nên nếu một
+    // route bị redirect về /login lúc chưa đăng nhập (vd: prefetch), cache đó
+    // vẫn được dùng lại sau khi đăng nhập xong, gây bị đá nhầm về /login.
+    staleTimes: {
+      dynamic: 0,
+      static: 0,
+    },
+  },
   images: {
     remotePatterns: [
       {

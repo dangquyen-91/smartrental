@@ -13,8 +13,10 @@ import Link from 'next/link';
 import { useProperty, useUpdateProperty, propertyKeys } from '@/hooks/use-properties';
 import { uploadImagesApi, deleteUploadedImageApi } from '@/lib/api/upload.api';
 import { useQueryClient } from '@tanstack/react-query';
+import { AMENITY_OPTIONS } from '@/lib/constants/amenities';
 import { cn } from '@/lib/utils';
 import type { Property } from '@/types';
+import { PricePredictionPanel } from '@/components/shared/price-prediction-panel';
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -23,12 +25,6 @@ const PROPERTY_TYPES: { value: Property['type']; label: string; icon: React.Elem
   { value: 'apartment', label: 'Căn hộ',          icon: Hotel },
   { value: 'house',     label: 'Nhà nguyên căn',  icon: Building2 },
   { value: 'studio',    label: 'Studio',           icon: Box },
-];
-
-const AMENITY_OPTIONS = [
-  'WiFi', 'Máy lạnh', 'Bãi đỗ xe', 'Bảo vệ 24/7', 'Camera an ninh',
-  'Máy giặt', 'Tủ lạnh', 'Bếp riêng', 'Ban công', 'Thang máy',
-  'Nội thất đầy đủ', 'Điện nước riêng', 'Sân phơi', 'Gần chợ/siêu thị',
 ];
 
 const STATUS_OPTIONS: { value: 'available' | 'maintenance'; label: string; cls: string }[] = [
@@ -390,6 +386,10 @@ export default function EditListingPage({
 
   const selectedType   = watch('type');
   const selectedStatus = watch('status');
+  const watchedArea = watch('area');
+  const watchedCity = watch('address.city');
+  const watchedDistrict = watch('address.district');
+  const watchedBedrooms = watch('bedrooms');
 
   const toggleAmenity = (name: string) =>
     setAmenities((prev) =>
@@ -594,6 +594,15 @@ export default function EditListingPage({
               <input {...register('address.street')} placeholder="123 Nguyễn Huệ" className={inputCls} />
             </InputField>
           </div>
+
+          <PricePredictionPanel
+            area={watchedArea}
+            city={watchedCity}
+            district={watchedDistrict}
+            bedrooms={watchedBedrooms}
+            amenities={amenities}
+            onApply={(price) => setValue('price', price, { shouldValidate: true })}
+          />
         </div>
       </SectionCard>
 

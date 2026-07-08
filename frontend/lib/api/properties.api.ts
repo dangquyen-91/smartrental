@@ -72,3 +72,25 @@ export async function getRecommendationsApi() {
   const res = await api.get<ApiResponse<RecommendationsData>>("/properties/recommendations");
   return res.data;
 }
+
+export interface PredictPriceInput {
+  area: number;
+  bedrooms?: number;
+  furniture?: "full" | "basic" | "unknown";
+  condition?: "newly_built" | "unknown";
+  amenities?: string[];
+  address: { city: string; district: string };
+}
+
+export interface PredictPriceData {
+  predictedPrice: number;
+  priceRange: { min: number; max: number };
+  currency: "VND";
+  model: string;
+  modelMetrics: { mae: number; r2: number };
+}
+
+export async function predictPriceApi(data: PredictPriceInput) {
+  const res = await api.post<ApiResponse<PredictPriceData>>("/properties/predict-price", data);
+  return res.data;
+}

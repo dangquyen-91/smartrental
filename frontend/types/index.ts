@@ -109,6 +109,11 @@ export interface Property {
   isVerified?: boolean;
   isActive?: boolean;
   createdAt: string;
+  marketComparison?: {
+    predictedPrice: number;
+    label: 'below_market' | 'fair' | 'above_market';
+    diffPercent: number;
+  } | null;
 }
 
 export interface Booking {

@@ -10,13 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { type TenantPreference } from '@/lib/api/preferences.api';
 import type { Property } from '@/types';
 import { cn } from '@/lib/utils';
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const AMENITY_OPTIONS = [
-  'Wifi', 'Điều hòa', 'Bãi đỗ xe', 'Máy giặt', 'Bếp',
-  'Phòng tắm riêng', 'Ban công', 'An ninh 24/7', 'Thang máy', 'Nội thất',
-];
+import { AMENITY_OPTIONS } from '@/lib/constants/amenities';
 
 const TYPE_OPTIONS: { label: string; value: TenantPreference['preferredTypes'][number] }[] = [
   { label: 'Phòng trọ', value: 'room' },
